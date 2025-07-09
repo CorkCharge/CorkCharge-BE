@@ -1,5 +1,6 @@
 package konkuk.corkCharge.global.exception.handler;
 
+import konkuk.corkCharge.global.exception.CustomException;
 import konkuk.corkCharge.global.response.BaseErrorResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.coyote.BadRequestException;
@@ -40,5 +41,10 @@ public class GlobalControllerAdvice {
     public BaseErrorResponse handle_RuntimeException(Exception e) {
         log.error("[handle_RuntimeException]", e);
         return new BaseErrorResponse(INTERNAL_SERVER_ERROR);
+    }
+
+    @ExceptionHandler(CustomException.class)
+    public BaseErrorResponse handleCustomException(CustomException e) {
+        return new BaseErrorResponse(e.getExceptionStatus(), e.getMessage());
     }
 }
