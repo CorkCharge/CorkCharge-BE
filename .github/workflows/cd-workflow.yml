@@ -88,13 +88,13 @@ jobs:
             cd /home/ubuntu/app
 
             echo "🧹 Stopping old containers & removing images"
-            sudo docker compose down --rmi all || true
+            sudo docker-compose down --rmi all || true
 
             echo "📥 Pulling latest image"
             sudo docker pull ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_IMAGE }}
 
             echo "🚀 Starting container"
-            sudo docker compose up -d
+            sudo docker-compose up -d
 
       - name: ❌ Remove GitHub Actions IP from EC2
         if: always()
