@@ -1,10 +1,12 @@
 services:
-  mysql:
-    image: 'mysql:latest'
-    environment:
-      - 'MYSQL_DATABASE=mydatabase'
-      - 'MYSQL_PASSWORD=secret'
-      - 'MYSQL_ROOT_PASSWORD=verysecret'
-      - 'MYSQL_USER=myuser'
+  ustoearth:
+    image: shinystar990/corkcharge:latest
+    env_file:
+      - .env
     ports:
-      - '3306'
+      - "8000:9000"
+    environment:
+      - PROD_DB_URL=${PROD_DB_URL}
+      - PROD_DB_USER=${PROD_DB_USER}
+      - PROD_DB_PASSWORD=${PROD_DB_PASSWORD}
+      - TZ=Asia/Seoul
