@@ -1,6 +1,6 @@
 services:
   ustoearth:
-    image: shinystar990/corkcharge:latest
+    image: jaypark0205/corkcharge:latest
     env_file:
       - .env
     ports:
