@@ -1,5 +1,5 @@
 services:
-  ustoearth:
+  corkCharge:
     image: jaypark0205/corkcharge:latest
     env_file:
       - .env
