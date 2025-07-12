@@ -31,10 +31,6 @@ public class Restaurant extends BaseEntity {
     @Column(name = "phone", length = 100)
     private String phone;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "biz_type")
-    private BizType bizType;
-
     @Column(name = "rating")
     private Double rating;
 
