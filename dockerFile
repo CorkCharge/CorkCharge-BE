@@ -1,6 +1,7 @@
 FROM amazoncorretto:21
 EXPOSE 9000
 COPY ./build/libs/*.jar ./app.jar
+COPY src/main/resources/application-secret.yml ./application-secret.yml
 
 ENV SPRING_PROFILES_ACTIVE=prod
 ENTRYPOINT ["java", "-jar", "app.jar"]
