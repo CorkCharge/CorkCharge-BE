@@ -1,6 +1,7 @@
-package konkuk.corkCharge.global.openApi;
+package konkuk.corkCharge.global.openApi.GJRestaurantOpenApi.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -8,11 +9,24 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class RestaurantRowDto {
-    private String BPLCNM;       // 사업장명
-    private String RDNWHLADDR;   // 도로명주소
-    private String RDNPOSTNO;    // 도로명우편번호
-    private String SITETEL;      // 전화번호
-    private String LAT;          // 위도
-    private String LNG;          // 경도
-    private String DTLSTATENM;   // 상세영업상태명
+    @JsonProperty("BPLCNM")         // 사업장명
+    private String BPLCNM;
+
+    @JsonProperty("DTLSTATENM")     // 상세영업상태명
+    private String DTLSTATENM;
+
+    @JsonProperty("RDNWHLADDR")     // 도로명주소
+    private String RDNWHLADDR;
+
+    @JsonProperty("RDNPOSTNO")      // 도로명우편번호
+    private String RDNPOSTNO;
+
+    @JsonProperty("SITETEL")        // 전화번호
+    private String SITETEL;
+
+    @JsonProperty("LAT")            // 위도
+    private String LAT;
+
+    @JsonProperty("LNG")            // 경도
+    private String LNG;
 }
