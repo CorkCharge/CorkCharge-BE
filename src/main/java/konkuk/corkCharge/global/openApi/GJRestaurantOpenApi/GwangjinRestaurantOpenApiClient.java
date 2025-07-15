@@ -33,6 +33,10 @@ public class GwangjinRestaurantOpenApiClient {
     private static final String DATASET = "LOCALDATA_072404_GJ";
 
     public void fetchAndSaveRestaurants() {
+        if (restaurantRepository.count() > 0) {
+            return;
+        }
+
         String url = String.format("%s/%s/json/%s/1/1000/", BASE_URL, AUTH_ENCODING_KEY, DATASET);
 
         try {
