@@ -1,6 +1,8 @@
 spring:
   application:
     name: corkCharge
+  config:
+    import: optional:application-secret.yml
   profiles:
     group:
       local: db-local, port-local, common
