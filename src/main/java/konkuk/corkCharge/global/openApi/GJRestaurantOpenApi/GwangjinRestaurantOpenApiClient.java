@@ -11,9 +11,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import static konkuk.corkCharge.global.openApi.GJRestaurantOpenApi.exception.OpenApiException.RESTAURANT_API_ERROR;
 
 @Component
@@ -42,7 +39,6 @@ public class GwangjinRestaurantOpenApiClient {
         try {
             RestaurantOpenApiResponse response = restTemplate.getForObject(url, RestaurantOpenApiResponse.class);
 
-            Set<String> stateNames = new HashSet<>();
             for (RestaurantRowDto rowDto : response.getLocalData().getRow()) {
                 if (!"영업".equals(rowDto.getDTLSTATENM()))
                     continue;
