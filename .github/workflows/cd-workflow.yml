@@ -72,6 +72,8 @@ jobs:
           echo "PROD_DB_URL=${{ secrets.PROD_DB_URL }}" >> .env
           echo "PROD_DB_USER=${{ secrets.PROD_DB_USER }}" >> .env
           echo "PROD_DB_PASSWORD=${{ secrets.PROD_DB_PASSWORD }}" >> .env
+          echo "OPEN_API_KEY=${{ secrets.OPEN_API_KEY }}" >> .env
+          echo "OPEN_API_BASE_URL=${{ secrets.OPEN_API_BASE_URL }}" >> .env
 
       - name: ✉️ Upload docker-compose.yml to EC2
         uses: appleboy/scp-action@master
