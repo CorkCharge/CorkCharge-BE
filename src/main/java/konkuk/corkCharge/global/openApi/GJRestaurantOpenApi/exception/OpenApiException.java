@@ -1,4 +1,4 @@
-package konkuk.corkCharge.global.openApi.exception;
+package konkuk.corkCharge.global.openApi.GJRestaurantOpenApi.exception;
 
 import konkuk.corkCharge.global.response.status.ResponseStatus;
 import lombok.RequiredArgsConstructor;

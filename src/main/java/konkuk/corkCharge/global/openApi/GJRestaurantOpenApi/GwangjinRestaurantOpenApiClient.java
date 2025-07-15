@@ -1,15 +1,20 @@
-package konkuk.corkCharge.global.openApi;
+package konkuk.corkCharge.global.openApi.GJRestaurantOpenApi;
 
 import konkuk.corkCharge.domain.restaurant.domain.Restaurant;
 import konkuk.corkCharge.domain.restaurant.repository.RestaurantRepository;
 import konkuk.corkCharge.global.exception.CustomException;
+import konkuk.corkCharge.global.openApi.GJRestaurantOpenApi.dto.RestaurantOpenApiResponse;
+import konkuk.corkCharge.global.openApi.GJRestaurantOpenApi.dto.RestaurantRowDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
-import static konkuk.corkCharge.global.openApi.exception.OpenApiException.RESTAURANT_API_ERROR;
+import java.util.HashSet;
+import java.util.Set;
+
+import static konkuk.corkCharge.global.openApi.GJRestaurantOpenApi.exception.OpenApiException.RESTAURANT_API_ERROR;
 
 @Component
 @RequiredArgsConstructor
@@ -25,7 +30,7 @@ public class GwangjinRestaurantOpenApiClient {
     @Value("${openApi.baseUrl}")
     private String BASE_URL;
 
-    private static final String DATASET = "LOCALDATA_020301_GJ";
+    private static final String DATASET = "LOCALDATA_072404_GJ";
 
     public void fetchAndSaveRestaurants() {
         String url = String.format("%s/%s/json/%s/1/1000/", BASE_URL, AUTH_ENCODING_KEY, DATASET);
@@ -33,7 +38,8 @@ public class GwangjinRestaurantOpenApiClient {
         try {
             RestaurantOpenApiResponse response = restTemplate.getForObject(url, RestaurantOpenApiResponse.class);
 
-            for (RestaurantRowDto rowDto : response.getLOCALDATA_020301_GJ().getRow()) {
+            Set<String> stateNames = new HashSet<>();
+            for (RestaurantRowDto rowDto : response.getLocalData().getRow()) {
                 if (!"영업".equals(rowDto.getDTLSTATENM()))
                     continue;
 
@@ -42,8 +48,8 @@ public class GwangjinRestaurantOpenApiClient {
                         .address(rowDto.getRDNWHLADDR())
                         .roadZipCode(rowDto.getRDNPOSTNO())
                         .phone(rowDto.getSITETEL())
-                        .latitude(Double.valueOf(rowDto.getLAT()))
-                        .longitude(Double.valueOf(rowDto.getLNG()))
+                        .latitude(0.0)
+                        .longitude(0.0)
                         .bookmarkCount(0)
                         .rating(null)
                         .hasCorkage(false)
@@ -56,6 +62,4 @@ public class GwangjinRestaurantOpenApiClient {
         }
 
     }
-
-
 }
