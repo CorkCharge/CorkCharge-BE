@@ -36,3 +36,6 @@ out/
 ### VS Code ###
 .vscode/
 .env
+
+### Custom ###
+src/main/resources/application-secret.yml
