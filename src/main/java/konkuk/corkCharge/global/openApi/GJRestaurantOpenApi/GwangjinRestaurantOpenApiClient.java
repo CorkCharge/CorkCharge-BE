@@ -11,7 +11,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
-import static konkuk.corkCharge.global.openApi.GJRestaurantOpenApi.exception.OpenApiException.RESTAURANT_API_ERROR;
+import static konkuk.corkCharge.global.response.status.BaseExceptionResponseStatus.RESTAURANT_API_ERROR;
 
 @Component
 @RequiredArgsConstructor
