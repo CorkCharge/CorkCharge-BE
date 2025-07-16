@@ -40,5 +40,5 @@ public class Image extends BaseEntity {
     private String imageUrl;
 
     @Column(length = 100)
-    private String type;
+    private ImageType type;
 }
