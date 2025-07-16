@@ -3,6 +3,7 @@ package konkuk.corkCharge.domain.restaurant.domain;
 import jakarta.persistence.*;
 import konkuk.corkCharge.domain.corkageStore.domain.CorkageStore;
 import konkuk.corkCharge.domain.image.domain.Image;
+import konkuk.corkCharge.domain.review.domain.Review;
 import konkuk.corkCharge.global.entity.BaseEntity;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -53,6 +54,9 @@ public class Restaurant extends BaseEntity {
     private CorkageStore corkageStore;
 
     @OneToMany(mappedBy = "restaurant", cascade = CascadeType.REMOVE)
+    private List<Review> reviews = new ArrayList<>();
+
+    @OneToMany(mappedBy = "restaurant", cascade = CascadeType.REMOVE)
     private List<Image> images = new ArrayList<>();
 
     @Builder
@@ -67,6 +71,10 @@ public class Restaurant extends BaseEntity {
         this.rating = rating;
         this.bookmarkCount = bookmarkCount;
         this.hasCorkage = hasCorkage;
+    }
+
+    public int getReviewCount() {
+        return reviews != null ? reviews.size() : 0;
     }
 
 }
