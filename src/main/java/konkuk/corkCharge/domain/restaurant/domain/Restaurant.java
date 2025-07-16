@@ -1,10 +1,16 @@
 package konkuk.corkCharge.domain.restaurant.domain;
 
 import jakarta.persistence.*;
+import konkuk.corkCharge.domain.corkageStore.domain.CorkageStore;
+import konkuk.corkCharge.domain.image.domain.Image;
 import konkuk.corkCharge.global.entity.BaseEntity;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "restaurant")
@@ -22,6 +28,9 @@ public class Restaurant extends BaseEntity {
     @Column(name = "address", nullable = false, length = 255)
     private String address;
 
+    @Column(name = "road_zip_code", length = 10)
+    private String roadZipCode;
+
     @Column(name = "latitude", nullable = false)
     private Double latitude;
 
@@ -35,8 +44,29 @@ public class Restaurant extends BaseEntity {
     private Double rating;
 
     @Column(name = "bookmark_count")
-    private Integer bookmarkCount;
+    private int bookmarkCount;
 
     @Column(name = "has_corkage")
-    private Boolean hasCorkage;
+    private boolean hasCorkage;
+
+    @OneToOne(mappedBy = "restaurant", cascade = CascadeType.REMOVE)
+    private CorkageStore corkageStore;
+
+    @OneToMany(mappedBy = "restaurant", cascade = CascadeType.REMOVE)
+    private List<Image> images = new ArrayList<>();
+
+    @Builder
+    public Restaurant(String name, String address, String roadZipCode, String phone, Double latitude, Double longitude,
+                      Double rating, int bookmarkCount, boolean hasCorkage) {
+        this.name = name;
+        this.address = address;
+        this.roadZipCode = roadZipCode;
+        this.phone = phone;
+        this.latitude = latitude;
+        this.longitude = longitude;
+        this.rating = rating;
+        this.bookmarkCount = bookmarkCount;
+        this.hasCorkage = hasCorkage;
+    }
+
 }
