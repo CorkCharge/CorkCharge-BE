@@ -9,4 +9,6 @@ services:
       - PROD_DB_URL=${PROD_DB_URL}
       - PROD_DB_USER=${PROD_DB_USER}
       - PROD_DB_PASSWORD=${PROD_DB_PASSWORD}
+      - OPEN_API_KEY=${OPEN_API_KEY}
+      - OPEN_API_BASE_URL=${OPEN_API_BASE_URL}
       - TZ=Asia/Seoul

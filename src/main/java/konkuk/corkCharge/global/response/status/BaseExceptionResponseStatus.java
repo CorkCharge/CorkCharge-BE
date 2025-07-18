@@ -9,7 +9,18 @@ public enum BaseExceptionResponseStatus implements ResponseStatus {
     BAD_REQUEST(40000, "유효하지 않은 요청입니다."),
     NOT_FOUND(40400, "존재하지 않는 API입니다."),
     INTERNAL_SERVER_ERROR(50000, "서버 내부 오류입니다."),
-    USER_NOT_FOUND(40401, "해당 사용자를 찾을 수 없습니다.")
+
+    /**
+     * 60000 : User 도메인 에러 코드
+     */
+
+
+    USER_NOT_FOUND(60001, "해당 사용자를 찾을 수 없습니다."),
+
+    /**
+     * 30000 : openApi
+     */
+    RESTAURANT_API_ERROR(30000, "공공데이터 포탈 API 호출 중 오류 발생")
     ;
 
     private final boolean success = false;
