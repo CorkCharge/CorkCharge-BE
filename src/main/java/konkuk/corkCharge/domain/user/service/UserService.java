@@ -23,7 +23,7 @@ public class UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(BaseExceptionResponseStatus.USER_NOT_FOUND));
 
-        String imageUrl = imageRepository.findFirstByUserId(userId)
+        String imageUrl = imageRepository.findProfileImageByUser_UserId(userId)
                 .map(Image::getImageUrl)
                 .orElse(null);
 
