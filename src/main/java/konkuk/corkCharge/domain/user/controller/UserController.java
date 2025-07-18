@@ -15,7 +15,6 @@ public class UserController {
 
     @GetMapping
     public BaseResponse<GetUserProfileResponse> getUserProfile(@RequestParam Long userId){
-        GetUserProfileResponse userProfile = userService.getUserProfile(userId);
-        return BaseResponse.ok(userProfile);
+        return BaseResponse.ok(userService.getUserProfile(userId));
     }
 }
