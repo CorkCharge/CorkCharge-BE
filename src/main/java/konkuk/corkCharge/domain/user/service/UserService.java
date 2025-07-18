@@ -6,10 +6,11 @@ import konkuk.corkCharge.domain.user.domain.User;
 import konkuk.corkCharge.domain.user.dto.response.GetUserProfileResponse;
 import konkuk.corkCharge.domain.user.repository.UserRepository;
 import konkuk.corkCharge.global.exception.CustomException;
-import konkuk.corkCharge.global.response.status.BaseExceptionResponseStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import static konkuk.corkCharge.global.response.status.BaseExceptionResponseStatus.USER_NOT_FOUND;
 
 @Service
 @RequiredArgsConstructor
@@ -21,7 +22,7 @@ public class UserService {
     @Transactional
     public GetUserProfileResponse getUserProfile(Long userId){
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new CustomException(BaseExceptionResponseStatus.USER_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(USER_NOT_FOUND));
 
         String imageUrl = imageRepository.findProfileImageByUser_UserId(userId)
                 .map(Image::getImageUrl)
