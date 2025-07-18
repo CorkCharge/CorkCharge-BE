@@ -13,7 +13,13 @@ public enum BaseExceptionResponseStatus implements ResponseStatus {
     /**
      * 30000 : openApi
      */
-    RESTAURANT_API_ERROR(30000, "공공데이터 포탈 API 호출 중 오류 발생")
+    RESTAURANT_API_ERROR(30000, "공공데이터 포탈 API 호출 중 오류 발생"),
+
+
+    /**
+     * 60000 : restaurant
+     */
+    RESTAURANT_NOT_FOUND(60000, "식당 정보를 찾을 수 없습니다.")
     ;
 
     private final boolean success = false;
