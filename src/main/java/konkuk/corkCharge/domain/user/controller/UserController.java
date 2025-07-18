@@ -1,7 +1,6 @@
 package konkuk.corkCharge.domain.user.controller;
 
-import konkuk.corkCharge.domain.user.domain.User;
-import konkuk.corkCharge.domain.user.dto.response.UserProfileResponseDto;
+import konkuk.corkCharge.domain.user.dto.response.GetUserProfileResponse;
 import konkuk.corkCharge.domain.user.service.UserService;
 import konkuk.corkCharge.global.response.BaseResponse;
 import lombok.RequiredArgsConstructor;
@@ -15,8 +14,8 @@ public class UserController {
     private final UserService userService;
 
     @GetMapping
-    public BaseResponse<UserProfileResponseDto> getUserProfile(@RequestParam Long userId){
-        UserProfileResponseDto userProfile = userService.getUserProfile(userId);
+    public BaseResponse<GetUserProfileResponse> getUserProfile(@RequestParam Long userId){
+        GetUserProfileResponse userProfile = userService.getUserProfile(userId);
         return BaseResponse.ok(userProfile);
     }
 }

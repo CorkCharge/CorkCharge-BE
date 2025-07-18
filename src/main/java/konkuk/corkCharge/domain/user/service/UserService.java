@@ -3,7 +3,7 @@ package konkuk.corkCharge.domain.user.service;
 import konkuk.corkCharge.domain.image.domain.Image;
 import konkuk.corkCharge.domain.image.repository.ImageRepository;
 import konkuk.corkCharge.domain.user.domain.User;
-import konkuk.corkCharge.domain.user.dto.response.UserProfileResponseDto;
+import konkuk.corkCharge.domain.user.dto.response.GetUserProfileResponse;
 import konkuk.corkCharge.domain.user.repository.UserRepository;
 import konkuk.corkCharge.global.exception.CustomException;
 import konkuk.corkCharge.global.response.status.BaseExceptionResponseStatus;
@@ -19,7 +19,7 @@ public class UserService {
     private final ImageRepository imageRepository;
 
     @Transactional
-    public UserProfileResponseDto getUserProfile(Long userId){
+    public GetUserProfileResponse getUserProfile(Long userId){
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(BaseExceptionResponseStatus.USER_NOT_FOUND));
 
@@ -27,7 +27,7 @@ public class UserService {
                 .map(Image::getImageUrl)
                 .orElse(null);
 
-        return new UserProfileResponseDto(
+        return new GetUserProfileResponse(
                 user.getName(),
                 user.getSocialId(),
                 imageUrl
