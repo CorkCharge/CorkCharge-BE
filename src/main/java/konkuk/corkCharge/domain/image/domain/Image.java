@@ -5,6 +5,7 @@ import konkuk.corkCharge.domain.corkageStore.domain.CorkageStore;
 import konkuk.corkCharge.domain.restaurant.domain.Restaurant;
 import konkuk.corkCharge.domain.review.domain.Review;
 import konkuk.corkCharge.domain.tip.domain.Tip;
+import konkuk.corkCharge.domain.user.domain.User;
 import konkuk.corkCharge.global.entity.BaseEntity;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -19,6 +20,10 @@ public class Image extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "image_id")
     private Long id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "restaurant_id")
