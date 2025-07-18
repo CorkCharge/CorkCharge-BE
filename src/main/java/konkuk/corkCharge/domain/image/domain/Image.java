@@ -10,10 +10,12 @@ import konkuk.corkCharge.global.entity.BaseEntity;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Table(name = "image")
 @Getter
+@Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Image extends BaseEntity {
     @Id
@@ -46,4 +48,10 @@ public class Image extends BaseEntity {
 
     @Column(length = 100)
     private ImageType type;
+
+    public Image(User user, String imageUrl, ImageType type) {
+        this.user = user;
+        this.imageUrl = imageUrl;
+        this.type = type;
+    }
 }
