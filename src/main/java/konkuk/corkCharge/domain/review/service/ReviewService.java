@@ -58,6 +58,18 @@ public class ReviewService {
                 imageRepository.save(image);
             }
         }
+        updateAverageRating(restaurant);
+    }
 
+    private void updateAverageRating(Restaurant restaurant) {
+        List<Review> reviews = restaurant.getReviews();
+
+        double avg = reviews.stream()
+                .mapToInt(Review::getRating)
+                .average()
+                .orElse(0.0);
+
+        restaurant.updateRating(avg);
+        restaurantRepository.save(restaurant);
     }
 }
