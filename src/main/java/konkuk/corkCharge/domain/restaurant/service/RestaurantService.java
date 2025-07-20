@@ -1,6 +1,7 @@
 package konkuk.corkCharge.domain.restaurant.service;
 
 import konkuk.corkCharge.domain.restaurant.domain.Restaurant;
+import konkuk.corkCharge.domain.restaurant.dto.response.GetRestaurantDetailResponse;
 import konkuk.corkCharge.domain.restaurant.dto.response.GetRestaurantListResponse;
 import konkuk.corkCharge.domain.restaurant.dto.response.GetRestaurantMapResponse;
 import konkuk.corkCharge.domain.restaurant.repository.RestaurantRepository;
@@ -15,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 import static konkuk.corkCharge.global.response.status.BaseExceptionResponseStatus.CORKAGE_RESTAURANT_NOT_FOUND;
+import static konkuk.corkCharge.global.response.status.BaseExceptionResponseStatus.RESTAURANT_NOT_FOUND;
 
 @Service
 @RequiredArgsConstructor
@@ -61,6 +63,13 @@ public class RestaurantService {
                     return GetRestaurantMapResponse.of(restaurant, corkagePrice);
                 })
                 .toList();
+    }
+
+    public GetRestaurantDetailResponse getRestaurantDetail(Long restaurantId){
+        Restaurant restaurant = restaurantRepository.findById(restaurantId)
+                .orElseThrow(() -> new CustomException(RESTAURANT_NOT_FOUND));
+
+        return GetRestaurantDetailResponse.from(restaurant);
     }
 
 }
