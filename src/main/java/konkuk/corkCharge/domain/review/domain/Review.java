@@ -5,6 +5,7 @@ import konkuk.corkCharge.domain.restaurant.domain.Restaurant;
 import konkuk.corkCharge.domain.user.domain.User;
 import konkuk.corkCharge.global.entity.BaseEntity;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -31,4 +32,13 @@ public class Review extends BaseEntity {
 
     @Column(nullable = false)
     private Integer rating;
+
+    @Builder
+    public Review(Restaurant restaurant, User user, String content, Integer rating) {
+        this.restaurant = restaurant;
+        this.user = user;
+        this.content = content;
+        this.rating = rating;
+    }
+
 }

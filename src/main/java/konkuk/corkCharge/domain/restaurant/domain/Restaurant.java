@@ -77,4 +77,9 @@ public class Restaurant extends BaseEntity {
         return reviews != null ? reviews.size() : 0;
     }
 
+    public void updateCoordinates(Double latitude, Double longitude) {
+        this.latitude = latitude;
+        this.longitude = longitude;
+    }
+
 }

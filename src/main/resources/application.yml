@@ -95,3 +95,17 @@ springdoc:
 openApi:
   serviceKey: ${OPEN_API_KEY}
   baseUrl: ${OPEN_API_BASE_URL}
+
+cloud:
+  aws:
+    credentials:
+      accessKey: ${AWS_ACCESS_KEY_ID}
+      secretKey: ${AWS_SECRET_ACCESS_KEY}
+    s3:
+      region: ap-northeast-2
+      bucket: ${AWS_S3_BUCKET}
+      base-url: ${AWS_S3_BASE_URL}
+
+naver:
+  client-id: ${NAVER_CLIENT_ID}
+  client-secret: ${NAVER_CLIENT_SECRET}

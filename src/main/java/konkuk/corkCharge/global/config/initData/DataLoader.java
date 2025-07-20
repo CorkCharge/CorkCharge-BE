@@ -1,6 +1,6 @@
 package konkuk.corkCharge.global.config.initData;
 
-import konkuk.corkCharge.global.openApi.GJRestaurantOpenApi.GwangjinRestaurantOpenApiClient;
+import konkuk.corkCharge.global.api.GJRestaurantOpenApi.GwangjinRestaurantOpenApiClient;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
