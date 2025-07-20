@@ -1,11 +1,15 @@
 package konkuk.corkCharge.domain.corkageStore.domain;
 
 import jakarta.persistence.*;
+import konkuk.corkCharge.domain.image.domain.Image;
 import konkuk.corkCharge.domain.restaurant.domain.Restaurant;
 import konkuk.corkCharge.global.entity.BaseEntity;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "corkage_store")
@@ -32,4 +36,7 @@ public class CorkageStore extends BaseEntity {
 
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
+
+    @OneToMany(mappedBy = "corkageStore", cascade = CascadeType.REMOVE)
+    private List<Image> images = new ArrayList<>();
 }
