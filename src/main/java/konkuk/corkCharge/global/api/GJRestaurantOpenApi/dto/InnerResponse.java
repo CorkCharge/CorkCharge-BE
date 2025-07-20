@@ -1,4 +1,4 @@
-package konkuk.corkCharge.global.openApi.GJRestaurantOpenApi.dto;
+package konkuk.corkCharge.global.api.GJRestaurantOpenApi.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;

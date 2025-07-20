@@ -18,8 +18,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
 import static konkuk.corkCharge.domain.image.domain.ImageCategory.REVIEW;
-import static konkuk.corkCharge.global.response.status.BaseExceptionResponseStatus.RESTAURANT_NOT_FOUND;
-import static konkuk.corkCharge.global.response.status.BaseExceptionResponseStatus.USER_NOT_FOUND;
+import static konkuk.corkCharge.global.response.status.BaseExceptionResponseStatus.*;
 
 @Service
 @RequiredArgsConstructor
