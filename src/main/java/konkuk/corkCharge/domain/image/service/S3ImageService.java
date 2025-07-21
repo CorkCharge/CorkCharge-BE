@@ -1,6 +1,5 @@
 package konkuk.corkCharge.domain.image.service;
 
-import com.amazonaws.services.s3.model.CannedAccessControlList;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import konkuk.corkCharge.domain.image.domain.ImageCategory;
@@ -36,7 +35,7 @@ public class S3ImageService {
 
         for (MultipartFile file : files) {
             String fileName = UUID.randomUUID() + "_" + file.getOriginalFilename();
-            String fullPath = dir + "_" + fileName;
+            String fullPath = dir + "/" + fileName;
 
             try {
                 ObjectMetadata metadata = new ObjectMetadata();

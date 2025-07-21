@@ -46,4 +46,7 @@ public class Image extends BaseEntity {
 
     @Column(length = 100)
     private ImageType type;
+
+    @Column(length = 100)
+    private ImageCategory category;
 }
