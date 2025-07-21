@@ -4,6 +4,7 @@ import konkuk.corkCharge.domain.restaurant.domain.Restaurant;
 import konkuk.corkCharge.domain.restaurant.dto.response.GetRestaurantDetailResponse;
 import konkuk.corkCharge.domain.restaurant.dto.response.GetRestaurantListResponse;
 import konkuk.corkCharge.domain.restaurant.dto.response.GetRestaurantMapResponse;
+import konkuk.corkCharge.domain.restaurant.dto.response.GetSearchRestaurantResponse;
 import konkuk.corkCharge.domain.restaurant.repository.RestaurantRepository;
 import konkuk.corkCharge.global.api.naverMapsApi.NaverGeocodingClient;
 import konkuk.corkCharge.global.api.naverMapsApi.dto.Address;
@@ -65,11 +66,20 @@ public class RestaurantService {
                 .toList();
     }
 
-    public GetRestaurantDetailResponse getRestaurantDetail(Long restaurantId){
+    public GetRestaurantDetailResponse getRestaurantDetail(Long restaurantId) {
         Restaurant restaurant = restaurantRepository.findById(restaurantId)
                 .orElseThrow(() -> new CustomException(RESTAURANT_NOT_FOUND));
 
         return GetRestaurantDetailResponse.from(restaurant);
+    }
+
+    @Transactional
+    public List<GetSearchRestaurantResponse> searchRestaurants(String keyword) {
+        List<Restaurant> matchedRestaurants = restaurantRepository.findByNameContaining(keyword);
+
+        return matchedRestaurants.stream()
+                .map(GetSearchRestaurantResponse::from)
+                .toList();
     }
 
 }
