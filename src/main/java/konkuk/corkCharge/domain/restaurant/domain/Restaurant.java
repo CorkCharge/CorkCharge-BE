@@ -59,6 +59,12 @@ public class Restaurant extends BaseEntity {
     @OneToMany(mappedBy = "restaurant", cascade = CascadeType.REMOVE)
     private List<Image> images = new ArrayList<>();
 
+    @Column(name = "represent_menu", length = 255)
+    private String representMenu;
+
+    @Column(name = "opening_hours", columnDefinition = "TEXT")
+    private String openingHours;
+
     @Builder
     public Restaurant(String name, String address, String roadZipCode, String phone, Double latitude, Double longitude,
                       Double rating, int bookmarkCount, boolean hasCorkage) {
@@ -80,6 +86,10 @@ public class Restaurant extends BaseEntity {
     public void updateCoordinates(Double latitude, Double longitude) {
         this.latitude = latitude;
         this.longitude = longitude;
+    }
+
+    public void updateRating(Double rating) {
+        this.rating = rating;
     }
 
 }
