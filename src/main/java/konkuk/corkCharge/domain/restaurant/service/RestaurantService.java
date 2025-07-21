@@ -1,10 +1,7 @@
 package konkuk.corkCharge.domain.restaurant.service;
 
 import konkuk.corkCharge.domain.restaurant.domain.Restaurant;
-import konkuk.corkCharge.domain.restaurant.dto.response.GetRestaurantDetailResponse;
-import konkuk.corkCharge.domain.restaurant.dto.response.GetRestaurantListResponse;
-import konkuk.corkCharge.domain.restaurant.dto.response.GetRestaurantMapResponse;
-import konkuk.corkCharge.domain.restaurant.dto.response.GetSearchRestaurantResponse;
+import konkuk.corkCharge.domain.restaurant.dto.response.*;
 import konkuk.corkCharge.domain.restaurant.repository.RestaurantRepository;
 import konkuk.corkCharge.global.api.naverMapsApi.NaverGeocodingClient;
 import konkuk.corkCharge.global.api.naverMapsApi.dto.Address;
@@ -79,6 +76,15 @@ public class RestaurantService {
 
         return matchedRestaurants.stream()
                 .map(GetSearchRestaurantResponse::from)
+                .toList();
+    }
+
+    @Transactional
+    public List<GetHotRestaurantResponse> getHotRestaurants() {
+        List<Restaurant> hotRestaurants = restaurantRepository.findByBookmarkCountGreaterThanEqual(5);
+
+        return hotRestaurants.stream()
+                .map(GetHotRestaurantResponse::from)
                 .toList();
     }
 
