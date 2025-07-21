@@ -1,10 +1,10 @@
-package konkuk.corkCharge.global.openApi.GJRestaurantOpenApi;
+package konkuk.corkCharge.global.api.GJRestaurantOpenApi;
 
 import konkuk.corkCharge.domain.restaurant.domain.Restaurant;
 import konkuk.corkCharge.domain.restaurant.repository.RestaurantRepository;
 import konkuk.corkCharge.global.exception.CustomException;
-import konkuk.corkCharge.global.openApi.GJRestaurantOpenApi.dto.RestaurantOpenApiResponse;
-import konkuk.corkCharge.global.openApi.GJRestaurantOpenApi.dto.RestaurantRowDto;
+import konkuk.corkCharge.global.api.GJRestaurantOpenApi.dto.RestaurantOpenApiResponse;
+import konkuk.corkCharge.global.api.GJRestaurantOpenApi.dto.RestaurantRowDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;

@@ -7,16 +7,14 @@ import konkuk.corkCharge.domain.review.domain.Review;
 import konkuk.corkCharge.domain.tip.domain.Tip;
 import konkuk.corkCharge.domain.user.domain.User;
 import konkuk.corkCharge.global.entity.BaseEntity;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 @Entity
 @Table(name = "image")
 @Getter
-@Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Builder
+@AllArgsConstructor
 public class Image extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -49,9 +47,6 @@ public class Image extends BaseEntity {
     @Column(length = 100)
     private ImageType type;
 
-    public Image(User user, String imageUrl, ImageType type) {
-        this.user = user;
-        this.imageUrl = imageUrl;
-        this.type = type;
-    }
+    @Column(length = 100)
+    private ImageCategory category;
 }
