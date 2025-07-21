@@ -1,9 +1,6 @@
 package konkuk.corkCharge.domain.restaurant.controller;
 
-import konkuk.corkCharge.domain.restaurant.dto.response.GetRestaurantDetailResponse;
-import konkuk.corkCharge.domain.restaurant.dto.response.GetRestaurantListResponse;
-import konkuk.corkCharge.domain.restaurant.dto.response.GetRestaurantMapResponse;
-import konkuk.corkCharge.domain.restaurant.dto.response.GetSearchRestaurantResponse;
+import konkuk.corkCharge.domain.restaurant.dto.response.*;
 import konkuk.corkCharge.domain.restaurant.service.RestaurantService;
 import konkuk.corkCharge.global.response.BaseResponse;
 import lombok.RequiredArgsConstructor;
@@ -40,6 +37,11 @@ public class RestaurantController {
             @RequestParam(name = "keyword") String keyword
     ) {
         return BaseResponse.ok(restaurantService.searchRestaurants(keyword));
+    }
+
+    @GetMapping("/hot")
+    public BaseResponse<List<GetHotRestaurantResponse>> getHotRestaurant() {
+        return BaseResponse.ok(restaurantService.getHotRestaurants());
     }
 
 }
