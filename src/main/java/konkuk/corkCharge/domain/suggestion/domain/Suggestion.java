@@ -32,4 +32,12 @@ public class Suggestion extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "suggestion_category", nullable = false)
     private SuggestionCategory suggestionCategory;
+
+    public Suggestion(User user, Restaurant restaurant, String content, SuggestionCategory suggestionCategory) {
+        this.user = user;
+        this.restaurant = restaurant;
+        this.content = content;
+        this.suggestionCategory = suggestionCategory;
+    }
+
 }
