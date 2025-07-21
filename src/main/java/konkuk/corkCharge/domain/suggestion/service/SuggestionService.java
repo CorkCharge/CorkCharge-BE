@@ -29,12 +29,12 @@ public class SuggestionService {
         Restaurant restaurant = restaurantRepository.findById(request.restaurantId())
                 .orElseThrow(() -> new CustomException(RESTAURANT_NOT_FOUND));
 
-        Suggestion suggestion = new Suggestion(
-                user,
-                restaurant,
-                request.content(),
-                request.category()
-        );
+        Suggestion suggestion = Suggestion.builder()
+                        .user(user)
+                        .restaurant(restaurant)
+                        .content(request.content())
+                        .suggestionCategory(request.category())
+                        .build();
 
         suggestionRepository.save(suggestion);
     }

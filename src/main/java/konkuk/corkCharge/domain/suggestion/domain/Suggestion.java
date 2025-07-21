@@ -4,14 +4,14 @@ import jakarta.persistence.*;
 import konkuk.corkCharge.domain.restaurant.domain.Restaurant;
 import konkuk.corkCharge.domain.user.domain.User;
 import konkuk.corkCharge.global.entity.BaseEntity;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Entity
 @Table(name = "suggestion")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
+@Builder
 public class Suggestion extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -32,12 +32,5 @@ public class Suggestion extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "suggestion_category", nullable = false)
     private SuggestionCategory suggestionCategory;
-
-    public Suggestion(User user, Restaurant restaurant, String content, SuggestionCategory suggestionCategory) {
-        this.user = user;
-        this.restaurant = restaurant;
-        this.content = content;
-        this.suggestionCategory = suggestionCategory;
-    }
 
 }

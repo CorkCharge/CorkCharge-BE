@@ -15,7 +15,7 @@ public class SuggestionController {
     private final SuggestionService suggestionService;
 
     @PostMapping
-    public BaseResponse<GetUserProfileResponse> postSuggestion(@RequestParam Long userId, @RequestBody PostSuggestionRequest request){
+    public BaseResponse<GetUserProfileResponse> postSuggestion(@RequestParam(name="userId") Long userId, @RequestBody PostSuggestionRequest request){
         suggestionService.createSuggestion(userId, request);
         return BaseResponse.ok(null);
     }
