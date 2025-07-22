@@ -12,6 +12,7 @@ import lombok.*;
 @Entity
 @Table(name = "image")
 @Getter
+@Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Builder
 @AllArgsConstructor
@@ -44,9 +45,11 @@ public class Image extends BaseEntity {
     @Column(name = "image_url", nullable = false)
     private String imageUrl;
 
+    @Enumerated(EnumType.STRING)
     @Column(length = 100)
     private ImageType type;
 
+    @Enumerated(EnumType.STRING)
     @Column(length = 100)
     private ImageCategory category;
 }
