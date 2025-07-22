@@ -1,6 +1,5 @@
 package konkuk.corkCharge.domain.user.controller;
 
-import konkuk.corkCharge.domain.user.dto.request.PutUserProfileRequest;
 import konkuk.corkCharge.domain.user.dto.response.GetUserProfileResponse;
 import konkuk.corkCharge.domain.user.service.UserService;
 import konkuk.corkCharge.global.response.BaseResponse;
@@ -21,8 +20,8 @@ public class UserController {
     }
 
     @PutMapping("/modify")
-    public BaseResponse<Void> editUserProfile(@RequestParam Long userId, @RequestPart(required = false) PutUserProfileRequest request, @RequestPart(required = false) MultipartFile image){
-        userService.updateUserProfile(userId, request.name(), image);
+    public BaseResponse<Void> editUserProfile(@RequestParam(name="userId") Long userId, @RequestParam(name="name") String name, @RequestPart(required = false) MultipartFile image){
+        userService.updateUserProfile(userId, name, image);
         return BaseResponse.ok();
     }
 }
