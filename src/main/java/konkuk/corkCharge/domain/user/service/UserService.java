@@ -1,9 +1,11 @@
 package konkuk.corkCharge.domain.user.service;
 
 import konkuk.corkCharge.domain.image.domain.Image;
+import konkuk.corkCharge.domain.image.domain.ImageCategory;
+import konkuk.corkCharge.domain.image.domain.ImageType;
 import konkuk.corkCharge.domain.image.repository.ImageRepository;
+import konkuk.corkCharge.domain.image.service.S3ImageService;
 import konkuk.corkCharge.domain.user.domain.User;
-import konkuk.corkCharge.domain.user.dto.request.PutUserProfileRequest;
 import konkuk.corkCharge.domain.user.dto.response.GetUserProfileResponse;
 import konkuk.corkCharge.domain.user.repository.UserRepository;
 import konkuk.corkCharge.global.exception.CustomException;
@@ -12,7 +14,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import static konkuk.corkCharge.domain.image.domain.ImageType.USER;
+import java.util.List;
+
 import static konkuk.corkCharge.global.response.status.BaseExceptionResponseStatus.USER_NOT_FOUND;
 
 @Service
@@ -21,6 +24,7 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final ImageRepository imageRepository;
+    private final S3ImageService s3ImageService;
 
     @Transactional
     public GetUserProfileResponse getUserProfile(Long userId){
@@ -48,17 +52,24 @@ public class UserService {
         }
 
         if(imageFile != null && !imageFile.isEmpty()){
-            String newImageUrl = s3Uploader.upload(imageFile);
+                    String newImageUrl = s3ImageService.uploadImages(List.of(imageFile), ImageCategory.USER, ImageType.USER)
+                            .get(0);
 
             imageRepository.findProfileImageByUser_UserId(userId)
                     .ifPresentOrElse(
                             existingImage-> {
-                                s3Uploader.delete(existingImage.getImageUrl());
-
                                 existingImage.setImageUrl(newImageUrl);
+                                existingImage.setType(ImageType.USER);
+                                existingImage.setCategory(ImageCategory.USER);
                             },
                             () -> {
-                                Image newImage = new Image(user, newImageUrl, USER);
+                                Image newImage = Image.builder()
+                                        .user(user)
+                                        .imageUrl(newImageUrl)
+                                        .type(ImageType.USER)
+                                        .category(ImageCategory.USER)
+                                        .build();
+                                imageRepository.save(newImage);
                             }
                             );
         }
