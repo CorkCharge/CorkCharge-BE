@@ -23,6 +23,7 @@ public enum BaseExceptionResponseStatus implements ResponseStatus {
     CORKAGE_RESTAURANT_NOT_FOUND(60001, "콜키지 매장이 없습니다."),
     SIDO_REQUIRED(60002, "시•도 입력은 필수입니다."),
     NOT_EXIT_TYPE(60003, "유효하지 않은 type 입니다."),
+    ALREADY_REGISTERED_CORKAGE(60004, "해당 매장은 이미 콜키지 등록이 돼 있습니다."),
 
     /**
      * 70000 : User 도메인 에러 코드
