@@ -8,9 +8,9 @@ public record GetRestaurantMapResponse(
         String address,
         Double latitude,
         Double longitude,
-        String corkagePrice
+        int corkagePrice
 ) {
-    public static GetRestaurantMapResponse of(Restaurant restaurant, String corkagePrice) {
+    public static GetRestaurantMapResponse of(Restaurant restaurant, int corkagePrice) {
         return new GetRestaurantMapResponse(
                 restaurant.getRestaurantId(),
                 restaurant.getName(),
