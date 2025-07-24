@@ -5,6 +5,7 @@ import konkuk.corkCharge.domain.image.domain.Image;
 import konkuk.corkCharge.domain.restaurant.domain.Restaurant;
 import konkuk.corkCharge.global.entity.BaseEntity;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -25,11 +26,18 @@ public class CorkageStore extends BaseEntity {
     @JoinColumn(name = "restaurant_id", nullable = false)
     private Restaurant restaurant;
 
-    @Column(name = "corkage_price", length = 100)
-    private String corkagePrice;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 30)
+    private CorkageType corkageType;
 
-    @Column(name = "additional_options", columnDefinition = "TEXT")
-    private String additionalOptions;
+    @Column(name = "corkage_price", length = 100)   // 병당, 인당, 테이블당 가격
+    private int corkagePrice;
+
+    @OneToMany(mappedBy = "corkageStore", cascade = CascadeType.REMOVE)  // 다중 콜키지
+    private List<MultiCorkage> multiPrices = new ArrayList<>();
+
+    @OneToMany(mappedBy = "corkageStore", cascade = CascadeType.REMOVE)
+    private List<CorkageOption> corkageOptions = new ArrayList<>();
 
     @Column(name = "pairing", columnDefinition = "TEXT")
     private String pairing;
@@ -39,4 +47,20 @@ public class CorkageStore extends BaseEntity {
 
     @OneToMany(mappedBy = "corkageStore", cascade = CascadeType.REMOVE)
     private List<Image> images = new ArrayList<>();
+
+    public void addMultiPrice(MultiCorkage price) {
+        this.multiPrices.add(price);
+    }
+
+    public void addAdditionalOption(CorkageOption option) {
+        this.corkageOptions.add(option);
+    }
+
+    @Builder
+    public CorkageStore(Restaurant restaurant, CorkageType corkageType, int corkagePrice){
+        this.restaurant = restaurant;
+        this.corkageType = corkageType;
+        this.corkagePrice = corkagePrice;
+    }
+
 }

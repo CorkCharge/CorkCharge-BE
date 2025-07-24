@@ -92,4 +92,8 @@ public class Restaurant extends BaseEntity {
         this.rating = rating;
     }
 
+    public void setHasCorkage(boolean hasCorkage) {
+        this.hasCorkage = hasCorkage;
+    }
+
 }

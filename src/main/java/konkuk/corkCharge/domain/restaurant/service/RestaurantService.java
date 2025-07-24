@@ -57,7 +57,7 @@ public class RestaurantService {
                         }
                     }
 
-                    String corkagePrice = restaurant.getCorkageStore() != null ? restaurant.getCorkageStore().getCorkagePrice() : null;
+                    int corkagePrice = restaurant.getCorkageStore() != null ? restaurant.getCorkageStore().getCorkagePrice() : null;
                     return GetRestaurantMapResponse.of(restaurant, corkagePrice);
                 })
                 .toList();
