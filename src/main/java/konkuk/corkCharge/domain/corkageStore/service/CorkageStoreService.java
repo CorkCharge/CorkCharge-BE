@@ -8,13 +8,15 @@ import konkuk.corkCharge.domain.corkageStore.repository.CorkageStoreRepository;
 import konkuk.corkCharge.domain.corkageStore.repository.MultiCorkageRepository;
 import konkuk.corkCharge.domain.restaurant.domain.Restaurant;
 import konkuk.corkCharge.domain.restaurant.repository.RestaurantRepository;
+import konkuk.corkCharge.domain.user.domain.Role;
+import konkuk.corkCharge.domain.user.domain.User;
+import konkuk.corkCharge.domain.user.repository.UserRepository;
 import konkuk.corkCharge.global.exception.CustomException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import static konkuk.corkCharge.global.response.status.BaseExceptionResponseStatus.ALREADY_REGISTERED_CORKAGE;
-import static konkuk.corkCharge.global.response.status.BaseExceptionResponseStatus.RESTAURANT_NOT_FOUND;
+import static konkuk.corkCharge.global.response.status.BaseExceptionResponseStatus.*;
 
 @Service
 @RequiredArgsConstructor
@@ -24,9 +26,18 @@ public class CorkageStoreService {
     private final CorkageStoreRepository corkageStoreRepository;
     private final MultiCorkageRepository multiCorkageRepository;
     private final CorkageOptionRepository corkageOptionRepository;
+    private final UserRepository userRepository;
 
     @Transactional
     public void createCorkage(PostAddCorkageRequest request) {
+
+        User user = userRepository.findById(request.userId())
+                .orElseThrow(() -> new CustomException(USER_NOT_FOUND));
+
+        if (user.getRole() == Role.USER) {
+            throw new CustomException(PERMISSION_DENIED);
+        }
+
         Restaurant restaurant = restaurantRepository.findById(request.restaurantId())
                 .orElseThrow(() -> new CustomException(RESTAURANT_NOT_FOUND));
 
