@@ -22,6 +22,6 @@ public class UserController {
     @PutMapping("/modify")
     public BaseResponse<Void> editUserProfile(@RequestParam(name="userId") Long userId, @RequestParam(name="name") String name, @RequestPart(required = false) MultipartFile image){
         userService.updateUserProfile(userId, name, image);
-        return BaseResponse.ok();
+        return BaseResponse.ok(null);
     }
 }

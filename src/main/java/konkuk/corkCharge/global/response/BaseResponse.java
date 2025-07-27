@@ -29,10 +29,6 @@ public class BaseResponse<T> implements ResponseStatus {
         return new BaseResponse<>(data);
     }
 
-    public static BaseResponse<Void> ok() {
-        return new BaseResponse<>(null);
-    }
-
     @Override
     public boolean getSuccess() {
         return success;

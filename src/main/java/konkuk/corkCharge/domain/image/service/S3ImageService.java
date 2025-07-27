@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import static konkuk.corkCharge.global.response.status.BaseExceptionResponseStatus.FAILED_DELETE_IMAGE;
 import static konkuk.corkCharge.global.response.status.BaseExceptionResponseStatus.FAILED_UPLOAD;
 
 @Service
@@ -60,9 +61,25 @@ public class S3ImageService {
         return uploadedUrls;
     }
 
+    public void deleteImage(String imageUrl){
+        if(imageUrl == null || imageUrl.isEmpty()) return;
+
+        try{
+            String key = imageUrl.substring(imageUrl.indexOf(".amazonaws.com/") + ".amazonaws.com/".length());
+            s3Service.deleteObject(BUCKET_NAME, key);
+        } catch(Exception e){
+            throw  new CustomException(FAILED_DELETE_IMAGE);
+        }
+    }
+
     private String getDirectory(ImageCategory category, ImageType imageType) {
         return switch (category) {
-            case RESTAURANT -> "restaurant/" + imageType.name().toLowerCase();
+            case RESTAURANT -> {
+                if (imageType == null) {
+                    throw new IllegalArgumentException("RESTAURANT category requires non-null ImageType.");
+                }
+                yield "restaurant/" + imageType.name().toLowerCase();
+            }
             case REVIEW -> "review";
             case TIP -> "tip";
             case CORKAGE -> "corkage";

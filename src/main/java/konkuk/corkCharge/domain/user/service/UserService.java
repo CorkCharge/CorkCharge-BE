@@ -52,22 +52,22 @@ public class UserService {
         }
 
         if(imageFile != null && !imageFile.isEmpty()){
-                    String newImageUrl = s3ImageService.uploadImages(List.of(imageFile), ImageCategory.USER, ImageType.USER)
+                    String newImageUrl = s3ImageService.uploadImages(List.of(imageFile), ImageCategory.USER, null)
                             .get(0);
 
             imageRepository.findProfileImageByUser_UserId(userId)
                     .ifPresentOrElse(
                             existingImage-> {
+                                s3ImageService.deleteImage(existingImage.getImageUrl());
                                 existingImage.setImageUrl(newImageUrl);
-                                existingImage.setType(ImageType.USER);
                                 existingImage.setCategory(ImageCategory.USER);
                             },
                             () -> {
                                 Image newImage = Image.builder()
                                         .user(user)
                                         .imageUrl(newImageUrl)
-                                        .type(ImageType.USER)
                                         .category(ImageCategory.USER)
+                                        .type(null)
                                         .build();
                                 imageRepository.save(newImage);
                             }
