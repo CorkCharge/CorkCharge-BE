@@ -22,4 +22,9 @@ public class AmazonS3ServiceImpl implements AmazonS3Service{
     public URL getUrl(String bucketName, String fileName) {
         return amazonS3Client.getUrl(bucketName, fileName);
     }
+
+    @Override
+    public void deleteObject(String bucketName, String key) {
+        amazonS3Client.deleteObject(bucketName, key);
+    }
 }

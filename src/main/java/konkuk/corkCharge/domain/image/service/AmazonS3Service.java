@@ -9,4 +9,5 @@ public interface AmazonS3Service {
 
     void putObject(PutObjectRequest request);
     URL getUrl(String bucketName, String fileName);
+    void deleteObject(String bucketNmae, String key);
 }

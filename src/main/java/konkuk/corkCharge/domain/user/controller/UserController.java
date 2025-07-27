@@ -5,6 +5,7 @@ import konkuk.corkCharge.domain.user.service.UserService;
 import konkuk.corkCharge.global.response.BaseResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/users")
@@ -16,5 +17,11 @@ public class UserController {
     @GetMapping
     public BaseResponse<GetUserProfileResponse> getUserProfile(@RequestParam Long userId){
         return BaseResponse.ok(userService.getUserProfile(userId));
+    }
+
+    @PutMapping("/modify")
+    public BaseResponse<Void> editUserProfile(@RequestParam(name="userId") Long userId, @RequestParam(name="name") String name, @RequestPart(required = false) MultipartFile image){
+        userService.updateUserProfile(userId, name, image);
+        return BaseResponse.ok(null);
     }
 }

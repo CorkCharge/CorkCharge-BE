@@ -34,7 +34,8 @@ public enum BaseExceptionResponseStatus implements ResponseStatus {
     /**
      * 80000 : Image
      */
-    FAILED_UPLOAD(80000, "S3 업로드를 실패했습니다.")
+    FAILED_UPLOAD(80000, "S3 업로드를 실패했습니다."),
+    FAILED_DELETE_IMAGE(80001, "S3 이미지 삭제에 실패하였습니다.")
     ;
 
     private final boolean success = false;
