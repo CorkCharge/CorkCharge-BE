@@ -5,7 +5,10 @@ import konkuk.corkCharge.domain.image.domain.ImageCategory;
 import konkuk.corkCharge.domain.image.domain.ImageType;
 import konkuk.corkCharge.domain.image.repository.ImageRepository;
 import konkuk.corkCharge.domain.image.service.S3ImageService;
+import konkuk.corkCharge.domain.review.domain.Review;
+import konkuk.corkCharge.domain.review.repository.ReviewRepository;
 import konkuk.corkCharge.domain.user.domain.User;
+import konkuk.corkCharge.domain.user.dto.response.GetReviewResponse;
 import konkuk.corkCharge.domain.user.dto.response.GetUserProfileResponse;
 import konkuk.corkCharge.domain.user.repository.UserRepository;
 import konkuk.corkCharge.global.exception.CustomException;
@@ -15,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static konkuk.corkCharge.global.response.status.BaseExceptionResponseStatus.USER_NOT_FOUND;
 
@@ -25,6 +29,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final ImageRepository imageRepository;
     private final S3ImageService s3ImageService;
+    private final ReviewRepository reviewRepository;
 
     @Transactional
     public GetUserProfileResponse getUserProfile(Long userId){
@@ -73,6 +78,25 @@ public class UserService {
                             }
                             );
         }
+    }
+
+    @Transactional(readOnly = true)
+    public List<GetReviewResponse> getUserReviews(Long userId){
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(USER_NOT_FOUND));
+
+        List<Review> reviews = reviewRepository.findAllByUser_UserId(userId);
+
+        return reviews.stream()
+                .map(review -> new GetReviewResponse(
+                        review.getReviewId(),
+                        review.getRestaurant().getRestaurantId(),
+                        userId,
+                        review.getContent(),
+                        review.getRating(),
+                        review.getCreatedAt()
+                )).collect(Collectors.toList());
+
     }
 
 
