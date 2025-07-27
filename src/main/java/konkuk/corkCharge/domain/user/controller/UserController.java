@@ -35,6 +35,7 @@ public class UserController {
 
     @DeleteMapping
     public BaseResponse<Void> deleteUser(@RequestParam(name="userId")Long userId){
+        userService.deleteUser(userId);
         return BaseResponse.ok(null);
     }
 }
