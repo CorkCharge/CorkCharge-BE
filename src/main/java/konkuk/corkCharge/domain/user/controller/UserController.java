@@ -32,4 +32,9 @@ public class UserController {
     public BaseResponse<List<GetReviewResponse>> getUserReviews(@RequestParam(name="userId") Long userId){
         return BaseResponse.ok(userService.getUserReviews(userId));
     }
+
+    @DeleteMapping
+    public BaseResponse<Void> deleteUser(@RequestParam(name="userId")Long userId){
+        return BaseResponse.ok(null);
+    }
 }
