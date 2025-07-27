@@ -1,11 +1,14 @@
 package konkuk.corkCharge.domain.user.controller;
 
+import konkuk.corkCharge.domain.user.dto.response.GetReviewResponse;
 import konkuk.corkCharge.domain.user.dto.response.GetUserProfileResponse;
 import konkuk.corkCharge.domain.user.service.UserService;
 import konkuk.corkCharge.global.response.BaseResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/users")
@@ -23,5 +26,10 @@ public class UserController {
     public BaseResponse<Void> editUserProfile(@RequestParam(name="userId") Long userId, @RequestParam(name="name") String name, @RequestPart(required = false) MultipartFile image){
         userService.updateUserProfile(userId, name, image);
         return BaseResponse.ok(null);
+    }
+
+    @GetMapping("/reviews")
+    public BaseResponse<List<GetReviewResponse>> getUserReviews(@RequestParam(name="userId") Long userId){
+        return BaseResponse.ok(userService.getUserReviews(userId));
     }
 }
