@@ -1,5 +1,6 @@
 package konkuk.corkCharge.domain.user.controller;
 
+import konkuk.corkCharge.domain.user.dto.request.PostRoleRequest;
 import konkuk.corkCharge.domain.user.dto.response.GetMyPageResponse;
 import konkuk.corkCharge.domain.user.dto.response.GetReviewResponse;
 import konkuk.corkCharge.domain.user.dto.response.GetUserProfileResponse;
@@ -43,5 +44,11 @@ public class UserController {
     @GetMapping("/page")
     public BaseResponse<GetMyPageResponse> getMyPage(@RequestParam Long userId){
         return BaseResponse.ok(userService.getMyPage(userId));
+    }
+
+    @PutMapping("/role")
+    public BaseResponse<Void> updateUserRole(@RequestParam Long userId, @RequestBody PostRoleRequest request){
+        userService.updateUserRole(userId, request.role());
+        return BaseResponse.ok(null);
     }
 }

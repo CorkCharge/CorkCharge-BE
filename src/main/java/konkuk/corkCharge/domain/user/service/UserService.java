@@ -9,6 +9,7 @@ import konkuk.corkCharge.domain.restaurant.domain.Restaurant;
 import konkuk.corkCharge.domain.review.domain.Review;
 import konkuk.corkCharge.domain.review.dto.response.GetMyPageReviewResponse;
 import konkuk.corkCharge.domain.review.repository.ReviewRepository;
+import konkuk.corkCharge.domain.user.domain.Role;
 import konkuk.corkCharge.domain.user.domain.User;
 import konkuk.corkCharge.domain.user.dto.response.GetMyPageResponse;
 import konkuk.corkCharge.domain.user.dto.response.GetReviewResponse;
@@ -139,5 +140,11 @@ public class UserService {
         );
     }
 
+    @Transactional
+    public void updateUserRole(Long userId, Role role){
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(USER_NOT_FOUND));
 
+        user.setRole(role);
+    }
 }
