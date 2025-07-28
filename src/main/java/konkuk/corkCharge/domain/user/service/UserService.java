@@ -5,9 +5,12 @@ import konkuk.corkCharge.domain.image.domain.ImageCategory;
 import konkuk.corkCharge.domain.image.domain.ImageType;
 import konkuk.corkCharge.domain.image.repository.ImageRepository;
 import konkuk.corkCharge.domain.image.service.S3ImageService;
+import konkuk.corkCharge.domain.restaurant.domain.Restaurant;
 import konkuk.corkCharge.domain.review.domain.Review;
+import konkuk.corkCharge.domain.review.dto.response.GetMyPageReviewResponse;
 import konkuk.corkCharge.domain.review.repository.ReviewRepository;
 import konkuk.corkCharge.domain.user.domain.User;
+import konkuk.corkCharge.domain.user.dto.response.GetMyPageResponse;
 import konkuk.corkCharge.domain.user.dto.response.GetReviewResponse;
 import konkuk.corkCharge.domain.user.dto.response.GetUserProfileResponse;
 import konkuk.corkCharge.domain.user.repository.UserRepository;
@@ -105,6 +108,35 @@ public class UserService {
                 .orElseThrow(() -> new CustomException(USER_NOT_FOUND));
 
         userRepository.delete(user);
+    }
+
+    @Transactional
+    public GetMyPageResponse getMyPage(Long userId){
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(USER_NOT_FOUND));
+
+        List<Review> reviews = reviewRepository.findAllByUser_UserId(userId);
+
+        List<GetMyPageReviewResponse> reviewDtos = reviews.stream()
+                .map(review -> {
+                    Restaurant restaurant = review.getRestaurant();
+                    String thumbnailUrl = imageRepository.findFirstByReview_ReviewId(review.getReviewId())
+                            .map(Image::getImageUrl)
+                            .orElse(null);
+
+                            return new GetMyPageReviewResponse(
+                                    restaurant.getName(),
+                                    restaurant.getAddress(),
+                                    thumbnailUrl
+                            );
+                })
+                .collect(Collectors.toList());
+
+        return new GetMyPageResponse(
+                user.getName(),
+                user.getSocialId(),
+                reviewDtos
+        );
     }
 
 
