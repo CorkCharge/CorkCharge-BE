@@ -1,5 +1,6 @@
 package konkuk.corkCharge.domain.user.controller;
 
+import konkuk.corkCharge.domain.user.dto.response.GetMyPageResponse;
 import konkuk.corkCharge.domain.user.dto.response.GetReviewResponse;
 import konkuk.corkCharge.domain.user.dto.response.GetUserProfileResponse;
 import konkuk.corkCharge.domain.user.service.UserService;
@@ -37,5 +38,10 @@ public class UserController {
     public BaseResponse<Void> deleteUser(@RequestParam(name="userId")Long userId){
         userService.deleteUser(userId);
         return BaseResponse.ok(null);
+    }
+
+    @GetMapping("/page")
+    public BaseResponse<GetMyPageResponse> getMyPage(@RequestParam Long userId){
+        return BaseResponse.ok(userService.getMyPage(userId));
     }
 }
