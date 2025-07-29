@@ -4,7 +4,7 @@ import konkuk.corkCharge.domain.suggestion.domain.SuggestionCategory;
 
 
 public record PostSuggestionRequest (
-        Long restaurantId,
+        String title,
         String content,
         SuggestionCategory category
 ){
