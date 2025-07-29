@@ -1,11 +1,14 @@
 package konkuk.corkCharge.domain.suggestion.controller;
 
 import konkuk.corkCharge.domain.suggestion.dto.request.PostSuggestionRequest;
+import konkuk.corkCharge.domain.suggestion.dto.response.GetSuggestionListResponse;
 import konkuk.corkCharge.domain.suggestion.service.SuggestionService;
 import konkuk.corkCharge.domain.user.dto.response.GetUserProfileResponse;
 import konkuk.corkCharge.global.response.BaseResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/suggestion")
@@ -15,8 +18,13 @@ public class SuggestionController {
     private final SuggestionService suggestionService;
 
     @PostMapping
-    public BaseResponse<GetUserProfileResponse> postSuggestion(@RequestParam(name="userId") Long userId, @RequestBody PostSuggestionRequest request){
+    public BaseResponse<Void> postSuggestion(@RequestParam(name="userId") Long userId, @RequestBody PostSuggestionRequest request){
         suggestionService.createSuggestion(userId, request);
         return BaseResponse.ok(null);
+    }
+
+    @GetMapping
+    public BaseResponse<List<GetSuggestionListResponse>> getSuggestions(@RequestParam Long userId){
+        return BaseResponse.ok(suggestionService.getSuggestions(userId));
     }
 }
