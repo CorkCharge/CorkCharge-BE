@@ -1,6 +1,7 @@
 package konkuk.corkCharge.domain.suggestion.controller;
 
 import konkuk.corkCharge.domain.suggestion.dto.request.PostSuggestionRequest;
+import konkuk.corkCharge.domain.suggestion.dto.response.GetSuggestionDetailResponse;
 import konkuk.corkCharge.domain.suggestion.dto.response.GetSuggestionListResponse;
 import konkuk.corkCharge.domain.suggestion.service.SuggestionService;
 import konkuk.corkCharge.domain.user.dto.response.GetUserProfileResponse;
@@ -26,5 +27,10 @@ public class SuggestionController {
     @GetMapping
     public BaseResponse<List<GetSuggestionListResponse>> getSuggestions(@RequestParam Long userId){
         return BaseResponse.ok(suggestionService.getSuggestions(userId));
+    }
+
+    @GetMapping("/{suggestionId}")
+    public BaseResponse<GetSuggestionDetailResponse> getSuggestionDetail(@PathVariable Long suggestionId){
+        return BaseResponse.ok(suggestionService.getSuggestionDetail(suggestionId));
     }
 }
