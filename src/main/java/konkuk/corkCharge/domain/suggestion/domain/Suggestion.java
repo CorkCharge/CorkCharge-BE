@@ -22,9 +22,8 @@ public class Suggestion extends BaseEntity {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "restaurant_id", nullable = false)
-    private Restaurant restaurant;
+    @Column(name = "title")
+    private String title;
 
     @Column(name = "content", columnDefinition = "TEXT")
     private String content;
