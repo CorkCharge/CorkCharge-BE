@@ -4,13 +4,13 @@ import jakarta.persistence.*;
 import konkuk.corkCharge.domain.restaurant.domain.Restaurant;
 import konkuk.corkCharge.domain.user.domain.User;
 import konkuk.corkCharge.global.entity.BaseEntity;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Entity
 @Table(name = "help_request")
 @Getter
+@Builder
+@AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class HelpRequest extends BaseEntity {
     @Id
