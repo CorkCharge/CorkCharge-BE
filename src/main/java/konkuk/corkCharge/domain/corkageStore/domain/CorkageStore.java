@@ -10,7 +10,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "corkage_store")
@@ -31,10 +33,10 @@ public class CorkageStore extends BaseEntity {
     private CorkageType corkageType;
 
     @Column(name = "corkage_price", length = 100)   // 병당, 인당, 테이블당 가격
-    private int corkagePrice;
+    private Integer corkagePrice;
 
     @OneToMany(mappedBy = "corkageStore", cascade = CascadeType.REMOVE)  // 다중 콜키지
-    private List<MultiCorkage> multiPrices = new ArrayList<>();
+    private Set<MultiCorkage> multiPrices = new HashSet<>();
 
     @OneToMany(mappedBy = "corkageStore", cascade = CascadeType.REMOVE)
     private List<CorkageOption> corkageOptions = new ArrayList<>();
@@ -57,7 +59,7 @@ public class CorkageStore extends BaseEntity {
     }
 
     @Builder
-    public CorkageStore(Restaurant restaurant, CorkageType corkageType, int corkagePrice){
+    public CorkageStore(Restaurant restaurant, CorkageType corkageType, Integer corkagePrice){
         this.restaurant = restaurant;
         this.corkageType = corkageType;
         this.corkagePrice = corkagePrice;
