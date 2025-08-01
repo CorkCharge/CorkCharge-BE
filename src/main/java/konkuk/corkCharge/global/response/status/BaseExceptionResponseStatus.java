@@ -26,7 +26,7 @@ public enum BaseExceptionResponseStatus implements ResponseStatus {
     ALREADY_REGISTERED_CORKAGE(60004, "해당 매장은 이미 콜키지 등록이 돼 있습니다."),
 
     /**
-     * 70000 : User 도메인 에러 코드
+     * 70000 : User
      */
     USER_NOT_FOUND(70000, "해당 사용자를 찾을 수 없습니다."),
     PERMISSION_DENIED(70001, "ADMIN 혹은 OWNER 권한이 필요합니다."),
@@ -40,7 +40,13 @@ public enum BaseExceptionResponseStatus implements ResponseStatus {
     /**
      * 90000 : OwnerRestaurant
      */
-    ALREADY_REGISTERED_BY_ANOTHER_OWNER(90000, "이미 다른 사장님이 등록한 식당입니다.");
+    ALREADY_REGISTERED_BY_ANOTHER_OWNER(90000, "이미 다른 사장님이 등록한 식당입니다."),
+
+    /**
+     * 100000 : Review
+     */
+    INVALID_RANGE(100000, "유효하지 않은 기간 필터입니다.")
+    ;
 
     private final boolean success = false;
     private final int code;
