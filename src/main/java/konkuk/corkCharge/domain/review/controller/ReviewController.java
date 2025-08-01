@@ -1,6 +1,7 @@
 package konkuk.corkCharge.domain.review.controller;
 
 import konkuk.corkCharge.domain.review.dto.request.PostReviewCreateRequest;
+import konkuk.corkCharge.domain.review.dto.response.GetCorkageScoreResponse;
 import konkuk.corkCharge.domain.review.service.ReviewService;
 import konkuk.corkCharge.global.response.BaseResponse;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +25,13 @@ public class ReviewController {
     ) {
         reviewService.createReview(restaurantId, request, images);
         return BaseResponse.ok(null);
+    }
+
+    @GetMapping("/corkageScore")
+    public BaseResponse<List<GetCorkageScoreResponse>> getCorkageScore(
+            @RequestParam(name = "range", defaultValue = "1") String range
+    ) {
+        return BaseResponse.ok(reviewService.getCorkageScores(range));
     }
 
 }
