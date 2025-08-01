@@ -6,7 +6,9 @@ import konkuk.corkCharge.domain.image.service.S3ImageService;
 import konkuk.corkCharge.domain.restaurant.domain.Restaurant;
 import konkuk.corkCharge.domain.restaurant.repository.RestaurantRepository;
 import konkuk.corkCharge.domain.review.domain.Review;
+import konkuk.corkCharge.domain.review.domain.ReviewRange;
 import konkuk.corkCharge.domain.review.dto.request.PostReviewCreateRequest;
+import konkuk.corkCharge.domain.review.dto.response.GetCorkageScoreResponse;
 import konkuk.corkCharge.domain.review.repository.ReviewRepository;
 import konkuk.corkCharge.domain.user.domain.User;
 import konkuk.corkCharge.domain.user.repository.UserRepository;
@@ -15,6 +17,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
 
 import static konkuk.corkCharge.domain.image.domain.ImageCategory.REVIEW;
@@ -71,5 +75,17 @@ public class ReviewService {
 
         restaurant.updateRating(avg);
         restaurantRepository.save(restaurant);
+    }
+
+    public List<GetCorkageScoreResponse> getCorkageScores(String range) {
+        ReviewRange reviewRange = ReviewRange.fromValue(range);
+        LocalDateTime from = reviewRange.getFromDate();
+
+        List<Review> reviews = reviewRepository.findRecentReviews(from);
+
+        return reviews.stream()
+                .sorted(Comparator.comparing(Review::getCreatedAt).reversed())
+                .map(GetCorkageScoreResponse::from)
+                .toList();
     }
 }
