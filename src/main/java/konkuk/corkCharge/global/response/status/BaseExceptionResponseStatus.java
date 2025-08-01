@@ -45,7 +45,9 @@ public enum BaseExceptionResponseStatus implements ResponseStatus {
     /**
      * 100000 : Review
      */
-    INVALID_RANGE(100000, "유효하지 않은 기간 필터입니다.")
+    INVALID_RANGE(100000, "유효하지 않은 기간 필터입니다."),
+    REVIEW_NOT_FOUND(100001, "해당 리뷰를 찾을 수 없습니다."),
+    FORBIDDEN_REVIEW_EDIT(100002, "해당 리뷰를 수정할 권한이 없습니다.")
     ;
 
     private final boolean success = false;

@@ -1,5 +1,6 @@
 package konkuk.corkCharge.domain.review.controller;
 
+import konkuk.corkCharge.domain.review.dto.request.PatchUpdateReviewRequest;
 import konkuk.corkCharge.domain.review.dto.request.PostReviewCreateRequest;
 import konkuk.corkCharge.domain.review.dto.response.GetCorkageScoreResponse;
 import konkuk.corkCharge.domain.review.service.ReviewService;
@@ -32,6 +33,25 @@ public class ReviewController {
             @RequestParam(name = "range", defaultValue = "1") String range
     ) {
         return BaseResponse.ok(reviewService.getCorkageScores(range));
+    }
+
+    @PatchMapping("/{reviewId}")
+    public BaseResponse<Void> updateReview(
+            @PathVariable(name = "reviewId") Long reviewId,
+            @RequestPart("request") PatchUpdateReviewRequest request,
+            @RequestPart(value = "images", required = false) List<MultipartFile> images
+    ) {
+        reviewService.updateReview(reviewId, request, images);
+        return BaseResponse.ok(null);
+    }
+
+    @DeleteMapping("/{reviewId}")
+    public BaseResponse<Void> deleteReview(
+            @PathVariable(name = "reviewId") Long reviewId,
+            @RequestParam(name = "userId") Long userId
+    ) {
+        reviewService.deleteReview(reviewId, userId);
+        return BaseResponse.ok(null);
     }
 
 }
