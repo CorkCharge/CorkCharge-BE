@@ -36,33 +36,6 @@ public class RestaurantService {
                 .toList();
     }
 
-    @Transactional
-    public List<GetRestaurantMapResponse> getRestaurantMap() {
-        List<Restaurant> restaurants = restaurantRepository.findByHasCorkageTrue();
-
-        if (restaurants.isEmpty()) {
-            throw new CustomException(CORKAGE_RESTAURANT_NOT_FOUND);
-        }
-
-        return restaurants.stream()
-                .map(restaurant -> {
-                    if (restaurant.getLatitude() == 0 && restaurant.getLongitude() == 0) {
-                        NaverMapsResponse response = naverGeocodingClient.getCoordinatesByAddress(restaurant.getAddress());
-                        if (!response.addresses().isEmpty()) {
-                            Address address = response.addresses().get(0);
-                            restaurant.updateCoordinates(
-                                    Double.parseDouble(address.latitude()),
-                                    Double.parseDouble(address.longitude())
-                            );
-                        }
-                    }
-
-                    int corkagePrice = restaurant.getCorkageStore() != null ? restaurant.getCorkageStore().getCorkagePrice() : null;
-                    return GetRestaurantMapResponse.of(restaurant, corkagePrice);
-                })
-                .toList();
-    }
-
     public GetRestaurantDetailResponse getRestaurantDetail(Long restaurantId) {
         Restaurant restaurant = restaurantRepository.findById(restaurantId)
                 .orElseThrow(() -> new CustomException(RESTAURANT_NOT_FOUND));
@@ -128,6 +101,46 @@ public class RestaurantService {
         }
 
         return matchedRestaurants;
+    }
+
+    @Transactional
+    public List<?> GetMapCluster(String level, double latMin, double latMax, double lonMin, double lonMax) {
+        List<Restaurant> restaurants = restaurantRepository.findByHasCorkageTrue();
+
+        if (restaurants.isEmpty()) {
+            throw new CustomException(CORKAGE_RESTAURANT_NOT_FOUND);
+        }
+
+        // 위도/경도가 없는 매장의 경우 추가
+        restaurants.forEach(restaurant -> {
+            if (restaurant.getLatitude() == 0 || restaurant.getLongitude() == 0) {
+                NaverMapsResponse response = naverGeocodingClient.getCoordinatesByAddress(restaurant.getAddress());
+                if (!response.addresses().isEmpty()) {
+                    Address address = response.addresses().get(0);
+                    restaurant.updateCoordinates(
+                            Double.parseDouble(address.latitude()),
+                            Double.parseDouble(address.longitude())
+                    );
+                }
+            }
+        });
+
+        List<Restaurant> filtered = restaurants.stream()
+                .filter(r -> r.getLatitude() >= latMin && r.getLatitude() <= latMax)
+                .filter(r -> r.getLongitude() >= lonMin && r.getLongitude() <= lonMax)
+                .toList();
+
+        return switch (level) {
+            case "restaurant" -> filtered.stream()
+                    .map(GetMapRestaurantResponse::from)
+                    .toList();
+
+            case "dong", "sigungu", "sido" -> filtered.stream()
+                    .map(GetMapClusterResponse::from)
+                    .toList();
+
+            default -> throw new CustomException(BAD_REQUEST);
+        };
     }
 
 }
