@@ -45,4 +45,13 @@ public class ReviewController {
         return BaseResponse.ok(null);
     }
 
+    @DeleteMapping("/{reviewId}")
+    public BaseResponse<Void> deleteReview(
+            @PathVariable(name = "reviewId") Long reviewId,
+            @RequestParam(name = "userId") Long userId
+    ) {
+        reviewService.deleteReview(reviewId, userId);
+        return BaseResponse.ok(null);
+    }
+
 }
