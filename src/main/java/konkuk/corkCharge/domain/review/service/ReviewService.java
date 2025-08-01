@@ -7,6 +7,7 @@ import konkuk.corkCharge.domain.restaurant.domain.Restaurant;
 import konkuk.corkCharge.domain.restaurant.repository.RestaurantRepository;
 import konkuk.corkCharge.domain.review.domain.Review;
 import konkuk.corkCharge.domain.review.domain.ReviewRange;
+import konkuk.corkCharge.domain.review.dto.request.PatchUpdateReviewRequest;
 import konkuk.corkCharge.domain.review.dto.request.PostReviewCreateRequest;
 import konkuk.corkCharge.domain.review.dto.response.GetCorkageScoreResponse;
 import konkuk.corkCharge.domain.review.repository.ReviewRepository;
@@ -15,6 +16,7 @@ import konkuk.corkCharge.domain.user.repository.UserRepository;
 import konkuk.corkCharge.global.exception.CustomException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
@@ -58,6 +60,7 @@ public class ReviewService {
                 Image image = Image.builder()
                         .review(review)
                         .imageUrl(url)
+                        .category(REVIEW)
                         .build();
                 imageRepository.save(image);
             }
@@ -88,4 +91,41 @@ public class ReviewService {
                 .map(GetCorkageScoreResponse::from)
                 .toList();
     }
+
+    @Transactional
+    public void updateReview(Long reviewId, PatchUpdateReviewRequest request, List<MultipartFile> images) {
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new CustomException(REVIEW_NOT_FOUND));
+
+        User user = userRepository.findById(request.userId())
+                .orElseThrow(() -> new CustomException(USER_NOT_FOUND));
+
+        if (!review.getUser().getUserId().equals(user.getUserId())) {
+            throw new CustomException(FORBIDDEN_REVIEW_EDIT);
+        }
+
+        review.updateContent(request.content());
+        review.updateRating(request.rating());
+
+        if (images != null && !images.isEmpty()) {
+            for (Image image : review.getImages()) {
+                s3ImageService.deleteImage(image.getImageUrl());
+            }
+            imageRepository.deleteAll(review.getImages());
+            review.getImages().clear();
+
+            List<String> uploadedUrls = s3ImageService.uploadImages(images, REVIEW, null);
+            for (String url : uploadedUrls) {
+                Image image = Image.builder()
+                        .review(review)
+                        .imageUrl(url)
+                        .category(REVIEW)
+                        .build();
+                imageRepository.save(image);
+                review.getImages().add(image);
+            }
+        }
+        updateAverageRating(review.getRestaurant());
+    }
+
 }
