@@ -128,4 +128,24 @@ public class ReviewService {
         updateAverageRating(review.getRestaurant());
     }
 
+    @Transactional
+    public void deleteReview(Long reviewId, Long userId) {
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new CustomException(REVIEW_NOT_FOUND));
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(USER_NOT_FOUND));
+
+        if (!review.getUser().getUserId().equals(user.getUserId())) {
+            throw new CustomException(FORBIDDEN_REVIEW_EDIT);
+        }
+
+        for (Image image : review.getImages()) {
+            s3ImageService.deleteImage(image.getImageUrl());
+        }
+
+        imageRepository.deleteAll(review.getImages());
+        reviewRepository.delete(review);
+    }
+
 }
