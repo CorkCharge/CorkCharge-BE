@@ -1,12 +1,14 @@
 package konkuk.corkCharge.domain.corkageStore.service;
 
 import konkuk.corkCharge.domain.corkageStore.domain.*;
+import konkuk.corkCharge.domain.corkageStore.dto.request.GetCorkageFilterRequest;
 import konkuk.corkCharge.domain.corkageStore.dto.request.MultiCorkageRequest;
 import konkuk.corkCharge.domain.corkageStore.dto.request.PostAddCorkageRequest;
 import konkuk.corkCharge.domain.corkageStore.repository.CorkageOptionRepository;
 import konkuk.corkCharge.domain.corkageStore.repository.CorkageStoreRepository;
 import konkuk.corkCharge.domain.corkageStore.repository.MultiCorkageRepository;
 import konkuk.corkCharge.domain.restaurant.domain.Restaurant;
+import konkuk.corkCharge.domain.restaurant.dto.response.GetSearchRestaurantResponse;
 import konkuk.corkCharge.domain.restaurant.repository.RestaurantRepository;
 import konkuk.corkCharge.domain.user.domain.Role;
 import konkuk.corkCharge.domain.user.domain.User;
@@ -15,6 +17,8 @@ import konkuk.corkCharge.global.exception.CustomException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 import static konkuk.corkCharge.global.response.status.BaseExceptionResponseStatus.*;
 
@@ -83,6 +87,48 @@ public class CorkageStoreService {
             }
         }
         restaurant.setHasCorkage(true);
+    }
+
+    @Transactional
+    public List<GetSearchRestaurantResponse> filterCorkageStores(GetCorkageFilterRequest request) {
+        List<CorkageStore> corkageStores = corkageStoreRepository.findAllForRestaurant();
+
+        return corkageStores.stream()
+                .filter(store -> {      // 평점 필터링
+                    Double rating = store.getRestaurant().getRating();
+                    return rating != null && rating >= request.minScore() && rating <= request.maxScore();
+                })
+                .filter(store -> {      // 콜키지 타입 별 가격 필터링
+                    CorkageType type = store.getCorkageType();
+
+                    if (!request.corkageTypes().contains(type.name()))
+                        return false;
+
+                    Integer price = store.getCorkagePrice();
+
+                    return switch (type) {
+                        case PER_BOTTLE ->
+                                price != null && price >= request.minBottlePrice() && price <= request.maxBottlePrice();
+                        case PER_PERSON ->
+                                price != null && price >= request.minPersonPrice() && price <= request.maxPersonPrice();
+                        case PER_TABLE ->
+                                price != null && price >= request.minTablePrice() && price <= request.maxTablePrice();
+                        case MULTIPLE, FREE -> true;  // 가격 필터링 없이 다중 콜키지 여부로 필터링 적용
+                    };
+                })
+                .filter(store -> {      // 콜키지 옵션 필터링
+                    if (request.optionTypes().isEmpty())
+                        return true;
+
+                    List<String> storeOptions = store.getCorkageOptions().stream()
+                            .map(opt -> opt.getOptionType().name())
+                            .toList();
+
+                    return request.optionTypes().stream()
+                            .anyMatch(storeOptions::contains);
+                })
+                .map(store -> GetSearchRestaurantResponse.from(store.getRestaurant()))
+                .toList();
     }
 
 }
