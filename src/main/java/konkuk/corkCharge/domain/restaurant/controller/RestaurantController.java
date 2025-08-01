@@ -21,11 +21,6 @@ public class RestaurantController {
         return BaseResponse.ok(restaurantService.getCorkageRestaurants());
     }
 
-    @GetMapping("/map")
-    public BaseResponse<List<GetRestaurantMapResponse>> getCorkageMap() {
-        return BaseResponse.ok(restaurantService.getRestaurantMap());
-    }
-
     @GetMapping("/{restaurantId}")
     public BaseResponse<GetRestaurantDetailResponse> getRestaurantDetail(
             @PathVariable(name = "restaurantId") Long restaurantId
@@ -50,6 +45,17 @@ public class RestaurantController {
             @ModelAttribute GetFilterRequest request
     ) {
         return BaseResponse.ok(restaurantService.filterRestaurants(request));
+    }
+
+    @GetMapping("/map")
+    public BaseResponse<List<?>> getMapCluster(
+            @RequestParam(name = "level") String level,
+            @RequestParam(name = "latMin") double latMin,
+            @RequestParam(name = "latMax") double latMax,
+            @RequestParam(name = "lonMin") double lonMin,
+            @RequestParam(name = "lonMax") double lonMax
+    ) {
+        return BaseResponse.ok(restaurantService.GetMapCluster(level, latMin, latMax, lonMin, lonMax));
     }
 
 }
