@@ -1,5 +1,7 @@
 package konkuk.corkCharge.domain.restaurant.service;
 
+import konkuk.corkCharge.domain.corkageStore.domain.CorkageStore;
+import konkuk.corkCharge.domain.corkageStore.domain.MultiCorkage;
 import konkuk.corkCharge.domain.restaurant.domain.Restaurant;
 import konkuk.corkCharge.domain.restaurant.dto.request.GetFilterRequest;
 import konkuk.corkCharge.domain.restaurant.dto.response.*;
@@ -140,6 +142,32 @@ public class RestaurantService {
                     .toList();
 
             default -> throw new CustomException(BAD_REQUEST);
+        };
+    }
+
+    @Transactional(readOnly = true)
+    public List<GetClusterListResponse> getClusterList(List<Long> restaurantIds) {
+        List<Restaurant> restaurants = restaurantRepository.findAllById(restaurantIds);
+
+        return restaurants.stream()
+                .sorted((r1, r2) -> {
+                    int price1 = getComparableCorkagePrice(r1);
+                    int price2 = getComparableCorkagePrice(r2);
+                    return Integer.compare(price1, price2);
+                })
+                .map(GetClusterListResponse::from)
+                .toList();
+    }
+
+    private int getComparableCorkagePrice(Restaurant r) {
+        CorkageStore cs = r.getCorkageStore();
+
+        return switch (cs.getCorkageType()) {
+            case FREE -> 0;
+            case MULTIPLE -> cs.getMultiPrices().stream()
+                    .mapToInt(MultiCorkage::getPrice)
+                    .min().orElse(Integer.MAX_VALUE);
+            default -> cs.getCorkagePrice() != null ? cs.getCorkagePrice() : Integer.MAX_VALUE;
         };
     }
 

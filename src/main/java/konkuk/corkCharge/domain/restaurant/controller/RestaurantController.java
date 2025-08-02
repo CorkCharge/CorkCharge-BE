@@ -1,5 +1,6 @@
 package konkuk.corkCharge.domain.restaurant.controller;
 
+import konkuk.corkCharge.domain.restaurant.dto.request.GetClusterListRequest;
 import konkuk.corkCharge.domain.restaurant.dto.request.GetFilterRequest;
 import konkuk.corkCharge.domain.restaurant.dto.response.*;
 import konkuk.corkCharge.domain.restaurant.service.RestaurantService;
@@ -56,6 +57,13 @@ public class RestaurantController {
             @RequestParam(name = "lonMax") double lonMax
     ) {
         return BaseResponse.ok(restaurantService.GetMapCluster(level, latMin, latMax, lonMin, lonMax));
+    }
+
+    @PostMapping("/cluster/list")
+    public BaseResponse<List<GetClusterListResponse>> getClusterRestaurantList(
+            @RequestBody GetClusterListRequest request
+    ) {
+        return BaseResponse.ok(restaurantService.getClusterList(request.restaurantIds()));
     }
 
 }
