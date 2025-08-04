@@ -4,8 +4,8 @@ import konkuk.corkCharge.domain.image.domain.Image;
 import konkuk.corkCharge.domain.image.repository.ImageRepository;
 import konkuk.corkCharge.domain.image.service.S3ImageService;
 import konkuk.corkCharge.domain.tip.domain.Tip;
-import konkuk.corkCharge.domain.tip.domain.TipCategory;
 import konkuk.corkCharge.domain.tip.dto.request.PostTipRequest;
+import konkuk.corkCharge.domain.tip.dto.response.GetTipListResponse;
 import konkuk.corkCharge.domain.tip.repository.TipRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -52,6 +52,14 @@ public class TipService {
             imageRepository.saveAll(imageEntities);
             tip.setImages(imageEntities);
         }
+    }
+
+    @Transactional
+    public List<GetTipListResponse> getTips(){
+        List<Tip> tips = tipRepository.findAll();
+        return tips.stream()
+                .map(GetTipListResponse::from)
+                .collect(Collectors.toList());
     }
 
 
