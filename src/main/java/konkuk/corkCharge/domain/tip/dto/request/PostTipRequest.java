@@ -5,6 +5,6 @@ import konkuk.corkCharge.domain.tip.domain.TipCategory;
 public record PostTipRequest(
         String title,
         String content,
-        String tipCategory
+        TipCategory tipCategory
 ) {
 }
