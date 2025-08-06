@@ -45,19 +45,19 @@ public class BookmarkService {
             case RESTAURANT -> {
                 Restaurant restaurant = restaurantRepository.findById(request.targetId())
                         .orElseThrow(() -> new CustomException(RESTAURANT_NOT_FOUND));
-                // bookmarkCount 1 증가
+
                 restaurant.setBookmarkCount(restaurant.getBookmarkCount() + 1);
                 restaurantRepository.save(restaurant);
             }
             case REVIEW -> {
                 Review review = reviewRepository.findById(request.targetId())
                         .orElseThrow(() -> new CustomException(REVIEW_NOT_FOUND));
-                // bookmarkCount 1 증가 (Review 엔티티에 해당 필드 + setter 가 있어야 합니다)
+
                 review.setBookmarkCount(review.getBookmarkCount() + 1);
                 reviewRepository.save(review);
             }
             case TIP -> {
-                // TIP 에 대해서는 bookmarkCount 가 없거나, 따로 관리하지 않는다면 그냥 존재 여부만 체크
+
                 if (!tipRepository.existsById(request.targetId())) {
                     throw new CustomException(TIP_NOT_FOUND);
                 }
@@ -79,11 +79,29 @@ public class BookmarkService {
     public void deleteBookmark(Long bookmarkId){
         Bookmark bookmark = bookmarkRepository.findById(bookmarkId)
                         .orElseThrow(() -> new CustomException(BOOKMARK_NOT_FOUND));
-        Restaurant restaurant = restaurantRepository.findById(bookmark.getTargetId())
-                        .orElseThrow(()-> new CustomException(RESTAURANT_NOT_FOUND));
 
         bookmarkRepository.delete(bookmark);
-        restaurant.setBookmarkCount(restaurant.getBookmarkCount()-1);
+        switch(bookmark.getTargetType()) {
+            case RESTAURANT -> {
+                Restaurant restaurant = restaurantRepository.findById(bookmark.getTargetId())
+                        .orElseThrow(() -> new CustomException(RESTAURANT_NOT_FOUND));
+
+                restaurant.setBookmarkCount(restaurant.getBookmarkCount() - 1);
+                restaurantRepository.save(restaurant);
+            }
+            case REVIEW -> {
+                Review review = reviewRepository.findById(bookmark.getTargetId())
+                        .orElseThrow(() -> new CustomException(REVIEW_NOT_FOUND));
+
+                review.setBookmarkCount(review.getBookmarkCount() - 1);
+                reviewRepository.save(review);
+            }
+            case TIP -> {
+                if (!tipRepository.existsById(bookmark.getTargetId())) {
+                    throw new CustomException(TIP_NOT_FOUND);
+                }
+            }
+        }
     }
 
     @Transactional(readOnly = true)
