@@ -1,0 +1,134 @@
+package konkuk.corkCharge.domain.bookmark.service;
+
+import konkuk.corkCharge.domain.bookmark.domain.Bookmark;
+import konkuk.corkCharge.domain.bookmark.dto.request.PostBookmarkRequest;
+import konkuk.corkCharge.domain.bookmark.repository.BookmarkRepository;
+import konkuk.corkCharge.domain.corkageStore.domain.CorkageStore;
+import konkuk.corkCharge.domain.corkageStore.repository.CorkageStoreRepository;
+import konkuk.corkCharge.domain.image.domain.Image;
+import konkuk.corkCharge.domain.image.repository.ImageRepository;
+import konkuk.corkCharge.domain.restaurant.domain.Restaurant;
+import konkuk.corkCharge.domain.bookmark.dto.response.GetSavedRestaurantResponse;
+import konkuk.corkCharge.domain.restaurant.repository.RestaurantRepository;
+import konkuk.corkCharge.domain.review.domain.Review;
+import konkuk.corkCharge.domain.review.repository.ReviewRepository;
+import konkuk.corkCharge.domain.tip.repository.TipRepository;
+import konkuk.corkCharge.domain.user.domain.User;
+import konkuk.corkCharge.domain.user.repository.UserRepository;
+import konkuk.corkCharge.global.exception.CustomException;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+
+import static konkuk.corkCharge.domain.bookmark.domain.BookmarkTargetType.*;
+import static konkuk.corkCharge.global.response.status.BaseExceptionResponseStatus.*;
+
+@Service
+@RequiredArgsConstructor
+public class BookmarkService {
+    private final BookmarkRepository bookmarkRepository;
+    private final UserRepository userRepository;
+    private final RestaurantRepository restaurantRepository;
+    private final ReviewRepository reviewRepository;
+    private final TipRepository tipRepository;
+    private final ImageRepository imageRepository;
+    private final CorkageStoreRepository corkageStoreRepository;
+
+    @Transactional
+    public void createBookmark(Long userId, PostBookmarkRequest request){
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(USER_NOT_FOUND));
+
+        switch(request.targetType()) {
+            case RESTAURANT -> {
+                Restaurant restaurant = restaurantRepository.findById(request.targetId())
+                        .orElseThrow(() -> new CustomException(RESTAURANT_NOT_FOUND));
+
+                restaurant.setBookmarkCount(restaurant.getBookmarkCount() + 1);
+                restaurantRepository.save(restaurant);
+            }
+            case REVIEW -> {
+                Review review = reviewRepository.findById(request.targetId())
+                        .orElseThrow(() -> new CustomException(REVIEW_NOT_FOUND));
+
+                review.setBookmarkCount(review.getBookmarkCount() + 1);
+                reviewRepository.save(review);
+            }
+            case TIP -> {
+
+                if (!tipRepository.existsById(request.targetId())) {
+                    throw new CustomException(TIP_NOT_FOUND);
+                }
+            }
+        }
+
+        Bookmark bookmark = Bookmark.builder()
+                .user(user)
+                .targetId(request.targetId())
+                .targetType(request.targetType())
+                .build();
+
+        bookmarkRepository.save(bookmark);
+
+
+    }
+
+    @Transactional
+    public void deleteBookmark(Long bookmarkId){
+        Bookmark bookmark = bookmarkRepository.findById(bookmarkId)
+                        .orElseThrow(() -> new CustomException(BOOKMARK_NOT_FOUND));
+
+        bookmarkRepository.delete(bookmark);
+        switch(bookmark.getTargetType()) {
+            case RESTAURANT -> {
+                Restaurant restaurant = restaurantRepository.findById(bookmark.getTargetId())
+                        .orElseThrow(() -> new CustomException(RESTAURANT_NOT_FOUND));
+
+                restaurant.setBookmarkCount(restaurant.getBookmarkCount() - 1);
+                restaurantRepository.save(restaurant);
+            }
+            case REVIEW -> {
+                Review review = reviewRepository.findById(bookmark.getTargetId())
+                        .orElseThrow(() -> new CustomException(REVIEW_NOT_FOUND));
+
+                review.setBookmarkCount(review.getBookmarkCount() - 1);
+                reviewRepository.save(review);
+            }
+            case TIP -> {
+                if (!tipRepository.existsById(bookmark.getTargetId())) {
+                    throw new CustomException(TIP_NOT_FOUND);
+                }
+            }
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public List<GetSavedRestaurantResponse> getSavedRestaurants(Long userId){
+        userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(USER_NOT_FOUND));
+
+        return bookmarkRepository
+                .findAllByUser_UserIdAndTargetType(userId, RESTAURANT)
+                .stream()
+                .map(bookmark -> {
+                    Restaurant restaurant = restaurantRepository
+                            .findById(bookmark.getTargetId())
+                            .orElseThrow(() -> new CustomException(RESTAURANT_NOT_FOUND));
+                    List<Image> images = imageRepository.findAllByRestaurant_RestaurantId(restaurant.getRestaurantId());
+
+                    CorkageStore corkageStore = corkageStoreRepository
+                            .findByRestaurant_RestaurantId(restaurant.getRestaurantId())
+                            .orElse(null);
+
+                    return GetSavedRestaurantResponse.from(
+                            bookmark,
+                            restaurant,
+                            images,
+                            corkageStore
+                    );
+                })
+                .toList();
+    }
+}

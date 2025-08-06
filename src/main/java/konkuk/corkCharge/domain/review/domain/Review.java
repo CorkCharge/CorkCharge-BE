@@ -37,6 +37,9 @@ public class Review extends BaseEntity {
     @Column(nullable = false)
     private Integer rating;
 
+    @Column(name = "bookmark_count")
+    private Integer bookmarkCount = 0;
+
     @OneToMany(mappedBy = "review", cascade = CascadeType.ALL)
     private List<Image> images = new ArrayList<>();
 
@@ -48,4 +51,15 @@ public class Review extends BaseEntity {
         this.rating = rating;
     }
 
+    public void updateContent(String content) {
+        this.content = content;
+    }
+
+    public void updateRating(Integer rating) {
+        this.rating = rating;
+    }
+
+    public void setBookmarkCount(int bookmarkCount){
+        this.bookmarkCount = bookmarkCount;
+    }
 }

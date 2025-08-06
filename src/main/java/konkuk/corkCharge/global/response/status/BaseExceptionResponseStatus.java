@@ -26,7 +26,7 @@ public enum BaseExceptionResponseStatus implements ResponseStatus {
     ALREADY_REGISTERED_CORKAGE(60004, "해당 매장은 이미 콜키지 등록이 돼 있습니다."),
 
     /**
-     * 70000 : User 도메인 에러 코드
+     * 70000 : User
      */
     USER_NOT_FOUND(70000, "해당 사용자를 찾을 수 없습니다."),
     PERMISSION_DENIED(70001, "ADMIN 혹은 OWNER 권한이 필요합니다."),
@@ -35,14 +35,29 @@ public enum BaseExceptionResponseStatus implements ResponseStatus {
      * 80000 : Image
      */
     FAILED_UPLOAD(80000, "S3 업로드를 실패했습니다."),
-    FAILED_DELETE_IMAGE(80001, "S3 이미지 삭제에 실패하였습니다.")
-    ,
+    FAILED_DELETE_IMAGE(80001, "S3 이미지 삭제에 실패하였습니다."),
 
     /**
-     * 90000 : Suggestion
+     * 90000 : OwnerRestaurant
      */
-    SUGGESTION_NOT_FOUND(90001, "해당 문의하기를 찾을 수 없습니다.")
-    ;
+    ALREADY_REGISTERED_BY_ANOTHER_OWNER(90000, "이미 다른 사장님이 등록한 식당입니다."),
+
+    /**
+     * 100000 : Review
+     */
+    INVALID_RANGE(100000, "유효하지 않은 기간 필터입니다."),
+    REVIEW_NOT_FOUND(100001, "해당 리뷰를 찾을 수 없습니다."),
+    FORBIDDEN_REVIEW_EDIT(100002, "해당 리뷰를 수정할 권한이 없습니다."),
+
+    /**
+     * 110000 : Tip
+     */
+    TIP_NOT_FOUND(110000, "해당 tip을 찾을 수 없습니다."),
+
+    /**
+     * 120000 : Bookmark
+     */
+    BOOKMARK_NOT_FOUND(120000, "해당 북마크를 찾을 수 없습니다.");
 
     private final boolean success = false;
     private final int code;

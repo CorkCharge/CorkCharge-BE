@@ -1,14 +1,19 @@
 package konkuk.corkCharge.domain.tip.domain;
 
 import jakarta.persistence.*;
+import konkuk.corkCharge.domain.image.domain.Image;
 import konkuk.corkCharge.global.entity.BaseEntity;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "tip")
 @Getter
+@Setter
+@Builder
+@AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Tip extends BaseEntity {
     @Id
@@ -25,4 +30,8 @@ public class Tip extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "tip_category", nullable = false)
     private TipCategory tipCategory;
+
+    @Builder.Default
+    @OneToMany(mappedBy = "tip", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Image> images = new ArrayList<>();
 }

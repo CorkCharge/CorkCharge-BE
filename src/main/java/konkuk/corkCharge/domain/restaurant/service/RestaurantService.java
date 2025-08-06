@@ -1,5 +1,7 @@
 package konkuk.corkCharge.domain.restaurant.service;
 
+import konkuk.corkCharge.domain.corkageStore.domain.CorkageStore;
+import konkuk.corkCharge.domain.corkageStore.domain.MultiCorkage;
 import konkuk.corkCharge.domain.restaurant.domain.Restaurant;
 import konkuk.corkCharge.domain.restaurant.dto.request.GetFilterRequest;
 import konkuk.corkCharge.domain.restaurant.dto.response.*;
@@ -33,33 +35,6 @@ public class RestaurantService {
 
         return restaurants.stream()
                 .map(GetRestaurantListResponse::from)
-                .toList();
-    }
-
-    @Transactional
-    public List<GetRestaurantMapResponse> getRestaurantMap() {
-        List<Restaurant> restaurants = restaurantRepository.findByHasCorkageTrue();
-
-        if (restaurants.isEmpty()) {
-            throw new CustomException(CORKAGE_RESTAURANT_NOT_FOUND);
-        }
-
-        return restaurants.stream()
-                .map(restaurant -> {
-                    if (restaurant.getLatitude() == 0 && restaurant.getLongitude() == 0) {
-                        NaverMapsResponse response = naverGeocodingClient.getCoordinatesByAddress(restaurant.getAddress());
-                        if (!response.addresses().isEmpty()) {
-                            Address address = response.addresses().get(0);
-                            restaurant.updateCoordinates(
-                                    Double.parseDouble(address.latitude()),
-                                    Double.parseDouble(address.longitude())
-                            );
-                        }
-                    }
-
-                    int corkagePrice = restaurant.getCorkageStore() != null ? restaurant.getCorkageStore().getCorkagePrice() : null;
-                    return GetRestaurantMapResponse.of(restaurant, corkagePrice);
-                })
                 .toList();
     }
 
@@ -128,6 +103,72 @@ public class RestaurantService {
         }
 
         return matchedRestaurants;
+    }
+
+    @Transactional
+    public List<?> GetMapCluster(String level, double latMin, double latMax, double lonMin, double lonMax) {
+        List<Restaurant> restaurants = restaurantRepository.findByHasCorkageTrue();
+
+        if (restaurants.isEmpty()) {
+            throw new CustomException(CORKAGE_RESTAURANT_NOT_FOUND);
+        }
+
+        // 위도/경도가 없는 매장의 경우 추가
+        restaurants.forEach(restaurant -> {
+            if (restaurant.getLatitude() == 0 || restaurant.getLongitude() == 0) {
+                NaverMapsResponse response = naverGeocodingClient.getCoordinatesByAddress(restaurant.getAddress());
+                if (!response.addresses().isEmpty()) {
+                    Address address = response.addresses().get(0);
+                    restaurant.updateCoordinates(
+                            Double.parseDouble(address.latitude()),
+                            Double.parseDouble(address.longitude())
+                    );
+                }
+            }
+        });
+
+        List<Restaurant> filtered = restaurants.stream()
+                .filter(r -> r.getLatitude() >= latMin && r.getLatitude() <= latMax)
+                .filter(r -> r.getLongitude() >= lonMin && r.getLongitude() <= lonMax)
+                .toList();
+
+        return switch (level) {
+            case "restaurant" -> filtered.stream()
+                    .map(GetMapRestaurantResponse::from)
+                    .toList();
+
+            case "dong", "sigungu", "sido" -> filtered.stream()
+                    .map(GetMapClusterResponse::from)
+                    .toList();
+
+            default -> throw new CustomException(BAD_REQUEST);
+        };
+    }
+
+    @Transactional(readOnly = true)
+    public List<GetClusterListResponse> getClusterList(List<Long> restaurantIds) {
+        List<Restaurant> restaurants = restaurantRepository.findAllById(restaurantIds);
+
+        return restaurants.stream()
+                .sorted((r1, r2) -> {
+                    int price1 = getComparableCorkagePrice(r1);
+                    int price2 = getComparableCorkagePrice(r2);
+                    return Integer.compare(price1, price2);
+                })
+                .map(GetClusterListResponse::from)
+                .toList();
+    }
+
+    private int getComparableCorkagePrice(Restaurant r) {
+        CorkageStore cs = r.getCorkageStore();
+
+        return switch (cs.getCorkageType()) {
+            case FREE -> 0;
+            case MULTIPLE -> cs.getMultiPrices().stream()
+                    .mapToInt(MultiCorkage::getPrice)
+                    .min().orElse(Integer.MAX_VALUE);
+            default -> cs.getCorkagePrice() != null ? cs.getCorkagePrice() : Integer.MAX_VALUE;
+        };
     }
 
 }
