@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface CorkageStoreRepository extends JpaRepository<CorkageStore, Long> {
@@ -16,4 +17,5 @@ public interface CorkageStoreRepository extends JpaRepository<CorkageStore, Long
             "LEFT JOIN FETCH cs.corkageOptions co")
     List<CorkageStore> findAllForRestaurant();
 
+    Optional<CorkageStore> findByRestaurant_RestaurantId(Long restaurantId);
 }
