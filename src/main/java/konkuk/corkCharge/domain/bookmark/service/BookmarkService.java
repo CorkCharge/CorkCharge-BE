@@ -55,4 +55,12 @@ public class BookmarkService {
 
         bookmarkRepository.save(bookmark);
     }
+
+    @Transactional
+    public void deleteBookmark(Long bookmarkId){
+        Bookmark bookmark = bookmarkRepository.findById(bookmarkId)
+                        .orElseThrow(() -> new CustomException(BOOKMARK_NOT_FOUND));
+
+        bookmarkRepository.delete(bookmark);
+    }
 }

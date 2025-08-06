@@ -17,4 +17,10 @@ public class BookmarkController {
         bookmarkService.createBookmark(userId, request);
         return BaseResponse.ok(null);
     }
+
+    @DeleteMapping("/{bookmarkId}")
+    public BaseResponse<Void> deleteBookmark(@PathVariable Long bookmarkId){
+        bookmarkService.deleteBookmark(bookmarkId);
+        return BaseResponse.ok(null);
+    }
 }
