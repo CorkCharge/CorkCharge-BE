@@ -52,7 +52,13 @@ public enum BaseExceptionResponseStatus implements ResponseStatus {
     /**
      * 110000 : Tip
      */
-    TIP_NOT_FOUND(110000, "해당 tip을 찾을 수 없습니다.");
+    TIP_NOT_FOUND(110000, "해당 tip을 찾을 수 없습니다."),
+
+    /**
+     * 120000 : Bookmark
+     */
+    BOOKMARK_NOT_FOUND(120000, "해당 북마크를 찾을 수 없습니다.");
+
     private final boolean success = false;
     private final int code;
     private final String message;
