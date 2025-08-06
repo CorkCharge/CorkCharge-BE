@@ -45,7 +45,7 @@ public class Restaurant extends BaseEntity {
     private Double rating;
 
     @Column(name = "bookmark_count")
-    private int bookmarkCount;
+    private Integer bookmarkCount = 0;
 
     @Column(name = "has_corkage")
     private boolean hasCorkage;
@@ -94,6 +94,10 @@ public class Restaurant extends BaseEntity {
 
     public void setHasCorkage(boolean hasCorkage) {
         this.hasCorkage = hasCorkage;
+    }
+
+    public void setBookmarkCount(int bookmarkCount){
+        this.bookmarkCount = bookmarkCount;
     }
 
 }
