@@ -10,6 +10,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public record GetSavedRestaurantResponse(
+        Long bookmarkId,
         Long restaurantId,
         String name,
         String address,
@@ -35,6 +36,7 @@ public record GetSavedRestaurantResponse(
         Integer price = corkageStore != null ? corkageStore.getCorkagePrice() : null;
 
         return new GetSavedRestaurantResponse(
+                bookmark.getId(),
                 restaurant.getRestaurantId(),
                 restaurant.getName(),
                 restaurant.getAddress(),
