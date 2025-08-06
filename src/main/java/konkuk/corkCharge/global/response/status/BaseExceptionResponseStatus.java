@@ -50,20 +50,25 @@ public enum BaseExceptionResponseStatus implements ResponseStatus {
     FORBIDDEN_REVIEW_EDIT(100002, "해당 리뷰를 수정할 권한이 없습니다."),
 
     /**
-     * 110000 : Auth/JWT
+     * 110000 : Tip
      */
-    AUTH_REQUIRED(110000, "인증이 필요합니다."),
-    INVALID_AUTH_TYPE(110001, "유효하지 않은 인증 타입입니다."),
-    JWT_INVALID(110002, "유효하지 않은 토큰입니다."),
-    JWT_REFRESH_NOT_FOUND(110003, "리프레시 토큰을 찾을 수 없습니다."),
-    JWT_REFRESH_TOKEN_MISMATCH(110004, "저장된 리프레시 토큰과 일치하지 않습니다."),
+    TIP_NOT_FOUND(110000, "해당 tip을 찾을 수 없습니다."),
 
     /**
-     * 120000 : OAuth(Naver)
+     * 120000 : Auth/JWT
      */
-    NAVER_TOKEN_ERROR(120000, "네이버 토큰 응답 오류입니다."),
-    NAVER_TOKEN_REQUEST_FAILED(120001, "네이버 토큰 요청에 실패했습니다."),
-    NAVER_USER_INFO_REQUEST_FAILED(120002, "네이버 사용자 정보 요청에 실패했습니다.")
+    AUTH_REQUIRED(120000, "인증이 필요합니다."),
+    INVALID_AUTH_TYPE(120001, "유효하지 않은 인증 타입입니다."),
+    JWT_INVALID(120002, "유효하지 않은 토큰입니다."),
+    JWT_REFRESH_NOT_FOUND(120003, "리프레시 토큰을 찾을 수 없습니다."),
+    JWT_REFRESH_TOKEN_MISMATCH(120004, "저장된 리프레시 토큰과 일치하지 않습니다."),
+
+    /**
+     * 130000 : OAuth(Naver)
+     */
+    NAVER_TOKEN_ERROR(130000, "네이버 토큰 응답 오류입니다."),
+    NAVER_TOKEN_REQUEST_FAILED(130001, "네이버 토큰 요청에 실패했습니다."),
+    NAVER_USER_INFO_REQUEST_FAILED(130002, "네이버 사용자 정보 요청에 실패했습니다.")
     ;
 
     private final boolean success = false;
