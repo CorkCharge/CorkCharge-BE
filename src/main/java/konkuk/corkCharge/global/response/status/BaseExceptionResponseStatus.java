@@ -60,20 +60,25 @@ public enum BaseExceptionResponseStatus implements ResponseStatus {
     BOOKMARK_NOT_FOUND(120000, "해당 북마크를 찾을 수 없습니다."),
 
     /**
-     * 130000 : Auth/JWT
+     * 130000 : Suggestion
      */
-    AUTH_REQUIRED(130000, "인증이 필요합니다."),
-    INVALID_AUTH_TYPE(130001, "유효하지 않은 인증 타입입니다."),
-    JWT_INVALID(130002, "유효하지 않은 토큰입니다."),
-    JWT_REFRESH_NOT_FOUND(130003, "리프레시 토큰을 찾을 수 없습니다."),
-    JWT_REFRESH_TOKEN_MISMATCH(130004, "저장된 리프레시 토큰과 일치하지 않습니다."),
+    SUGGESTION_NOT_FOUND(130000, "해당 문의하기를 찾을 수 없습니다."),
 
     /**
-     * 140000 : OAuth(Naver)
+     * 140000 : Auth/JWT
      */
-    NAVER_TOKEN_ERROR(140000, "네이버 토큰 응답 오류입니다."),
-    NAVER_TOKEN_REQUEST_FAILED(140001, "네이버 토큰 요청에 실패했습니다."),
-    NAVER_USER_INFO_REQUEST_FAILED(140002, "네이버 사용자 정보 요청에 실패했습니다.")
+    AUTH_REQUIRED(140000, "인증이 필요합니다."),
+    INVALID_AUTH_TYPE(140001, "유효하지 않은 인증 타입입니다."),
+    JWT_INVALID(140002, "유효하지 않은 토큰입니다."),
+    JWT_REFRESH_NOT_FOUND(140003, "리프레시 토큰을 찾을 수 없습니다."),
+    JWT_REFRESH_TOKEN_MISMATCH(140004, "저장된 리프레시 토큰과 일치하지 않습니다."),
+
+    /**
+     * 150000 : OAuth(Naver)
+     */
+    NAVER_TOKEN_ERROR(150000, "네이버 토큰 응답 오류입니다."),
+    NAVER_TOKEN_REQUEST_FAILED(150001, "네이버 토큰 요청에 실패했습니다."),
+    NAVER_USER_INFO_REQUEST_FAILED(150002, "네이버 사용자 정보 요청에 실패했습니다.")
     ;
 
     private final boolean success = false;
