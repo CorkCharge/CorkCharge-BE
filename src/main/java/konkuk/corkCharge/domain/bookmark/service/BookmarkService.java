@@ -2,6 +2,7 @@ package konkuk.corkCharge.domain.bookmark.service;
 
 import konkuk.corkCharge.domain.bookmark.domain.Bookmark;
 import konkuk.corkCharge.domain.bookmark.dto.request.PostBookmarkRequest;
+import konkuk.corkCharge.domain.bookmark.dto.response.GetSavedReviewResponse;
 import konkuk.corkCharge.domain.bookmark.repository.BookmarkRepository;
 import konkuk.corkCharge.domain.corkageStore.domain.CorkageStore;
 import konkuk.corkCharge.domain.corkageStore.repository.CorkageStoreRepository;
@@ -132,6 +133,48 @@ public class BookmarkService {
                             images,
                             corkageStore
                     );
+                })
+                .toList();
+    }
+
+    @Transactional
+    public List<GetSavedReviewResponse> getSavedReviews(Long userId){
+        userRepository.findById(userId)
+                .orElseThrow(()-> new CustomException(USER_NOT_FOUND));
+
+        return bookmarkRepository
+                .findAllByUser_UserIdAndTargetType(userId, REVIEW)
+                .stream()
+                .map(bookmark -> {
+                    Review review = reviewRepository.findById(bookmark.getTargetId())
+                            .orElseThrow(() -> new CustomException(REVIEW_NOT_FOUND));
+
+                    String imageUrl = imageRepository
+                            .findAllByReview_ReviewId(review.getReviewId())
+                            .stream()
+                            .map(img -> img.getImageUrl())
+                            .findFirst()
+                            .orElse("");
+
+                    String authorName = review.getUser().getName();
+
+                    String restaurantName = review.getRestaurant().getName();
+
+                    long totalSaved = bookmarkRepository.countByTargetTypeAndTargetId(REVIEW, review.getReviewId());
+
+
+                    return new GetSavedReviewResponse(
+                            bookmark.getId(),
+                            review.getReviewId(),
+                            restaurantName,
+                            (int) totalSaved,
+                            imageUrl,
+                            review.getRating(),
+                            review.getContent(),
+                            authorName,
+                            review.getCreatedAt()
+                    );
+
                 })
                 .toList();
     }
