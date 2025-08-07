@@ -3,6 +3,7 @@ package konkuk.corkCharge.domain.bookmark.controller;
 import konkuk.corkCharge.domain.bookmark.domain.BookmarkTargetType;
 import konkuk.corkCharge.domain.bookmark.dto.request.PostBookmarkRequest;
 import konkuk.corkCharge.domain.bookmark.dto.response.GetSavedRestaurantResponse;
+import konkuk.corkCharge.domain.bookmark.dto.response.GetSavedReviewResponse;
 import konkuk.corkCharge.domain.bookmark.service.BookmarkService;
 import konkuk.corkCharge.global.response.BaseResponse;
 import lombok.RequiredArgsConstructor;
@@ -32,5 +33,10 @@ public class BookmarkController {
     public BaseResponse<List<GetSavedRestaurantResponse>> getSavedRestaurants(
             @RequestParam Long userId){
         return BaseResponse.ok(bookmarkService.getSavedRestaurants(userId));
+    }
+
+    @GetMapping("/review")
+    public BaseResponse<List<GetSavedReviewResponse>> getSavedReviews(@RequestParam Long userId){
+        return BaseResponse.ok(bookmarkService.getSavedReviews(userId));
     }
 }
