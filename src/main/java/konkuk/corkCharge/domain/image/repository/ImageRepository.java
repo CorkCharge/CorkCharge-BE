@@ -12,5 +12,6 @@ public interface ImageRepository extends JpaRepository<Image, Long> {
     Optional<Image> findProfileImageByUser_UserId(Long userId);
     Optional<Image> findFirstByReview_ReviewId(Long reviewId);
     List<Image> findAllByRestaurant_RestaurantId(Long restaurantId);
-    List<Image> findAllByReview_ReviewId(Long restaurantId);
+    List<Image> findAllByReview_ReviewId(Long reviewId);
+    List<Image> findAllByTip_TipId(Long tipId);
 }
