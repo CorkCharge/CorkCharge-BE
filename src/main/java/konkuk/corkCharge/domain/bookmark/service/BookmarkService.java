@@ -3,6 +3,7 @@ package konkuk.corkCharge.domain.bookmark.service;
 import konkuk.corkCharge.domain.bookmark.domain.Bookmark;
 import konkuk.corkCharge.domain.bookmark.dto.request.PostBookmarkRequest;
 import konkuk.corkCharge.domain.bookmark.dto.response.GetSavedReviewResponse;
+import konkuk.corkCharge.domain.bookmark.dto.response.GetSavedTipResponse;
 import konkuk.corkCharge.domain.bookmark.repository.BookmarkRepository;
 import konkuk.corkCharge.domain.corkageStore.domain.CorkageStore;
 import konkuk.corkCharge.domain.corkageStore.repository.CorkageStoreRepository;
@@ -13,6 +14,7 @@ import konkuk.corkCharge.domain.bookmark.dto.response.GetSavedRestaurantResponse
 import konkuk.corkCharge.domain.restaurant.repository.RestaurantRepository;
 import konkuk.corkCharge.domain.review.domain.Review;
 import konkuk.corkCharge.domain.review.repository.ReviewRepository;
+import konkuk.corkCharge.domain.tip.domain.Tip;
 import konkuk.corkCharge.domain.tip.repository.TipRepository;
 import konkuk.corkCharge.domain.user.domain.User;
 import konkuk.corkCharge.domain.user.repository.UserRepository;
@@ -175,6 +177,37 @@ public class BookmarkService {
                             review.getCreatedAt()
                     );
 
+                })
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<GetSavedTipResponse> getSavedTips(Long userId){
+        userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(USER_NOT_FOUND));
+
+        return bookmarkRepository
+                .findAllByUser_UserIdAndTargetType(userId, TIP)
+                .stream()
+                .map(bookmark -> {
+                    Tip tip = tipRepository.findById(bookmark.getTargetId())
+                            .orElseThrow(()-> new CustomException(TIP_NOT_FOUND));
+
+                    String imageUrl = imageRepository
+                            .findAllByTip_TipId(tip.getTipId())
+                            .stream()
+                            .map(img -> img.getImageUrl())
+                            .findFirst()
+                            .orElse("");
+
+                    return new GetSavedTipResponse(
+                            bookmark.getId(),
+                            tip.getTipId(),
+                            tip.getTitle(),
+                            tip.getTipCategory(),
+                            imageUrl,
+                            tip.getCreatedAt()
+                    );
                 })
                 .toList();
     }
