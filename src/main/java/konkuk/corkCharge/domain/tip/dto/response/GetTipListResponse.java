@@ -9,28 +9,22 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@Builder
 public record GetTipListResponse(
         Long tipId,
         String title,
-        String content,
         TipCategory tipCategory,
-        List<String> imageUrls,
-        LocalDateTime createdAt
+        String imageUrl
 ) {
     public static GetTipListResponse from(Tip tip){
-        List<String> imageUrls = tip.getImages().stream()
-                .map(Image::getImageUrl)
-                .collect(Collectors.toList());
+        String imageUrl = tip.getImages().stream()
+                .map(img -> img.getImageUrl())
+                .findFirst()
+                .orElse("");
 
-        return GetTipListResponse.builder()
-                .tipId(tip.getTipId())
-                .title(tip.getTitle())
-                .content(tip.getContent())
-                .tipCategory(tip.getTipCategory())
-                .imageUrls(imageUrls)
-                .createdAt(tip.getCreatedAt())
-                .build();
-
+        return new GetTipListResponse(
+                tip.getTipId(),
+                tip.getTitle(),
+                tip.getTipCategory(),imageUrl
+        );
     }
 }
