@@ -56,10 +56,9 @@ public class TipService {
 
     @Transactional
     public List<GetTipListResponse> getTips(){
-        List<Tip> tips = tipRepository.findAll();
-        return tips.stream()
+        return tipRepository.findAll().stream()
                 .map(GetTipListResponse::from)
-                .collect(Collectors.toList());
+                .toList();
     }
 
 
