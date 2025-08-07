@@ -10,4 +10,6 @@ import java.util.List;
 @Repository
 public interface BookmarkRepository extends JpaRepository<Bookmark, Long> {
     List<Bookmark> findAllByUser_UserIdAndTargetType(Long userId, BookmarkTargetType bookmarkTargetType);
+
+    long countByTargetTypeAndTargetId(BookmarkTargetType type, Long targetId);
 }
