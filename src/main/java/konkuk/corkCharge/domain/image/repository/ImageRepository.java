@@ -14,4 +14,5 @@ public interface ImageRepository extends JpaRepository<Image, Long> {
     List<Image> findAllByRestaurant_RestaurantId(Long restaurantId);
     List<Image> findAllByReview_ReviewId(Long reviewId);
     List<Image> findAllByTip_TipId(Long tipId);
+    Optional<Image> findFirstByRestaurant_RestaurantId(Long restaurantId);
 }
