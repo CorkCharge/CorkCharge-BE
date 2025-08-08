@@ -41,7 +41,7 @@ public record GetSavedRestaurantResponse(
                 restaurant.getName(),
                 restaurant.getAddress(),
                 thumbnail,
-                restaurant.getRating() != null ? restaurant.getRating() : 0.0,
+                restaurant.getRating(),
                 restaurant.getReviewCount(),
                 restaurant.getBookmarkCount(),
                 restaurant.isHasCorkage(),
