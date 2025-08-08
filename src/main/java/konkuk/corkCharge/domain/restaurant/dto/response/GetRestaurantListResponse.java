@@ -30,7 +30,7 @@ public record GetRestaurantListResponse(
                 corkagePrice,
                 imageUrl,
                 restaurant.getReviewCount(),
-                restaurant.getRating() != null ? restaurant.getRating() : 0.0,
+                restaurant.getRating(),
                 restaurant.getBookmarkCount()
         );
     }
