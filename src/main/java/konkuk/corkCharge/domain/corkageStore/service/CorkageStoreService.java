@@ -4,9 +4,13 @@ import konkuk.corkCharge.domain.corkageStore.domain.*;
 import konkuk.corkCharge.domain.corkageStore.dto.request.GetCorkageFilterRequest;
 import konkuk.corkCharge.domain.corkageStore.dto.request.MultiCorkageRequest;
 import konkuk.corkCharge.domain.corkageStore.dto.request.PostAddCorkageRequest;
+import konkuk.corkCharge.domain.corkageStore.dto.response.GetCorkageVerificationResponse;
 import konkuk.corkCharge.domain.corkageStore.repository.CorkageOptionRepository;
 import konkuk.corkCharge.domain.corkageStore.repository.CorkageStoreRepository;
 import konkuk.corkCharge.domain.corkageStore.repository.MultiCorkageRepository;
+import konkuk.corkCharge.domain.image.repository.ImageRepository;
+import konkuk.corkCharge.domain.ownerRestaurant.domain.OwnerRestaurant;
+import konkuk.corkCharge.domain.ownerRestaurant.repository.OwnerRestaurantRepository;
 import konkuk.corkCharge.domain.restaurant.domain.Restaurant;
 import konkuk.corkCharge.domain.restaurant.dto.response.GetSearchRestaurantResponse;
 import konkuk.corkCharge.domain.restaurant.repository.RestaurantRepository;
@@ -31,6 +35,8 @@ public class CorkageStoreService {
     private final MultiCorkageRepository multiCorkageRepository;
     private final CorkageOptionRepository corkageOptionRepository;
     private final UserRepository userRepository;
+    private final OwnerRestaurantRepository ownerRestaurantRepository;
+    private final ImageRepository imageRepository;
 
     @Transactional
     public void createCorkage(Long userId, PostAddCorkageRequest request) {
@@ -128,6 +134,34 @@ public class CorkageStoreService {
                             .anyMatch(storeOptions::contains);
                 })
                 .map(store -> GetSearchRestaurantResponse.from(store.getRestaurant()))
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<GetCorkageVerificationResponse> requestCorkage(Long userId){
+        userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(USER_NOT_FOUND));
+
+        List<OwnerRestaurant> mappings = ownerRestaurantRepository.findAllByUser_UserIdAndRestaurant_HasCorkageFalse(userId);
+
+        if(mappings.isEmpty()){
+            throw new CustomException(PERMISSION_DENIED);
+        }
+
+        return mappings.stream()
+                .map(OwnerRestaurant::getRestaurant)
+                .map(restaurant -> {
+                    String thumbnailUrl = imageRepository
+                            .findFirstByRestaurant_RestaurantId(restaurant.getRestaurantId())
+                            .map(img -> img.getImageUrl())
+                            .orElse(null);
+
+                    return new GetCorkageVerificationResponse(
+                            restaurant.getRestaurantId(),
+                            restaurant.getName(),
+                            thumbnailUrl
+                    );
+                })
                 .toList();
     }
 
