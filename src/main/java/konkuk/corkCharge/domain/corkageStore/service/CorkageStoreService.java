@@ -8,6 +8,9 @@ import konkuk.corkCharge.domain.corkageStore.dto.response.GetCorkageVerification
 import konkuk.corkCharge.domain.corkageStore.repository.CorkageOptionRepository;
 import konkuk.corkCharge.domain.corkageStore.repository.CorkageStoreRepository;
 import konkuk.corkCharge.domain.corkageStore.repository.MultiCorkageRepository;
+import konkuk.corkCharge.domain.image.domain.Image;
+import konkuk.corkCharge.domain.image.domain.ImageCategory;
+import konkuk.corkCharge.domain.image.domain.ImageType;
 import konkuk.corkCharge.domain.image.repository.ImageRepository;
 import konkuk.corkCharge.domain.ownerRestaurant.domain.OwnerRestaurant;
 import konkuk.corkCharge.domain.ownerRestaurant.repository.OwnerRestaurantRepository;
@@ -24,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+import static konkuk.corkCharge.domain.image.domain.ImageType.MENU;
 import static konkuk.corkCharge.global.response.status.BaseExceptionResponseStatus.*;
 
 @Service
@@ -151,14 +155,17 @@ public class CorkageStoreService {
         return mappings.stream()
                 .map(OwnerRestaurant::getRestaurant)
                 .map(restaurant -> {
-                    String thumbnailUrl = imageRepository
-                            .findFirstByRestaurant_RestaurantId(restaurant.getRestaurantId())
-                            .map(img -> img.getImageUrl())
+                    String thumbnailUrl = restaurant.getImages().stream()
+                            .filter(img -> img.getCategory() == ImageCategory.RESTAURANT)
+                            .filter(img -> img.getType()     == ImageType.MENU)
+                            .map(Image::getImageUrl)
+                            .findFirst()
                             .orElse(null);
 
                     return new GetCorkageVerificationResponse(
                             restaurant.getRestaurantId(),
                             restaurant.getName(),
+                            restaurant.getAddress(),
                             thumbnailUrl
                     );
                 })
