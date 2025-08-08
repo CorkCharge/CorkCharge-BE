@@ -42,7 +42,7 @@ public class Restaurant extends BaseEntity {
     private String phone;
 
     @Column(name = "rating")
-    private Double rating;
+    private double rating;
 
     @Column(name = "bookmark_count")
     private Integer bookmarkCount = 0;
@@ -67,7 +67,7 @@ public class Restaurant extends BaseEntity {
 
     @Builder
     public Restaurant(String name, String address, String roadZipCode, String phone, Double latitude, Double longitude,
-                      Double rating, int bookmarkCount, boolean hasCorkage) {
+                      double rating, int bookmarkCount, boolean hasCorkage) {
         this.name = name;
         this.address = address;
         this.roadZipCode = roadZipCode;
@@ -88,7 +88,7 @@ public class Restaurant extends BaseEntity {
         this.longitude = longitude;
     }
 
-    public void updateRating(Double rating) {
+    public void updateRating(double rating) {
         this.rating = rating;
     }
 
