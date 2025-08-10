@@ -2,7 +2,9 @@ package konkuk.corkCharge.domain.corkageStore.controller;
 
 import konkuk.corkCharge.domain.corkageStore.dto.request.GetCorkageFilterRequest;
 import konkuk.corkCharge.domain.corkageStore.dto.request.PostAddCorkageRequest;
+import konkuk.corkCharge.domain.corkageStore.dto.request.PostAdminCorkageRequest;
 import konkuk.corkCharge.domain.corkageStore.dto.response.GetCorkageVerificationResponse;
+import konkuk.corkCharge.domain.corkageStore.dto.response.PostAdminCorkageResponse;
 import konkuk.corkCharge.domain.corkageStore.service.CorkageStoreService;
 import konkuk.corkCharge.domain.restaurant.dto.response.GetSearchRestaurantResponse;
 import konkuk.corkCharge.global.response.BaseResponse;
@@ -36,5 +38,10 @@ public class CorkageStoreController {
     @GetMapping("/verify")
     public BaseResponse<List<GetCorkageVerificationResponse>> requestCorkage(@RequestParam Long userId){
         return BaseResponse.ok(corkageStoreService.requestCorkage(userId));
+    }
+
+    @PostMapping("/request/admin")
+    public BaseResponse<PostAdminCorkageResponse> adminRequestCorkage(@RequestBody PostAdminCorkageRequest request, @RequestParam Long userId){
+        return BaseResponse.ok(corkageStoreService.adminRequestCorkage(request, userId));
     }
 }
