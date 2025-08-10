@@ -35,7 +35,7 @@ public class CorkageStoreController {
         return BaseResponse.ok(corkageStoreService.filterCorkageStores(request));
     }
 
-    @PostMapping("/verify")
+    @GetMapping("/verify")
     public BaseResponse<List<GetCorkageVerificationResponse>> requestCorkage(@RequestParam Long userId){
         return BaseResponse.ok(corkageStoreService.requestCorkage(userId));
     }
