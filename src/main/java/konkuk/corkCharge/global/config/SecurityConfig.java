@@ -1,8 +1,12 @@
 package konkuk.corkCharge.global.config;
 
+import konkuk.corkCharge.global.oauth.jwt.JwtAuthenticationFilter;
+import konkuk.corkCharge.global.oauth.service.OAuthService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.Customizer;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -10,37 +14,43 @@ import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
+
+    private final JwtAuthenticationFilter jwtFilter;
+    private final OAuthService oAuthService;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-
-        //csrf disable
         http
-                .csrf((auth) -> auth.disable());
+                .csrf(csrf -> csrf.disable())
+                .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(auth -> auth
 
-        //From 로그인 방식 disable
-        http
-                .formLogin((auth) -> auth.disable());
+                        .requestMatchers("/", "/swagger-ui/**", "/v3/api-docs/**", "/swagger-resources/**",
+                                "/oauth/naver/login", "/oauth/reissue", "/actuator/**", "/oauth/test/user")
+                        .permitAll()
 
-        //HTTP Basic 인증 방식 disable
-        http
-                .httpBasic((auth) -> auth.disable());
+                        .requestMatchers(HttpMethod.GET,
+                                "/restaurants",
+                                "/restaurants/*",
+                                "/restaurants/hot",
+                                "/restaurants/search",
+                                "/restaurants/filter",
+                                "/restaurants/map",
+                                "/reviews/corkageScore")
+                        .permitAll()
 
-        //oauth2
-        http
-                .oauth2Login(Customizer.withDefaults());
+                        .requestMatchers(HttpMethod.POST,
+                                "/corkages/filter",
+                                "/restaurants/cluster/list")
+                        .permitAll()
 
-        //경로별 인가 작업
-        http
-                .authorizeHttpRequests((auth) -> auth
-                        .requestMatchers("/").permitAll()
-                        .anyRequest().authenticated());
-
-        //세션 설정 : STATELESS
-        http
-                .sessionManagement((session) -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+                        .anyRequest().authenticated()
+                )
+                .oauth2Login(o -> o.userInfoEndpoint(u -> u.userService(oAuthService)))
+                .addFilterAfter(jwtFilter, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
