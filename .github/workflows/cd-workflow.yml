@@ -82,6 +82,7 @@ jobs:
           echo "NAVER_CLIENT_SECRET=${{ secrets.NAVER_CLIENT_SECRET }}" >> .env
           echo "NAVER_OAUTH_CLIENT_ID=${{secrets.NAVER_OAUTH_CLIENT_ID}}" >> .env
           echo "NAVER_OAUTH_CLIENT_SECRET=${{secrets.NAVER_OAUTH_CLIENT_SECRET}}" >> .env
+          echo "JWT_SECRET=${{secrets.JWT_SECRET}}" >> .env
 
       - name: ✉️ Upload docker-compose.yml to EC2
         uses: appleboy/scp-action@master
