@@ -8,14 +8,14 @@ public record GetRestaurantListResponse(
         Long restaurantId,
         String name,
         String address,
-        int corkagePrice,
+        Integer corkagePrice,
         String imageUrl,
         int reviewCount,
         double averageRating,
         int bookmarkCount
 ) {
     public static GetRestaurantListResponse from(Restaurant restaurant) {
-        int corkagePrice = restaurant.getCorkageStore() != null ? restaurant.getCorkageStore().getCorkagePrice() : null;
+        Integer corkagePrice = restaurant.getCorkageStore() != null ? restaurant.getCorkageStore().getCorkagePrice() : null;
 
         String imageUrl = restaurant.getImages().stream()
                 .filter(image -> image.getType() == ImageType.MAIN)
