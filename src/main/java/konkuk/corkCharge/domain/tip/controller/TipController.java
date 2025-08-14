@@ -32,9 +32,10 @@ public class TipController {
     }
 
     @GetMapping("/{tipId}")
-    public BaseResponse<GetTipDetailResponse> getTipDetail(@PathVariable Long tipId){
+    public BaseResponse<GetTipDetailResponse> getTipDetail(
+            @PathVariable(name = "tipId") Long tipId
+    ){
         return BaseResponse.ok(tipService.getTipDetail(tipId));
     }
-
 
 }

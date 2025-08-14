@@ -38,12 +38,17 @@ public class CorkageStoreController {
     }
 
     @GetMapping("/verify")
-    public BaseResponse<List<GetCorkageVerificationResponse>> requestCorkage(@RequestParam Long userId){
+    public BaseResponse<List<GetCorkageVerificationResponse>> requestCorkage(
+            @LoginUserId Long userId
+    ){
         return BaseResponse.ok(corkageStoreService.requestCorkage(userId));
     }
 
     @PostMapping("/request/admin")
-    public BaseResponse<PostAdminCorkageResponse> adminRequestCorkage(@RequestBody PostAdminCorkageRequest request, @RequestParam Long userId){
+    public BaseResponse<PostAdminCorkageResponse> adminRequestCorkage(
+            @RequestBody PostAdminCorkageRequest request,
+            @LoginUserId Long userId
+    ){
         return BaseResponse.ok(corkageStoreService.adminRequestCorkage(request, userId));
     }
 }
