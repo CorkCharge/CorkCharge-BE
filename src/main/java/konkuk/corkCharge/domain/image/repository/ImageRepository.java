@@ -3,6 +3,7 @@ package konkuk.corkCharge.domain.image.repository;
 import konkuk.corkCharge.domain.image.domain.Image;
 import konkuk.corkCharge.domain.image.domain.ImageCategory;
 import konkuk.corkCharge.domain.image.domain.ImageType;
+import konkuk.corkCharge.domain.restaurant.domain.Restaurant;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -17,4 +18,5 @@ public interface ImageRepository extends JpaRepository<Image, Long> {
     List<Image> findAllByReview_ReviewId(Long reviewId);
     List<Image> findAllByTip_TipId(Long tipId);
     Optional<Image> findFirstByRestaurant_RestaurantIdAndCategoryAndType(Long restaurantId, ImageCategory imageCategory, ImageType imageType);
+    boolean existsByRestaurantAndCategoryAndType(Restaurant restaurant, ImageCategory category, ImageType type);
 }

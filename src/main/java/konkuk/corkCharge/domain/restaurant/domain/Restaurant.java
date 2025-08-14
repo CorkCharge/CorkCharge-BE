@@ -5,10 +5,7 @@ import konkuk.corkCharge.domain.corkageStore.domain.CorkageStore;
 import konkuk.corkCharge.domain.image.domain.Image;
 import konkuk.corkCharge.domain.review.domain.Review;
 import konkuk.corkCharge.global.entity.BaseEntity;
-import lombok.AccessLevel;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,6 +13,7 @@ import java.util.List;
 @Entity
 @Table(name = "restaurant")
 @Getter
+@Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Restaurant extends BaseEntity {
     @Id
@@ -42,7 +40,7 @@ public class Restaurant extends BaseEntity {
     private String phone;
 
     @Column(name = "rating")
-    private double rating;
+    private Double rating;
 
     @Column(name = "bookmark_count")
     private Integer bookmarkCount = 0;
