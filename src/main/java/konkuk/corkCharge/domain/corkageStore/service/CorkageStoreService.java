@@ -4,7 +4,9 @@ import konkuk.corkCharge.domain.corkageStore.domain.*;
 import konkuk.corkCharge.domain.corkageStore.dto.request.GetCorkageFilterRequest;
 import konkuk.corkCharge.domain.corkageStore.dto.request.MultiCorkageRequest;
 import konkuk.corkCharge.domain.corkageStore.dto.request.PostAddCorkageRequest;
+import konkuk.corkCharge.domain.corkageStore.dto.request.PostAdminCorkageRequest;
 import konkuk.corkCharge.domain.corkageStore.dto.response.GetCorkageVerificationResponse;
+import konkuk.corkCharge.domain.corkageStore.dto.response.PostAdminCorkageResponse;
 import konkuk.corkCharge.domain.corkageStore.repository.CorkageOptionRepository;
 import konkuk.corkCharge.domain.corkageStore.repository.CorkageStoreRepository;
 import konkuk.corkCharge.domain.corkageStore.repository.MultiCorkageRepository;
@@ -172,4 +174,30 @@ public class CorkageStoreService {
                 .toList();
     }
 
+    @Transactional
+    public PostAdminCorkageResponse adminRequestCorkage(PostAdminCorkageRequest request, Long userId){
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(USER_NOT_FOUND));
+
+        if(user.getRole() != Role.ADMIN){
+            throw new CustomException(PERMISSION_DENIED);
+        }
+
+        Restaurant restaurant = restaurantRepository.findById(request.restaurantId())
+                .orElseThrow((() -> new CustomException(RESTAURANT_NOT_FOUND)));
+
+        String thumbnailUrl = restaurant.getImages().stream()
+                .filter(img -> img.getCategory() == ImageCategory.RESTAURANT)
+                .filter(img -> img.getType()     == ImageType.MENU)
+                .map(Image::getImageUrl)
+                .findFirst()
+                .orElse(null);
+
+        return new PostAdminCorkageResponse(
+                request.restaurantId(),
+                request.name(),
+                request.address(),
+                thumbnailUrl
+        );
+    }
 }
