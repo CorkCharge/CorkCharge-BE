@@ -48,6 +48,9 @@ dependencies {
 
 	// Swagger
 	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.5'
+
+	// Playwright
+	implementation "com.microsoft.playwright:playwright:1.46.0"
 }
 
 tasks.named('test') {
