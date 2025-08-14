@@ -45,7 +45,7 @@ public class UserService {
 
         return new GetUserProfileResponse(
                 user.getName(),
-                user.getSocialId(),
+                user.getEmail(),
                 imageUrl
         );
     }
