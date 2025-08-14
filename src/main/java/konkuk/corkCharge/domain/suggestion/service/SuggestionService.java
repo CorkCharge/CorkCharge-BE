@@ -41,7 +41,7 @@ public class SuggestionService {
 
     @Transactional(readOnly = true)
     public List<GetSuggestionListResponse> getSuggestions(Long userId){
-        User user = userRepository.findById(userId)
+        userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(USER_NOT_FOUND));
 
         return suggestionRepository.findAllByUser_UserId(userId).stream()
@@ -54,7 +54,10 @@ public class SuggestionService {
     }
 
     @Transactional
-    public GetSuggestionDetailResponse getSuggestionDetail(Long suggestionId){
+    public GetSuggestionDetailResponse getSuggestionDetail(Long userId, Long suggestionId){
+        userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(USER_NOT_FOUND));
+
         Suggestion suggestion = suggestionRepository.findById(suggestionId)
                 .orElseThrow(() -> new CustomException(SUGGESTION_NOT_FOUND));
 
