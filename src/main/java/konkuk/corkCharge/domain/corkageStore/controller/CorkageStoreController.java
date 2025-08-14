@@ -2,6 +2,7 @@ package konkuk.corkCharge.domain.corkageStore.controller;
 
 import konkuk.corkCharge.domain.corkageStore.dto.request.GetCorkageFilterRequest;
 import konkuk.corkCharge.domain.corkageStore.dto.request.PostAddCorkageRequest;
+import konkuk.corkCharge.domain.corkageStore.dto.response.GetCorkageVerificationResponse;
 import konkuk.corkCharge.domain.corkageStore.service.CorkageStoreService;
 import konkuk.corkCharge.domain.restaurant.dto.response.GetSearchRestaurantResponse;
 import konkuk.corkCharge.global.response.BaseResponse;
@@ -32,4 +33,8 @@ public class CorkageStoreController {
         return BaseResponse.ok(corkageStoreService.filterCorkageStores(request));
     }
 
+    @GetMapping("/verify")
+    public BaseResponse<List<GetCorkageVerificationResponse>> requestCorkage(@RequestParam Long userId){
+        return BaseResponse.ok(corkageStoreService.requestCorkage(userId));
+    }
 }

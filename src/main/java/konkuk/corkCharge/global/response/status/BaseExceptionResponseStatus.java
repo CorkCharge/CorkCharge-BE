@@ -57,7 +57,12 @@ public enum BaseExceptionResponseStatus implements ResponseStatus {
     /**
      * 120000 : Bookmark
      */
-    BOOKMARK_NOT_FOUND(120000, "해당 북마크를 찾을 수 없습니다.");
+    BOOKMARK_NOT_FOUND(120000, "해당 북마크를 찾을 수 없습니다."),
+
+    /**
+     * 130000 : Suggestion
+     */
+    SUGGESTION_NOT_FOUND(130000, "해당 문의하기를 찾을 수 없습니다.");
 
     private final boolean success = false;
     private final int code;
