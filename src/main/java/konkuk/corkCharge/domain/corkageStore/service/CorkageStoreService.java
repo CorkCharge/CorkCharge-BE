@@ -45,9 +45,9 @@ public class CorkageStoreService {
     private final ImageRepository imageRepository;
 
     @Transactional
-    public void createCorkage(PostAddCorkageRequest request) {
+    public void createCorkage(Long userId, PostAddCorkageRequest request) {
 
-        User user = userRepository.findById(request.userId())
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(USER_NOT_FOUND));
 
         if (user.getRole() == Role.USER) {

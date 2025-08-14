@@ -5,7 +5,7 @@ import lombok.Getter;
 
 public record GetUserProfileResponse (
     String name,
-    String social_id,
+    String email,
     String image_url
 )
 {

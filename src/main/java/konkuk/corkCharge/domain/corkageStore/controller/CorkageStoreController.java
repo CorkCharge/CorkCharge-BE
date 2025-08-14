@@ -7,6 +7,7 @@ import konkuk.corkCharge.domain.corkageStore.dto.response.GetCorkageVerification
 import konkuk.corkCharge.domain.corkageStore.dto.response.PostAdminCorkageResponse;
 import konkuk.corkCharge.domain.corkageStore.service.CorkageStoreService;
 import konkuk.corkCharge.domain.restaurant.dto.response.GetSearchRestaurantResponse;
+import konkuk.corkCharge.global.annotation.LoginUserId;
 import konkuk.corkCharge.global.response.BaseResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -22,9 +23,10 @@ public class CorkageStoreController {
 
     @PostMapping
     public BaseResponse<Void> createCorkage(
+            @LoginUserId Long userId,
             @RequestBody PostAddCorkageRequest request
     ) {
-        corkageStoreService.createCorkage(request);
+        corkageStoreService.createCorkage(userId, request);
         return BaseResponse.ok(null);
     }
 
@@ -36,12 +38,17 @@ public class CorkageStoreController {
     }
 
     @GetMapping("/verify")
-    public BaseResponse<List<GetCorkageVerificationResponse>> requestCorkage(@RequestParam Long userId){
+    public BaseResponse<List<GetCorkageVerificationResponse>> requestCorkage(
+            @LoginUserId Long userId
+    ){
         return BaseResponse.ok(corkageStoreService.requestCorkage(userId));
     }
 
     @PostMapping("/request/admin")
-    public BaseResponse<PostAdminCorkageResponse> adminRequestCorkage(@RequestBody PostAdminCorkageRequest request, @RequestParam Long userId){
+    public BaseResponse<PostAdminCorkageResponse> adminRequestCorkage(
+            @RequestBody PostAdminCorkageRequest request,
+            @LoginUserId Long userId
+    ){
         return BaseResponse.ok(corkageStoreService.adminRequestCorkage(request, userId));
     }
 }
