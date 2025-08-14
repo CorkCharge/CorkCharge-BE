@@ -79,7 +79,11 @@ public class BookmarkService {
     }
 
     @Transactional
-    public void deleteBookmark(Long bookmarkId){
+    public void deleteBookmark(Long userId, Long bookmarkId){
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(()-> new CustomException(USER_NOT_FOUND));
+
         Bookmark bookmark = bookmarkRepository.findById(bookmarkId)
                         .orElseThrow(() -> new CustomException(BOOKMARK_NOT_FOUND));
 
