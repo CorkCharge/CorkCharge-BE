@@ -36,8 +36,8 @@ public class ReviewService {
     private final ImageRepository imageRepository;
     private final S3ImageService s3ImageService;
 
-    public void createReview(Long restaurantId, PostReviewCreateRequest requestDto, List<MultipartFile> images) {
-         User user = userRepository.findById(requestDto.userId())
+    public void createReview(Long userId, Long restaurantId, PostReviewCreateRequest requestDto, List<MultipartFile> images) {
+         User user = userRepository.findById(userId)
                  .orElseThrow(() -> new CustomException(USER_NOT_FOUND));
 
         Restaurant restaurant = restaurantRepository.findById(restaurantId)
@@ -93,11 +93,11 @@ public class ReviewService {
     }
 
     @Transactional
-    public void updateReview(Long reviewId, PatchUpdateReviewRequest request, List<MultipartFile> images) {
+    public void updateReview(Long userId, Long reviewId, PatchUpdateReviewRequest request, List<MultipartFile> images) {
         Review review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new CustomException(REVIEW_NOT_FOUND));
 
-        User user = userRepository.findById(request.userId())
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(USER_NOT_FOUND));
 
         if (!review.getUser().getUserId().equals(user.getUserId())) {
@@ -129,7 +129,7 @@ public class ReviewService {
     }
 
     @Transactional
-    public void deleteReview(Long reviewId, Long userId) {
+    public void deleteReview(Long userId, Long reviewId) {
         Review review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new CustomException(REVIEW_NOT_FOUND));
 

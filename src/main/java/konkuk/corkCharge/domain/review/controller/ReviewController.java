@@ -4,6 +4,7 @@ import konkuk.corkCharge.domain.review.dto.request.PatchUpdateReviewRequest;
 import konkuk.corkCharge.domain.review.dto.request.PostReviewCreateRequest;
 import konkuk.corkCharge.domain.review.dto.response.GetCorkageScoreResponse;
 import konkuk.corkCharge.domain.review.service.ReviewService;
+import konkuk.corkCharge.global.annotation.LoginUserId;
 import konkuk.corkCharge.global.response.BaseResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -20,11 +21,12 @@ public class ReviewController {
 
     @PostMapping("/{restaurantId}")
     public BaseResponse<Void> createReview(
+            @LoginUserId Long userId,
             @PathVariable(name = "restaurantId") Long restaurantId,
             @RequestPart(value = "request") PostReviewCreateRequest request,
             @RequestPart(value = "images", required = false) List<MultipartFile> images
     ) {
-        reviewService.createReview(restaurantId, request, images);
+        reviewService.createReview(userId, restaurantId, request, images);
         return BaseResponse.ok(null);
     }
 
@@ -37,20 +39,21 @@ public class ReviewController {
 
     @PatchMapping("/{reviewId}")
     public BaseResponse<Void> updateReview(
+            @LoginUserId Long userId,
             @PathVariable(name = "reviewId") Long reviewId,
             @RequestPart("request") PatchUpdateReviewRequest request,
             @RequestPart(value = "images", required = false) List<MultipartFile> images
     ) {
-        reviewService.updateReview(reviewId, request, images);
+        reviewService.updateReview(userId, reviewId, request, images);
         return BaseResponse.ok(null);
     }
 
     @DeleteMapping("/{reviewId}")
     public BaseResponse<Void> deleteReview(
-            @PathVariable(name = "reviewId") Long reviewId,
-            @RequestParam(name = "userId") Long userId
+            @LoginUserId Long userId,
+            @PathVariable(name = "reviewId") Long reviewId
     ) {
-        reviewService.deleteReview(reviewId, userId);
+        reviewService.deleteReview(userId, reviewId);
         return BaseResponse.ok(null);
     }
 

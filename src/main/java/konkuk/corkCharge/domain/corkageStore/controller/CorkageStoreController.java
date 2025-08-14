@@ -4,6 +4,7 @@ import konkuk.corkCharge.domain.corkageStore.dto.request.GetCorkageFilterRequest
 import konkuk.corkCharge.domain.corkageStore.dto.request.PostAddCorkageRequest;
 import konkuk.corkCharge.domain.corkageStore.service.CorkageStoreService;
 import konkuk.corkCharge.domain.restaurant.dto.response.GetSearchRestaurantResponse;
+import konkuk.corkCharge.global.annotation.LoginUserId;
 import konkuk.corkCharge.global.response.BaseResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -19,9 +20,10 @@ public class CorkageStoreController {
 
     @PostMapping
     public BaseResponse<Void> createCorkage(
+            @LoginUserId Long userId,
             @RequestBody PostAddCorkageRequest request
     ) {
-        corkageStoreService.createCorkage(request);
+        corkageStoreService.createCorkage(userId, request);
         return BaseResponse.ok(null);
     }
 
