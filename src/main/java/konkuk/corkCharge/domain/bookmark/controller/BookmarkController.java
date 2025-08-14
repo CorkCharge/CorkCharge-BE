@@ -19,8 +19,8 @@ public class BookmarkController {
     }
 
     @DeleteMapping("/{bookmarkId}")
-    public BaseResponse<Void> deleteBookmark(@PathVariable Long bookmarkId){
-        bookmarkService.deleteBookmark(bookmarkId);
+    public BaseResponse<Void> deleteBookmark(@RequestParam Long userId, @PathVariable Long bookmarkId){
+        bookmarkService.deleteBookmark(userId, bookmarkId);
         return BaseResponse.ok(null);
     }
 }
