@@ -4,7 +4,7 @@ import java.util.List;
 
 public record PostAddCorkageRequest(
         Long restaurantId,
-        String CorkageType,
+        String corkageType,
         int corkagePrice,
         List<MultiCorkageRequest> multiCorkages,
         List<String> optionTypes,

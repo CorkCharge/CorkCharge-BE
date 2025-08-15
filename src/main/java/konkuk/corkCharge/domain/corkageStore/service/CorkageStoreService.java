@@ -61,7 +61,7 @@ public class CorkageStoreService {
             throw new CustomException(ALREADY_REGISTERED_CORKAGE);
         }
 
-        CorkageType corkageType = CorkageType.valueOf(request.CorkageType());
+        CorkageType corkageType = CorkageType.valueOf(request.corkageType());
 
         CorkageStore corkageStore = CorkageStore.builder()
                 .restaurant(restaurant)
