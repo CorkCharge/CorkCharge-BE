@@ -98,7 +98,7 @@ spring:
             client-name: naver
             client-id: ${NAVER_OAUTH_CLIENT_ID}
             client-secret: ${NAVER_OAUTH_CLIENT_SECRET}
-            redirect-uri: http://localhost:8000/oauth/naver/login
+            redirect-uri: https://cork-charge-fe-deployment.vercel.app/signin/callback
             authorization-grant-type: authorization_code
             scope:
               - name
