@@ -48,6 +48,7 @@ public class SuggestionService {
                 .map(suggestion -> new GetSuggestionListResponse(
                         suggestion.getSuggestionId(),
                         suggestion.getTitle(),
+                        suggestion.isCompleted(),
                         suggestion.getCreatedAt()
                 ))
                 .toList();

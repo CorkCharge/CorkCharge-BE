@@ -28,6 +28,9 @@ public class Suggestion extends BaseEntity {
     @Column(name = "content", columnDefinition = "TEXT")
     private String content;
 
+    @Column(name = "completed")
+    private boolean completed = false;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "suggestion_category", nullable = false)
     private SuggestionCategory suggestionCategory;

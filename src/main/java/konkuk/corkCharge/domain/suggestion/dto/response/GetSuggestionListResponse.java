@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 public record GetSuggestionListResponse(
     Long suggestionId,
     String title,
+    boolean completed,
     LocalDateTime createdAt
 ) {
 }
