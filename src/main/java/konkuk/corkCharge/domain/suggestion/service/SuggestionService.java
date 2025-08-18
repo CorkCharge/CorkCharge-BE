@@ -4,6 +4,7 @@ import konkuk.corkCharge.domain.restaurant.domain.Restaurant;
 import konkuk.corkCharge.domain.restaurant.repository.RestaurantRepository;
 import konkuk.corkCharge.domain.suggestion.domain.Suggestion;
 import konkuk.corkCharge.domain.suggestion.dto.request.PostSuggestionRequest;
+import konkuk.corkCharge.domain.suggestion.dto.response.GetSuggestionDetailResponse;
 import konkuk.corkCharge.domain.suggestion.dto.response.GetSuggestionListResponse;
 import konkuk.corkCharge.domain.suggestion.repository.SuggestionRepository;
 import konkuk.corkCharge.domain.user.domain.User;
@@ -15,8 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-import static konkuk.corkCharge.global.response.status.BaseExceptionResponseStatus.RESTAURANT_NOT_FOUND;
-import static konkuk.corkCharge.global.response.status.BaseExceptionResponseStatus.USER_NOT_FOUND;
+import static konkuk.corkCharge.global.response.status.BaseExceptionResponseStatus.*;
 
 @Service
 @RequiredArgsConstructor
@@ -41,7 +41,7 @@ public class SuggestionService {
 
     @Transactional(readOnly = true)
     public List<GetSuggestionListResponse> getSuggestions(Long userId){
-        User user = userRepository.findById(userId)
+        userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(USER_NOT_FOUND));
 
         return suggestionRepository.findAllByUser_UserId(userId).stream()
@@ -52,6 +52,21 @@ public class SuggestionService {
                         suggestion.getCreatedAt()
                 ))
                 .toList();
+    }
+
+    @Transactional
+    public GetSuggestionDetailResponse getSuggestionDetail(Long userId, Long suggestionId){
+        userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(USER_NOT_FOUND));
+
+        Suggestion suggestion = suggestionRepository.findById(suggestionId)
+                .orElseThrow(() -> new CustomException(SUGGESTION_NOT_FOUND));
+
+        return new GetSuggestionDetailResponse(
+                suggestion.getTitle(),
+                suggestion.getContent(),
+                suggestion.getCreatedAt()
+        );
     }
 }
 

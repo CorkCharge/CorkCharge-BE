@@ -51,7 +51,7 @@ public class GwangjinRestaurantOpenApiClient {
                         .latitude(0.0)
                         .longitude(0.0)
                         .bookmarkCount(0)
-                        .rating(null)
+                        .rating(0.0)
                         .hasCorkage(false)
                         .build();
 

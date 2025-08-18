@@ -2,7 +2,6 @@ package konkuk.corkCharge.domain.user.service;
 
 import konkuk.corkCharge.domain.image.domain.Image;
 import konkuk.corkCharge.domain.image.domain.ImageCategory;
-import konkuk.corkCharge.domain.image.domain.ImageType;
 import konkuk.corkCharge.domain.image.repository.ImageRepository;
 import konkuk.corkCharge.domain.image.service.S3ImageService;
 import konkuk.corkCharge.domain.restaurant.domain.Restaurant;
@@ -46,7 +45,7 @@ public class UserService {
 
         return new GetUserProfileResponse(
                 user.getName(),
-                user.getSocialId(),
+                user.getEmail(),
                 imageUrl
         );
     }
@@ -141,10 +140,11 @@ public class UserService {
     }
 
     @Transactional
-    public void updateUserRole(Long userId, Role role){
+    public Role updateUserRole(Long userId, Role role){
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(USER_NOT_FOUND));
 
         user.setRole(role);
+        return role;
     }
 }
