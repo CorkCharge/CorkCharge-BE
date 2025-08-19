@@ -11,7 +11,8 @@ public record ReviewResponse(
         String content,
         int rating,
         LocalDateTime createdAt,
-        List<String> imageUrls
+        List<String> imageUrls,
+        int savedCount
 ) {
     public static ReviewResponse from(Review review) {
         List<String> imageUrls = review.getImages().stream()
@@ -23,7 +24,8 @@ public record ReviewResponse(
                 review.getContent(),
                 review.getRating(),
                 review.getCreatedAt(),
-                imageUrls
+                imageUrls,
+                review.getBookmarkCount() == null ? 0 : review.getBookmarkCount()
         );
     }
 }
