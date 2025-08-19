@@ -42,13 +42,14 @@ public class SecurityConfig {
                                 "/restaurants/filter",
                                 "/restaurants/map",
                                 "/reviews/corkageScore",
+                                "/tips",
                                 "/tips/*")
                         .permitAll()
 
                         .requestMatchers(HttpMethod.POST,
                                 "/corkages/filter",
                                 "/restaurants/cluster/list",
-                                "/tips/*")
+                                "/tips")
                         .permitAll()
 
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
