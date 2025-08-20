@@ -2,6 +2,7 @@ package konkuk.corkCharge.domain.user.domain;
 
 import jakarta.persistence.*;
 import konkuk.corkCharge.domain.helpRequest.domain.HelpRequest;
+import konkuk.corkCharge.domain.ownerRestaurant.domain.OwnerRestaurant;
 import konkuk.corkCharge.domain.review.domain.Review;
 import konkuk.corkCharge.global.entity.BaseEntity;
 import lombok.*;
@@ -44,6 +45,9 @@ public class User extends BaseEntity {
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<HelpRequest> helpRequests = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    private List<OwnerRestaurant> ownerRestaurants = new ArrayList<>();
 
     public void addReview(Review review) {
         reviews.add(review);
