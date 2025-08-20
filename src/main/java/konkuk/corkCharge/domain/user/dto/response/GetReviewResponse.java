@@ -8,6 +8,7 @@ public record GetReviewResponse(
         Long userId,
         String content,
         int rating,
+        String reviewImageUrl,
         LocalDateTime createdAt
 ) {
 }

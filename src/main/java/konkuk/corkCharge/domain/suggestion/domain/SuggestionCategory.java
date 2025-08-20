@@ -7,8 +7,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum SuggestionCategory {
     CORKAGE_ERROR("콜키지 정보 오류"),
-    OTHER_ERROR("기타 정보 오류")
-    ;
+    RESTAURANT_INFORMATION_ERROR("가게 정보 오류"),
+    OTHER_ERROR("기타 정보 오류");
 
     private final String categoryName;
 }

@@ -32,7 +32,7 @@ public class Suggestion extends BaseEntity {
     private boolean completed = false;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "suggestion_category", nullable = false)
+    @Column(name = "suggestion_category", length = 20, nullable = false)
     private SuggestionCategory suggestionCategory;
 
 }

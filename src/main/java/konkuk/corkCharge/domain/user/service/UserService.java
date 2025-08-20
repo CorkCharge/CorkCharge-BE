@@ -23,6 +23,9 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static konkuk.corkCharge.domain.image.domain.ImageCategory.RESTAURANT;
+import static konkuk.corkCharge.domain.image.domain.ImageCategory.REVIEW;
+import static konkuk.corkCharge.domain.image.domain.ImageType.MAIN;
 import static konkuk.corkCharge.global.response.status.BaseExceptionResponseStatus.USER_NOT_FOUND;
 
 @Service
@@ -90,6 +93,7 @@ public class UserService {
 
         List<Review> reviews = reviewRepository.findAllByUser_UserId(userId);
 
+
         return reviews.stream()
                 .map(review -> new GetReviewResponse(
                         review.getReviewId(),
@@ -97,6 +101,10 @@ public class UserService {
                         userId,
                         review.getContent(),
                         review.getRating(),
+                        review.getImages().stream()
+                                .filter(image -> image.getCategory() == REVIEW)
+                                .map(Image::getImageUrl)
+                                .findFirst().orElse(null),
                         review.getCreatedAt()
                 )).collect(Collectors.toList());
 
