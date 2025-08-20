@@ -4,6 +4,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import konkuk.corkCharge.global.exception.CustomException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -24,12 +25,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         if (header != null && header.startsWith("Bearer ")) {
             String token = header.substring("Bearer ".length()).trim();
-            if (jwtUtil.isTokenValid(token)) {
-                Long userId = jwtUtil.extractUserIdFromToken(token);
+            try {
+                Long userId = jwtUtil.authenticateTokenAndGetUserId(token);
                 Authentication auth = new JwtTokenAuthentication(userId);
                 SecurityContextHolder.getContext().setAuthentication(auth);
+            } catch (CustomException ex) {
+                SecurityContextHolder.clearContext();
+                throw ex;
             }
         }
+
         chain.doFilter(request, response);
     }
 }
