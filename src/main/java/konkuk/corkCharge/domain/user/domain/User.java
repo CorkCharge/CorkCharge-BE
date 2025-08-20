@@ -35,6 +35,9 @@ public class User extends BaseEntity {
     @Column(name = "role")
     private Role role;
 
+    @Column(name = "registrationImageUrl")
+    private String registrationImageUrl;
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Review> reviews = new ArrayList<>();
 
