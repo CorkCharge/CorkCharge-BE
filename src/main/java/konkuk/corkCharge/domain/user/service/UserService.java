@@ -135,7 +135,7 @@ public class UserService {
 
         return new GetMyPageResponse(
                 user.getName(),
-                user.getSocialId(),
+                user.getEmail(),
                 reviewDtos
         );
     }

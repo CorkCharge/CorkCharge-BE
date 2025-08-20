@@ -6,7 +6,7 @@ import java.util.List;
 
 public record GetMyPageResponse(
         String nickname,
-        String socialId,
+        String email,
         List<GetMyPageReviewResponse> reviews
 ) {
 }
