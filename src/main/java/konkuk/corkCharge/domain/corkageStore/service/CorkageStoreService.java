@@ -159,7 +159,7 @@ public class CorkageStoreService {
                 .map(restaurant -> {
                     String thumbnailUrl = restaurant.getImages().stream()
                             .filter(img -> img.getCategory() == ImageCategory.RESTAURANT)
-                            .filter(img -> img.getType()     == ImageType.MENU)
+                            .filter(img -> img.getType()     == ImageType.MAIN)
                             .map(Image::getImageUrl)
                             .findFirst()
                             .orElse(null);
