@@ -2,6 +2,7 @@ package konkuk.corkCharge.domain.user.service;
 
 import konkuk.corkCharge.domain.image.domain.Image;
 import konkuk.corkCharge.domain.image.domain.ImageCategory;
+import konkuk.corkCharge.domain.image.domain.ImageType;
 import konkuk.corkCharge.domain.image.repository.ImageRepository;
 import konkuk.corkCharge.domain.image.service.S3ImageService;
 import konkuk.corkCharge.domain.restaurant.domain.Restaurant;
@@ -60,7 +61,7 @@ public class UserService {
         }
 
         if(imageFile != null && !imageFile.isEmpty()){
-                    String newImageUrl = s3ImageService.uploadImages(List.of(imageFile), ImageCategory.USER, null)
+                    String newImageUrl = s3ImageService.uploadImages(List.of(imageFile), ImageCategory.USER, ImageType.PROFILE)
                             .get(0);
 
             imageRepository.findProfileImageByUser_UserId(userId)
@@ -146,5 +147,23 @@ public class UserService {
 
         user.setRole(role);
         return role;
+    }
+
+    @Transactional
+    public void updateRegistration(Long userId, MultipartFile registrationImage) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(USER_NOT_FOUND));
+
+        if (registrationImage == null || registrationImage.isEmpty()) {
+            return;
+        }
+
+        // 1) S3 업로드 (카테고리는 USER로 분류해 둠. 서비스 내부에서 경로 분리 가능)
+        String imageUrl = s3ImageService
+                .uploadImages(List.of(registrationImage), ImageCategory.USER, ImageType.REGISTRATION_IMAGE)
+                .get(0);
+
+
+        user.setRegistrationImageUrl(imageUrl);
     }
 }
