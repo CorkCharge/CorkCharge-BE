@@ -1,6 +1,7 @@
 package konkuk.corkCharge.domain.bookmark.service;
 
 import konkuk.corkCharge.domain.bookmark.domain.Bookmark;
+import konkuk.corkCharge.domain.bookmark.dto.request.DeleteBookmarkRequest;
 import konkuk.corkCharge.domain.bookmark.dto.request.PostBookmarkRequest;
 import konkuk.corkCharge.domain.bookmark.dto.response.GetSavedReviewResponse;
 import konkuk.corkCharge.domain.bookmark.dto.response.GetSavedTipResponse;
@@ -79,13 +80,16 @@ public class BookmarkService {
     }
 
     @Transactional
-    public void deleteBookmark(Long userId, Long bookmarkId){
+    public void deleteBookmark(Long userId, DeleteBookmarkRequest request){
 
         User user = userRepository.findById(userId)
                 .orElseThrow(()-> new CustomException(USER_NOT_FOUND));
 
-        Bookmark bookmark = bookmarkRepository.findById(bookmarkId)
-                        .orElseThrow(() -> new CustomException(BOOKMARK_NOT_FOUND));
+        Bookmark bookmark = bookmarkRepository
+                .findByUser_UserIdAndTargetTypeAndTargetId(
+                        userId, request.targetType(), request.targetId())
+                .orElseThrow(() -> new CustomException(BOOKMARK_NOT_FOUND));
+
 
         bookmarkRepository.delete(bookmark);
         switch(bookmark.getTargetType()) {
