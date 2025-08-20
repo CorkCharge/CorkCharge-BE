@@ -67,4 +67,13 @@ public class UserController {
     ){
         return BaseResponse.ok(userService.updateUserRole(userId, request.role()));
     }
+
+    @PutMapping("/registration")
+    public BaseResponse<Void> updateRegistration(
+            @LoginUserId Long userId,
+            @RequestPart(required = false) MultipartFile image
+    ){
+        userService.updateRegistration(userId, image);
+        return BaseResponse.ok(null);
+    }
 }
