@@ -19,4 +19,6 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
     List<Restaurant> findByAddressContaining(String address);
 
     Optional<Restaurant> findFirstByHasCorkageFalseOrderByBookmarkCountDesc();
+
+    List<Restaurant> findByHasCorkageFalseAndBookmarkCountGreaterThanEqual(int count);
 }

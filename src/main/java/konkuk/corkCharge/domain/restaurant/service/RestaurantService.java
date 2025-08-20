@@ -59,7 +59,7 @@ public class RestaurantService {
 
     @Transactional
     public List<GetHotRestaurantResponse> getHotRestaurants() {
-        List<Restaurant> hotRestaurants = restaurantRepository.findByBookmarkCountGreaterThanEqual(5);
+        List<Restaurant> hotRestaurants = restaurantRepository.findByHasCorkageFalseAndBookmarkCountGreaterThanEqual(5);
 
         return hotRestaurants.stream()
                 .map(GetHotRestaurantResponse::from)
