@@ -41,6 +41,7 @@ public class SecurityConfig {
                                 "/restaurants/search",
                                 "/restaurants/filter",
                                 "/restaurants/map",
+                                "/restaurants/home",
                                 "/reviews/corkageScore",
                                 "/tips",
                                 "/tips/*")
