@@ -4,6 +4,7 @@ import konkuk.corkCharge.domain.review.domain.Review;
 
 public record GetCorkageScoreResponse(
         Long reviewId,
+        Long restaurantId,
         String restaurantName,
         String userName,
         String content,
@@ -19,6 +20,7 @@ public record GetCorkageScoreResponse(
 
         return new GetCorkageScoreResponse(
                 review.getReviewId(),
+                review.getRestaurant().getRestaurantId(),
                 review.getRestaurant().getName(),
                 review.getUser().getName(),
                 review.getContent(),
