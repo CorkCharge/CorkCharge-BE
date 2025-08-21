@@ -72,6 +72,7 @@ public enum BaseExceptionResponseStatus implements ResponseStatus {
     JWT_INVALID(140002, "유효하지 않은 토큰입니다."),
     JWT_REFRESH_NOT_FOUND(140003, "리프레시 토큰을 찾을 수 없습니다."),
     JWT_REFRESH_TOKEN_MISMATCH(140004, "저장된 리프레시 토큰과 일치하지 않습니다."),
+    JWT_EXPIRED(140005, "토큰이 만료되었습니다."),
 
     /**
      * 150000 : OAuth(Naver)

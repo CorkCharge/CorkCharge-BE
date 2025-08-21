@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public record ReviewResponse(
+        Long reviewId,
         String writer,
         String content,
         int rating,
@@ -20,6 +21,7 @@ public record ReviewResponse(
                 .collect(Collectors.toList());
 
         return new ReviewResponse(
+                review.getReviewId(),
                 review.getUser().getName(),
                 review.getContent(),
                 review.getRating(),

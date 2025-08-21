@@ -1,5 +1,6 @@
 package konkuk.corkCharge.domain.restaurant.service;
 
+import konkuk.corkCharge.domain.image.domain.Image;
 import konkuk.corkCharge.domain.corkageStore.domain.CorkageStore;
 import konkuk.corkCharge.domain.corkageStore.domain.MultiCorkage;
 import konkuk.corkCharge.domain.restaurant.domain.Restaurant;
@@ -16,6 +17,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+import static konkuk.corkCharge.domain.image.domain.ImageCategory.RESTAURANT;
+import static konkuk.corkCharge.domain.image.domain.ImageType.MAIN;
 import static konkuk.corkCharge.global.response.status.BaseExceptionResponseStatus.*;
 
 @Service
@@ -56,7 +59,7 @@ public class RestaurantService {
 
     @Transactional
     public List<GetHotRestaurantResponse> getHotRestaurants() {
-        List<Restaurant> hotRestaurants = restaurantRepository.findByBookmarkCountGreaterThanEqual(5);
+        List<Restaurant> hotRestaurants = restaurantRepository.findByHasCorkageFalseAndBookmarkCountGreaterThanEqual(5);
 
         return hotRestaurants.stream()
                 .map(GetHotRestaurantResponse::from)
@@ -169,6 +172,26 @@ public class RestaurantService {
                     .min().orElse(Integer.MAX_VALUE);
             default -> cs.getCorkagePrice() != null ? cs.getCorkagePrice() : Integer.MAX_VALUE;
         };
+    }
+
+    @Transactional(readOnly = true)
+    public GetHomeRestaurantResponse getHomeRestaurant() {
+        Restaurant r = restaurantRepository
+                .findFirstByHasCorkageFalseOrderByBookmarkCountDesc()
+                .orElseThrow(() -> new CustomException(RESTAURANT_NOT_FOUND));
+
+        String imageUrl = r.getImages().stream()
+                .filter(img -> img.getCategory() == RESTAURANT && img.getType() == MAIN)
+                .map(Image::getImageUrl)
+                .findFirst()
+                .orElse(null);
+
+        return new GetHomeRestaurantResponse(
+                r.getRestaurantId(),
+                r.getName(),
+                r.getBookmarkCount() == null ? 0 : r.getBookmarkCount(),
+                imageUrl
+        );
     }
 
 }
