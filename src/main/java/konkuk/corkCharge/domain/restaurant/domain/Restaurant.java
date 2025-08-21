@@ -42,7 +42,7 @@ public class Restaurant extends BaseEntity {
     private String phone;
 
     @Column(name = "rating")
-    private double rating;
+    private Double rating;
 
     @Column(name = "bookmark_count")
     private Integer bookmarkCount = 0;
