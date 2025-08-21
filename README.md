@@ -60,5 +60,12 @@
     박재하 (건국대학교 컴퓨터공학과)
     
     https://github.com/jaepar
-    
+
     임찬규 (건국대학교 컴퓨터공학과)
+
+
+![Uploading KakaoTalk_Photo_2025-08-21-15-38-12.png…]()
+
+<img width="1742" height="1145" alt="KakaoTalk_Photo_2025-08-21-15-38-53" src="https://github.com/user-attachments/assets/3768361e-2d4d-4df8-805c-3230527d4031" />
+
+
