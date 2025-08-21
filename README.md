@@ -63,6 +63,9 @@
 
     임찬규 (건국대학교 컴퓨터공학과)
 
+- **API 명세서**
+      https://iridescent-gear-1c8.notion.site/API-22e15b7ec570816f8534ca7c31454b13?source=copy_link
+
 
 <img width="1132" height="536" alt="KakaoTalk_Photo_2025-08-21-15-38-12" src="https://github.com/user-attachments/assets/c914d64e-722b-42e7-b314-cb8d9f2cbcfa" />
 
