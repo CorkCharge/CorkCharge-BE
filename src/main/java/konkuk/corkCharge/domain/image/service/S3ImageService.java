@@ -83,12 +83,7 @@ public class S3ImageService {
             case REVIEW -> "review";
             case TIP -> "tip";
             case CORKAGE -> "corkage";
-            case USER -> {
-                if (imageType == null) {
-                    throw new IllegalArgumentException("USER category requires non-null ImageType.");
-                }
-                yield "user/" + imageType.name().toLowerCase();
-            }
+            case USER -> "user";
         };
     }
 
