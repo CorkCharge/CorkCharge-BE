@@ -30,7 +30,7 @@ public class Restaurant extends BaseEntity {
     private String address;
 
     @Column(name = "road_zip_code", length = 10)
-    private String roadZipCode; // Todo 이거 어디서 쓰는 필드인 건지?
+    private String roadZipCode; // Todo 이거 어디서 어떤 용도로 사용하는 필드인지?
 
     @Column(name = "latitude", nullable = false)
     private Double latitude;
@@ -57,7 +57,13 @@ public class Restaurant extends BaseEntity {
     private List<Review> reviews = new ArrayList<>();
 
     @OneToMany(mappedBy = "restaurant", cascade = CascadeType.REMOVE)
-    private List<Image> images = new ArrayList<>(); // Todo 이미지 테이블 폴리모픽 구조로 바꾸면 맞추어 연동 예정
+    private List<Image> images = new ArrayList<>();
+
+    @Column(name = "represent_menu", length = 255)
+    private String representMenu;
+
+    @Column(name = "opening_hours", columnDefinition = "TEXT")
+    private String openingHours;
 
     @Builder
     public Restaurant(String name, String address, String roadZipCode, String phone, Double latitude, Double longitude,
