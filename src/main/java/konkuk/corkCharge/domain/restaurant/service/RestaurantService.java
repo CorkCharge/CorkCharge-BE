@@ -3,6 +3,7 @@ package konkuk.corkCharge.domain.restaurant.service;
 import konkuk.corkCharge.domain.image.domain.Image;
 import konkuk.corkCharge.domain.corkageStore.domain.CorkageStore;
 import konkuk.corkCharge.domain.corkageStore.domain.MultiCorkage;
+import konkuk.corkCharge.domain.image.repository.ImageRepository;
 import konkuk.corkCharge.domain.restaurant.domain.Restaurant;
 import konkuk.corkCharge.domain.restaurant.dto.request.GetFilterRequest;
 import konkuk.corkCharge.domain.restaurant.dto.response.*;
@@ -27,6 +28,7 @@ public class RestaurantService {
 
     private final RestaurantRepository restaurantRepository;
     private final NaverGeocodingClient naverGeocodingClient;
+    private final ImageRepository imageRepository;
 
     @Transactional(readOnly = true)
     public List<GetRestaurantListResponse> getCorkageRestaurants() {
@@ -180,10 +182,12 @@ public class RestaurantService {
                 .findFirstByHasCorkageFalseOrderByBookmarkCountDesc()
                 .orElseThrow(() -> new CustomException(RESTAURANT_NOT_FOUND));
 
-        String imageUrl = r.getImages().stream()
-                .filter(img -> img.getCategory() == RESTAURANT && img.getType() == MAIN)
+        // 1순위: 레스토랑 MAIN 이미지
+        String imageUrl = imageRepository
+                .findFirstByCategoryAndTypeIdAndType(RESTAURANT, r.getRestaurantId(), MAIN)
+                // 2순위(없으면): 아무 레스토랑 이미지 한 장
+                .or(() -> imageRepository.findFirstByCategoryAndTypeIdOrderByCreatedAtAsc(RESTAURANT, r.getRestaurantId()))
                 .map(Image::getImageUrl)
-                .findFirst()
                 .orElse(null);
 
         return new GetHomeRestaurantResponse(

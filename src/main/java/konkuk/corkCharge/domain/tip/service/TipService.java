@@ -39,20 +39,20 @@ public class TipService {
 
         tipRepository.save(tip);
 
-        if(images !=null && !images.isEmpty()){
+        if (images != null && !images.isEmpty()) {
             List<String> uploadedUrls = s3ImageService.uploadImages(images, TIP, null);
 
             List<Image> imageEntities = new ArrayList<>();
-            for(String url : uploadedUrls){
+            for (String url : uploadedUrls) {
                 Image image = Image.builder()
-                        .tip(tip)
-                        .imageUrl(url)
+                        .typeId(tip.getTipId())
                         .category(TIP)
+                        .imageUrl(url)
                         .build();
                 imageEntities.add(image);
             }
             imageRepository.saveAll(imageEntities);
-            tip.setImages(imageEntities);
+
         }
     }
 
