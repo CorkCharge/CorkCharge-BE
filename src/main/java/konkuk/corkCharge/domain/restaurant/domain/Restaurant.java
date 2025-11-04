@@ -57,7 +57,7 @@ public class Restaurant extends BaseEntity {
     private List<Review> reviews = new ArrayList<>();
 
     @OneToMany(mappedBy = "restaurant", cascade = CascadeType.REMOVE)
-    private List<Image> images = new ArrayList<>();
+    private List<Image> images = new ArrayList<>(); // Todo 이미지 테이블 폴리모픽 구조로 바꾸면 맞추어 연동 예정
 
     @Builder
     public Restaurant(String name, String address, String roadZipCode, String phone, Double latitude, Double longitude,
