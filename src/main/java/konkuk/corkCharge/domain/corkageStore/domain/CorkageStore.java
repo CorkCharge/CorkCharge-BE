@@ -47,9 +47,6 @@ public class CorkageStore extends BaseEntity {
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
-    @OneToMany(mappedBy = "corkageStore", cascade = CascadeType.REMOVE)
-    private List<Image> images = new ArrayList<>();
-
     public void addMultiPrice(MultiCorkage price) {
         this.multiPrices.add(price);
     }

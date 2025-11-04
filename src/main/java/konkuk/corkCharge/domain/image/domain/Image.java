@@ -10,7 +10,10 @@ import konkuk.corkCharge.global.entity.BaseEntity;
 import lombok.*;
 
 @Entity
-@Table(name = "image")
+@Table(name = "image",
+        indexes = {
+                @Index(name = "idx_image_owner", columnList = "category,type_id")
+        })
 @Getter
 @Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -22,25 +25,25 @@ public class Image extends BaseEntity {
     @Column(name = "image_id")
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
-    private User user;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "restaurant_id")
-    private Restaurant restaurant;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "corkage_store_id")
-    private CorkageStore corkageStore;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "review_id")
-    private Review review;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "tip_id")
-    private Tip tip;
+//    @ManyToOne(fetch = FetchType.LAZY)
+//    @JoinColumn(name = "user_id")
+//    private User user;
+//
+//    @ManyToOne(fetch = FetchType.LAZY)
+//    @JoinColumn(name = "restaurant_id")
+//    private Restaurant restaurant;
+//
+//    @ManyToOne(fetch = FetchType.LAZY)
+//    @JoinColumn(name = "corkage_store_id")
+//    private CorkageStore corkageStore;
+//
+//    @ManyToOne(fetch = FetchType.LAZY)
+//    @JoinColumn(name = "review_id")
+//    private Review review;
+//
+//    @ManyToOne(fetch = FetchType.LAZY)
+//    @JoinColumn(name = "tip_id")
+//    private Tip tip;
 
     @Column(name = "image_url", nullable = false)
     private String imageUrl;
@@ -52,4 +55,7 @@ public class Image extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(length = 100)
     private ImageCategory category;
+
+    @Column(name = "type_id", nullable = false)
+    private Long typeId;
 }

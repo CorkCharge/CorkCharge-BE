@@ -56,8 +56,8 @@ public class Restaurant extends BaseEntity {
     @OneToMany(mappedBy = "restaurant", cascade = CascadeType.REMOVE)
     private List<Review> reviews = new ArrayList<>();
 
-    @OneToMany(mappedBy = "restaurant", cascade = CascadeType.REMOVE)
-    private List<Image> images = new ArrayList<>();
+//    @OneToMany(mappedBy = "restaurant", cascade = CascadeType.REMOVE)
+//    private List<Image> images = new ArrayList<>();
 
     @Column(name = "represent_menu", length = 255)
     private String representMenu;
