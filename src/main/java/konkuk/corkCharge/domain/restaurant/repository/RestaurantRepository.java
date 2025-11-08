@@ -2,6 +2,8 @@ package konkuk.corkCharge.domain.restaurant.repository;
 
 import konkuk.corkCharge.domain.restaurant.domain.Restaurant;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -21,4 +23,23 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
     Optional<Restaurant> findFirstByHasCorkageFalseOrderByBookmarkCountDesc();
 
     List<Restaurant> findByHasCorkageFalseAndBookmarkCountGreaterThanEqual(int count);
+
+    // 공간 인덱스 활용 범위 검색
+    @Query(value = """
+        SELECT r FROM Restaurant r
+        WHERE r.hasCorkage = true
+          AND ST_Within(
+                r.location,
+                ST_MakeEnvelope(:lonMin, :latMin, :lonMax, :latMax, 4326)
+              ) = true
+        """)
+    List<Restaurant> findCorkageRestaurantsInBounds(
+            @Param("latMin") double latMin,
+            @Param("latMax") double latMax,
+            @Param("lonMin") double lonMin,
+            @Param("lonMax") double lonMax
+    );
+
+    // 좌표 정보가 비어 있는 레스토랑 찾는 함수
+    List<Restaurant> findByLocationIsNull();
 }

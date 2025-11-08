@@ -14,6 +14,10 @@ import konkuk.corkCharge.global.exception.CustomException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.Point;
+import org.locationtech.jts.geom.PrecisionModel;
 
 import java.util.List;
 
@@ -108,32 +112,14 @@ public class RestaurantService {
         return matchedRestaurants;
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public List<?> GetMapCluster(String level, double latMin, double latMax, double lonMin, double lonMax) {
-        List<Restaurant> restaurants = restaurantRepository.findByHasCorkageTrue();
+        // DB에서 바로 공간 인덱스 기반으로 범위 내 매장 검색
+        List<Restaurant> filtered = restaurantRepository.findCorkageRestaurantsInBounds(latMin, latMax, lonMin, lonMax);
 
-        if (restaurants.isEmpty()) {
+        if (filtered.isEmpty()) {
             throw new CustomException(CORKAGE_RESTAURANT_NOT_FOUND);
         }
-
-        // 위도/경도가 없는 매장의 경우 추가
-        restaurants.forEach(restaurant -> {
-            if (restaurant.getLatitude() == 0 || restaurant.getLongitude() == 0) {
-                NaverMapsResponse response = naverGeocodingClient.getCoordinatesByAddress(restaurant.getAddress());
-                if (!response.addresses().isEmpty()) {
-                    Address address = response.addresses().get(0);
-                    restaurant.updateCoordinates(
-                            Double.parseDouble(address.latitude()),
-                            Double.parseDouble(address.longitude())
-                    );
-                }
-            }
-        });
-
-        List<Restaurant> filtered = restaurants.stream()
-                .filter(r -> r.getLatitude() >= latMin && r.getLatitude() <= latMax)
-                .filter(r -> r.getLongitude() >= lonMin && r.getLongitude() <= lonMax)
-                .toList();
 
         return switch (level) {
             case "restaurant" -> filtered.stream()
@@ -146,6 +132,26 @@ public class RestaurantService {
 
             default -> throw new CustomException(BAD_REQUEST);
         };
+    }
+
+    @Transactional
+    public void updateMissingLocations() { // 좌표 정보 없는 가게 찾는 함수.
+        List<Restaurant> withoutCoords = restaurantRepository.findByLocationIsNull();
+
+        if (withoutCoords.isEmpty()) return;
+
+        GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), 4326);
+
+        withoutCoords.forEach(restaurant -> {
+            NaverMapsResponse response = naverGeocodingClient.getCoordinatesByAddress(restaurant.getAddress());
+            if (!response.addresses().isEmpty()) {
+                Address address = response.addresses().get(0);
+                double lat = Double.parseDouble(address.latitude());
+                double lon = Double.parseDouble(address.longitude());
+                Point point = geometryFactory.createPoint(new Coordinate(lon, lat));
+                restaurant.updateCoordinates(lat, lon, point);
+            }
+        });
     }
 
     @Transactional(readOnly = true)
