@@ -52,6 +52,10 @@ dependencies {
 
 	implementation 'org.springframework.boot:spring-boot-starter-security'         // Spring Security
 	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'     // OAuth2 Client`
+
+    // 공간 인덱스
+    implementation 'org.hibernate.orm:hibernate-spatial:6.5.2.Final'
+    implementation 'org.locationtech.jts:jts-core:1.19.0'
 }
 
 tasks.named('test') {
