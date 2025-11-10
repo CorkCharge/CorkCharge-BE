@@ -16,9 +16,8 @@ import org.locationtech.jts.geom.Point;
 import jakarta.persistence.Index;
 
 @Entity
-@Table(name = "restaurant", indexes = {
-        @Index(name = "idx_restaurant_location", columnList = "location")
-})@Getter
+@Table(name = "restaurant")
+@Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Restaurant extends BaseEntity {
     @Id
@@ -42,8 +41,7 @@ public class Restaurant extends BaseEntity {
     private Double longitude;
 
     // 공간 인덱스를 위한 POINT 컬럼 추가
-    // nullable은 잠시 true로 변경
-    @Column(columnDefinition = "POINT SRID 4326")
+    @Column(name = "location", columnDefinition = "POINT SRID 4326 NOT NULL")
     private Point location;
 
     @Column(name = "phone", length = 100)
