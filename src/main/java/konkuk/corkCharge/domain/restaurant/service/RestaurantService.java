@@ -54,6 +54,10 @@ public class RestaurantService {
 
     @Transactional
     public List<GetSearchRestaurantResponse> searchRestaurants(String keyword) {
+
+        //임시
+        updateMissingLocations();
+
         List<Restaurant> matchedRestaurants = restaurantRepository.findByNameContaining(keyword);
 
         return matchedRestaurants.stream()
