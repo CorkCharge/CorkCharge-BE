@@ -31,19 +31,8 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
       WHERE r.has_corkage = 1
         AND ST_Within(
               r.location,
-              ST_GeomFromText(
-                CONCAT(
-                  'POLYGON((',
-                    :lonMin,' ',:latMin,',',
-                    :lonMax,' ',:latMin,',',
-                    :lonMax,' ',:latMax,',',
-                    :lonMin,' ',:latMax,',',
-                    :lonMin,' ',:latMin,
-                  '))'
-                ),
-                4326
-              )
-            ) = 1
+              ST_MakeEnvelope(:lonMin, :latMin, :lonMax, :latMax, 4326)
+            )
     """, nativeQuery = true)
     List<Restaurant> findCorkageRestaurantsInBounds(
             @Param("latMin") double latMin,
