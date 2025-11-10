@@ -26,13 +26,24 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
 
     // 공간 인덱스 활용 범위 검색
     @Query(value = """
-    SELECT *
-    FROM restaurant r
-    WHERE r.has_corkage = 1
-      AND ST_Within(
-            r.location,
-            ST_SRID(ST_MakeEnvelope(:lonMin, :latMin, :lonMax, :latMax), 4326)
-          ) = 1
+      SELECT *
+      FROM restaurant r
+      WHERE r.has_corkage = 1
+        AND ST_Within(
+              r.location,
+              ST_GeomFromText(
+                CONCAT(
+                  'POLYGON((',
+                    :lonMin,' ',:latMin,',',
+                    :lonMax,' ',:latMin,',',
+                    :lonMax,' ',:latMax,',',
+                    :lonMin,' ',:latMax,',',
+                    :lonMin,' ',:latMin,
+                  '))'
+                ),
+                4326
+              )
+            ) = 1
     """, nativeQuery = true)
     List<Restaurant> findCorkageRestaurantsInBounds(
             @Param("latMin") double latMin,
