@@ -42,7 +42,8 @@ public class Restaurant extends BaseEntity {
     private Double longitude;
 
     // 공간 인덱스를 위한 POINT 컬럼 추가
-    @Column(columnDefinition = "POINT SRID 4326", nullable = false)
+    // nullable은 잠시 true로 변경
+    @Column(columnDefinition = "POINT SRID 4326")
     private Point location;
 
     @Column(name = "phone", length = 100)
