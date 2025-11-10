@@ -26,16 +26,20 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
 
     // 공간 인덱스 활용 범위 검색
     @Query(value = """
-  SELECT *
-  FROM restaurant r
-  WHERE r.has_corkage = 1
-    AND ST_Within(
-          r.location,
-          ST_GeomFromText(:wktPolygon, 4326)
-        )
-  """, nativeQuery = true)
+        SELECT *
+        FROM restaurant r
+        WHERE r.has_corkage = 1
+          AND ST_Within(
+                r.location,
+                ST_GeomFromText(:wktPolygon, 4326)
+              )
+          AND ST_X(r.location) != 0 AND ST_Y(r.location) != 0
+        """, nativeQuery = true)
     List<Restaurant> findCorkageRestaurantsInBounds(@Param("wktPolygon") String wktPolygon);
 
-    // 좌표 정보가 비어 있는 레스토랑 찾는 함수
-    List<Restaurant> findByLocationIsNull();
+    @Query("""
+        SELECT r FROM Restaurant r
+        WHERE (r.latitude IS NULL OR r.longitude IS NULL OR r.latitude = 0 OR r.longitude = 0)
+        """)
+    List<Restaurant> findRestaurantsWithoutValidCoordinates();
 }

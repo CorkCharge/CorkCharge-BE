@@ -12,8 +12,8 @@ import lombok.NoArgsConstructor;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import org.locationtech.jts.geom.Point;
-import jakarta.persistence.Index;
 
 @Entity
 @Table(name = "restaurant")
@@ -34,14 +34,19 @@ public class Restaurant extends BaseEntity {
     @Column(name = "road_zip_code", length = 10)
     private String roadZipCode; // 도로명주소
 
-    @Column(name = "latitude", nullable = false)
+    @Column(name = "latitude")
     private Double latitude;
 
-    @Column(name = "longitude", nullable = false)
+    @Column(name = "longitude")
     private Double longitude;
 
     // 공간 인덱스를 위한 POINT 컬럼 추가
-    @Column(name = "location", columnDefinition = "POINT SRID 4326 NOT NULL")
+    @Column(
+            name = "location",
+            columnDefinition = "POINT SRID 4326 NOT NULL",
+            insertable = false,
+            updatable = false
+    )
     private Point location;
 
     @Column(name = "phone", length = 100)
@@ -73,15 +78,14 @@ public class Restaurant extends BaseEntity {
 
     @Builder
     public Restaurant(String name, String address, String roadZipCode, String phone,
-                      Double latitude, Double longitude, Point location,
+                      Double latitude, Double longitude,
                       double rating, int bookmarkCount, boolean hasCorkage) {
         this.name = name;
         this.address = address;
         this.roadZipCode = roadZipCode;
         this.phone = phone;
-        this.latitude = latitude;
-        this.longitude = longitude;
-        this.location = location;
+        this.latitude = latitude != null ? latitude : 0.0;
+        this.longitude = longitude != null ? longitude : 0.0;
         this.rating = rating;
         this.bookmarkCount = bookmarkCount;
         this.hasCorkage = hasCorkage;
@@ -91,10 +95,9 @@ public class Restaurant extends BaseEntity {
         return reviews != null ? reviews.size() : 0;
     }
 
-    public void updateCoordinates(Double latitude, Double longitude, Point location) {
+    public void updateCoordinates(Double latitude, Double longitude) {
         this.latitude = latitude;
         this.longitude = longitude;
-        this.location = location;
     }
 
     public void updateRating(double rating) {
