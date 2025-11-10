@@ -5,6 +5,7 @@ import konkuk.corkCharge.domain.corkageStore.domain.CorkageStore;
 import konkuk.corkCharge.domain.corkageStore.domain.MultiCorkage;
 import konkuk.corkCharge.domain.image.repository.ImageRepository;
 import konkuk.corkCharge.domain.restaurant.domain.Restaurant;
+import konkuk.corkCharge.domain.restaurant.dto.mapper.ClusterListResponseMapper;
 import konkuk.corkCharge.domain.restaurant.dto.request.GetFilterRequest;
 import konkuk.corkCharge.domain.restaurant.dto.response.*;
 import konkuk.corkCharge.domain.restaurant.repository.RestaurantRepository;
@@ -16,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Comparator;
 import java.util.List;
 
 import static konkuk.corkCharge.domain.image.domain.ImageCategory.RESTAURANT;
@@ -29,6 +31,7 @@ public class RestaurantService {
     private final RestaurantRepository restaurantRepository;
     private final NaverGeocodingClient naverGeocodingClient;
     private final ImageRepository imageRepository;
+    private final ClusterListResponseMapper clusterListResponseMapper;
 
     @Transactional(readOnly = true)
     public List<GetRestaurantListResponse> getCorkageRestaurants() {
@@ -155,12 +158,8 @@ public class RestaurantService {
         List<Restaurant> restaurants = restaurantRepository.findAllById(restaurantIds);
 
         return restaurants.stream()
-                .sorted((r1, r2) -> {
-                    int price1 = getComparableCorkagePrice(r1);
-                    int price2 = getComparableCorkagePrice(r2);
-                    return Integer.compare(price1, price2);
-                })
-                .map(GetClusterListResponse::from)
+                .sorted(Comparator.comparingInt(this::getComparableCorkagePrice))
+                .map(clusterListResponseMapper::toClusterListResponse)
                 .toList();
     }
 
