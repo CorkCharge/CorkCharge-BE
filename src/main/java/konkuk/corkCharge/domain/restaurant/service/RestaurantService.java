@@ -140,11 +140,11 @@ public class RestaurantService {
     private String toEnvelopeWkt(double lonMin, double latMin, double lonMax, double latMax) {
         return String.format(
                 "POLYGON((%f %f, %f %f, %f %f, %f %f, %f %f))",
-                lonMin, latMin,
-                lonMax, latMin,
-                lonMax, latMax,
-                lonMin, latMax,
-                lonMin, latMin
+                latMin, lonMin,
+                latMin, lonMax,
+                latMax, lonMax,
+                latMax, lonMin,
+                latMin, lonMin
         );
     }
 
@@ -162,7 +162,7 @@ public class RestaurantService {
                 Address address = response.addresses().get(0);
                 double lat = Double.parseDouble(address.latitude());
                 double lon = Double.parseDouble(address.longitude());
-                Point point = geometryFactory.createPoint(new Coordinate(lon, lat));
+                Point point = geometryFactory.createPoint(new Coordinate(lat, lon));
                 restaurant.updateCoordinates(lat, lon, point);
             }
         });
