@@ -114,6 +114,7 @@ public class RestaurantService {
 
     @Transactional(readOnly = true)
     public List<?> GetMapCluster(String level, double latMin, double latMax, double lonMin, double lonMax) {
+        updateMissingLocations();
         // DB에서 바로 공간 인덱스 기반으로 범위 내 매장 검색
         List<Restaurant> filtered = restaurantRepository.findCorkageRestaurantsInBounds(latMin, latMax, lonMin, lonMax);
 
