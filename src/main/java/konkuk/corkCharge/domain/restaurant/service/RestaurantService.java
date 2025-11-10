@@ -117,7 +117,8 @@ public class RestaurantService {
     public List<?> GetMapCluster(String level, double latMin, double latMax, double lonMin, double lonMax) {
         updateMissingLocations();
         // DB에서 바로 공간 인덱스 기반으로 범위 내 매장 검색
-        List<Restaurant> filtered = restaurantRepository.findCorkageRestaurantsInBounds(latMin, latMax, lonMin, lonMax);
+        String wkt = toEnvelopeWkt(lonMin, latMin, lonMax, latMax);
+        List<Restaurant> filtered = restaurantRepository.findCorkageRestaurantsInBounds(wkt);
 
         if (filtered.isEmpty()) {
             throw new CustomException(CORKAGE_RESTAURANT_NOT_FOUND);
@@ -134,6 +135,17 @@ public class RestaurantService {
 
             default -> throw new CustomException(BAD_REQUEST);
         };
+    }
+
+    private String toEnvelopeWkt(double lonMin, double latMin, double lonMax, double latMax) {
+        return String.format(
+                "POLYGON((%f %f, %f %f, %f %f, %f %f, %f %f))",
+                lonMin, latMin,
+                lonMax, latMin,
+                lonMax, latMax,
+                lonMin, latMax,
+                lonMin, latMin
+        );
     }
 
     @Transactional

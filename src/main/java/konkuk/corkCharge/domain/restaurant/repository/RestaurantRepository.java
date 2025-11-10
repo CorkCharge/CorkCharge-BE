@@ -31,15 +31,10 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
   WHERE r.has_corkage = 1
     AND ST_Within(
           r.location,
-          ST_MakeEnvelope(:lonMin, :latMin, :lonMax, :latMax, 4326)
+          ST_GeomFromText(:wktPolygon, 4326)
         )
   """, nativeQuery = true)
-    List<Restaurant> findCorkageRestaurantsInBounds(
-            @Param("latMin") double latMin,
-            @Param("latMax") double latMax,
-            @Param("lonMin") double lonMin,
-            @Param("lonMax") double lonMax
-    );
+    List<Restaurant> findCorkageRestaurantsInBounds(@Param("wktPolygon") String wktPolygon);
 
     // 좌표 정보가 비어 있는 레스토랑 찾는 함수
     List<Restaurant> findByLocationIsNull();
