@@ -14,10 +14,6 @@ import konkuk.corkCharge.global.exception.CustomException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.GeometryFactory;
-import org.locationtech.jts.geom.Point;
-import org.locationtech.jts.geom.PrecisionModel;
 
 import java.util.List;
 
@@ -149,21 +145,18 @@ public class RestaurantService {
     }
 
     @Transactional
-    public void updateMissingLocations() { // 좌표 정보 없는 가게 찾는 함수.
-        List<Restaurant> withoutCoords = restaurantRepository.findByLocationIsNull();
+    public void updateMissingLocations() {
+        List<Restaurant> targets = restaurantRepository.findRestaurantsWithoutValidCoordinates();
+        if (targets.isEmpty()) return;
 
-        if (withoutCoords.isEmpty()) return;
-
-        GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), 4326);
-
-        withoutCoords.forEach(restaurant -> {
+        targets.forEach(restaurant -> {
             NaverMapsResponse response = naverGeocodingClient.getCoordinatesByAddress(restaurant.getAddress());
             if (!response.addresses().isEmpty()) {
                 Address address = response.addresses().get(0);
                 double lat = Double.parseDouble(address.latitude());
                 double lon = Double.parseDouble(address.longitude());
-                Point point = geometryFactory.createPoint(new Coordinate(lat, lon));
-                restaurant.updateCoordinates(lat, lon, point);
+                restaurant.updateCoordinates(lat, lon);
+                // location은 DB가 자동 갱신함
             }
         });
     }
