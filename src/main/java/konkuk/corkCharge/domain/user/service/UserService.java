@@ -97,7 +97,7 @@ public class UserService {
 
         List<GetMyPageReviewResponse> reviewDtos = reviews.stream()
                 .map(review -> {
-                    var restaurant = review.getRestaurant();
+                    Restaurant restaurant = review.getRestaurant();
                     String thumbnailUrl = imageRepository
                             .findFirstByCategoryAndTypeIdOrderByCreatedAtAsc(REVIEW, review.getReviewId())
                             .map(Image::getImageUrl)
