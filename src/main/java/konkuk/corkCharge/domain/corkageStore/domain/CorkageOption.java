@@ -25,5 +25,4 @@ public class CorkageOption {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "corkage_store_id", nullable = false)
     private CorkageStore corkageStore;
-
 }

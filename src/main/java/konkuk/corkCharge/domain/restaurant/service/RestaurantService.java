@@ -62,6 +62,7 @@ public class RestaurantService {
 
     @Transactional
     public List<GetSearchRestaurantResponse> searchRestaurants(String keyword) {
+
         List<Restaurant> matchedRestaurants = restaurantRepository.findByNameContaining(keyword);
 
         return matchedRestaurants.stream()
@@ -122,30 +123,14 @@ public class RestaurantService {
 
     @Transactional
     public List<?> GetMapCluster(String level, double latMin, double latMax, double lonMin, double lonMax) {
-        List<Restaurant> restaurants = restaurantRepository.findByHasCorkageTrue();
+        updateMissingLocations();
+        // DB에서 바로 공간 인덱스 기반으로 범위 내 매장 검색
+        String wkt = toEnvelopeWkt(lonMin, latMin, lonMax, latMax);
+        List<Restaurant> filtered = restaurantRepository.findCorkageRestaurantsInBounds(wkt);
 
-        if (restaurants.isEmpty()) {
+        if (filtered.isEmpty()) {
             throw new CustomException(CORKAGE_RESTAURANT_NOT_FOUND);
         }
-
-        // 위도/경도가 없는 매장의 경우 추가
-        restaurants.forEach(restaurant -> {
-            if (restaurant.getLatitude() == 0 || restaurant.getLongitude() == 0) {
-                NaverMapsResponse response = naverGeocodingClient.getCoordinatesByAddress(restaurant.getAddress());
-                if (!response.addresses().isEmpty()) {
-                    Address address = response.addresses().get(0);
-                    restaurant.updateCoordinates(
-                            Double.parseDouble(address.latitude()),
-                            Double.parseDouble(address.longitude())
-                    );
-                }
-            }
-        });
-
-        List<Restaurant> filtered = restaurants.stream()
-                .filter(r -> r.getLatitude() >= latMin && r.getLatitude() <= latMax)
-                .filter(r -> r.getLongitude() >= lonMin && r.getLongitude() <= lonMax)
-                .toList();
 
         return switch (level) {
             case "restaurant" -> filtered.stream()
@@ -158,6 +143,34 @@ public class RestaurantService {
 
             default -> throw new CustomException(BAD_REQUEST);
         };
+    }
+
+    private String toEnvelopeWkt(double lonMin, double latMin, double lonMax, double latMax) {
+        return String.format(
+                "POLYGON((%f %f, %f %f, %f %f, %f %f, %f %f))",
+                latMin, lonMin,
+                latMin, lonMax,
+                latMax, lonMax,
+                latMax, lonMin,
+                latMin, lonMin
+        );
+    }
+
+    @Transactional
+    public void updateMissingLocations() {
+        List<Restaurant> targets = restaurantRepository.findRestaurantsWithoutValidCoordinates();
+        if (targets.isEmpty()) return;
+
+        targets.forEach(restaurant -> {
+            NaverMapsResponse response = naverGeocodingClient.getCoordinatesByAddress(restaurant.getAddress());
+            if (!response.addresses().isEmpty()) {
+                Address address = response.addresses().get(0);
+                double lat = Double.parseDouble(address.latitude());
+                double lon = Double.parseDouble(address.longitude());
+                restaurant.updateCoordinates(lat, lon);
+                // location은 DB가 자동 갱신함
+            }
+        });
     }
 
     @Transactional(readOnly = true)

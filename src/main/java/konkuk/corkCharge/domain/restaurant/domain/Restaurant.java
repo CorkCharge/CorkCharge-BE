@@ -7,6 +7,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import org.locationtech.jts.geom.Point;
+
 @Entity
 @Table(name = "restaurant")
 @Getter
@@ -24,13 +26,22 @@ public class Restaurant extends BaseEntity {
     private String address;
 
     @Column(name = "road_zip_code", length = 10)
-    private String roadZipCode;
+    private String roadZipCode; // 도로명주소
 
-    @Column(name = "latitude", nullable = false)
+    @Column(name = "latitude")
     private Double latitude;
 
-    @Column(name = "longitude", nullable = false)
+    @Column(name = "longitude")
     private Double longitude;
+
+    // 공간 인덱스를 위한 POINT 컬럼 추가
+    @Column(
+            name = "location",
+            columnDefinition = "POINT SRID 4326 NOT NULL",
+            insertable = false,
+            updatable = false
+    )
+    private Point location;
 
     @Column(name = "phone", length = 100)
     private String phone;
@@ -54,14 +65,15 @@ public class Restaurant extends BaseEntity {
     private String openingHours;
 
     @Builder
-    public Restaurant(String name, String address, String roadZipCode, String phone, Double latitude, Double longitude,
+    public Restaurant(String name, String address, String roadZipCode, String phone,
+                      Double latitude, Double longitude,
                       double rating, int bookmarkCount, boolean hasCorkage) {
         this.name = name;
         this.address = address;
         this.roadZipCode = roadZipCode;
         this.phone = phone;
-        this.latitude = latitude;
-        this.longitude = longitude;
+        this.latitude = latitude != null ? latitude : 0.0;
+        this.longitude = longitude != null ? longitude : 0.0;
         this.rating = rating;
         this.bookmarkCount = bookmarkCount;
         this.hasCorkage = hasCorkage;
