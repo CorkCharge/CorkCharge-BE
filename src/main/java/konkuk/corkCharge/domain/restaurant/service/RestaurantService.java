@@ -1,11 +1,12 @@
 package konkuk.corkCharge.domain.restaurant.service;
 
+import konkuk.corkCharge.domain.corkageStore.repository.CorkageStoreRepository;
 import konkuk.corkCharge.domain.image.domain.Image;
 import konkuk.corkCharge.domain.corkageStore.domain.CorkageStore;
 import konkuk.corkCharge.domain.corkageStore.domain.MultiCorkage;
 import konkuk.corkCharge.domain.image.repository.ImageRepository;
 import konkuk.corkCharge.domain.restaurant.domain.Restaurant;
-import konkuk.corkCharge.domain.restaurant.dto.mapper.ClusterListResponseMapper;
+import konkuk.corkCharge.domain.restaurant.dto.mapper.*;
 import konkuk.corkCharge.domain.restaurant.dto.request.GetFilterRequest;
 import konkuk.corkCharge.domain.restaurant.dto.response.*;
 import konkuk.corkCharge.domain.restaurant.repository.RestaurantRepository;
@@ -31,7 +32,13 @@ public class RestaurantService {
     private final RestaurantRepository restaurantRepository;
     private final NaverGeocodingClient naverGeocodingClient;
     private final ImageRepository imageRepository;
+    private final CorkageStoreRepository corkageStoreRepository;
+
     private final ClusterListResponseMapper clusterListResponseMapper;
+    private final RestaurantDetailResponseMapper restaurantDetailResponseMapper;
+    private final HotRestaurantResponseMapper hotRestaurantResponseMapper;
+    private final MapRestaurantResponseMapper mapRestaurantResponseMapper;
+    private final RestaurantListResponseMapper restaurantListResponseMapper;
 
     @Transactional(readOnly = true)
     public List<GetRestaurantListResponse> getCorkageRestaurants() {
@@ -42,7 +49,7 @@ public class RestaurantService {
         }
 
         return restaurants.stream()
-                .map(GetRestaurantListResponse::from)
+                .map(restaurantListResponseMapper::toResponse)
                 .toList();
     }
 
@@ -50,7 +57,7 @@ public class RestaurantService {
         Restaurant restaurant = restaurantRepository.findById(restaurantId)
                 .orElseThrow(() -> new CustomException(RESTAURANT_NOT_FOUND));
 
-        return GetRestaurantDetailResponse.from(restaurant);
+        return restaurantDetailResponseMapper.toResponse(restaurant);
     }
 
     @Transactional
@@ -67,7 +74,7 @@ public class RestaurantService {
         List<Restaurant> hotRestaurants = restaurantRepository.findByHasCorkageFalseAndBookmarkCountGreaterThanEqual(5);
 
         return hotRestaurants.stream()
-                .map(GetHotRestaurantResponse::from)
+                .map(hotRestaurantResponseMapper::toResponse)
                 .toList();
     }
 
@@ -78,7 +85,7 @@ public class RestaurantService {
         return switch (request.type()) {
             case "hot" -> matchedRestaurants.stream()
                     .filter(r -> r.getBookmarkCount() >= 5)
-                    .map(GetHotRestaurantResponse::from)
+                    .map(hotRestaurantResponseMapper::toResponse)
                     .toList();
 
             case "map" -> matchedRestaurants.stream()
@@ -142,7 +149,7 @@ public class RestaurantService {
 
         return switch (level) {
             case "restaurant" -> filtered.stream()
-                    .map(GetMapRestaurantResponse::from)
+                    .map(mapRestaurantResponseMapper::toResponse)
                     .toList();
 
             case "dong", "sigungu", "sido" -> filtered.stream()
@@ -164,14 +171,24 @@ public class RestaurantService {
     }
 
     private int getComparableCorkagePrice(Restaurant r) {
-        CorkageStore cs = r.getCorkageStore();
+        CorkageStore cs = corkageStoreRepository
+                .findByRestaurant_RestaurantId(r.getRestaurantId())
+                .orElse(null);
+
+        // 콜키지 정보가 없으면 가장 큰 값으로 취급해서 “비싼 곳”처럼 뒤로 밀기
+        if (cs == null || cs.getCorkageType() == null) {
+            return Integer.MAX_VALUE;
+        }
 
         return switch (cs.getCorkageType()) {
             case FREE -> 0;
             case MULTIPLE -> cs.getMultiPrices().stream()
                     .mapToInt(MultiCorkage::getPrice)
-                    .min().orElse(Integer.MAX_VALUE);
-            default -> cs.getCorkagePrice() != null ? cs.getCorkagePrice() : Integer.MAX_VALUE;
+                    .min()
+                    .orElse(Integer.MAX_VALUE);
+            default -> cs.getCorkagePrice() != null
+                    ? cs.getCorkagePrice()
+                    : Integer.MAX_VALUE;
         };
     }
 

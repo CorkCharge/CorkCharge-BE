@@ -1,17 +1,11 @@
 package konkuk.corkCharge.domain.restaurant.domain;
 
 import jakarta.persistence.*;
-import konkuk.corkCharge.domain.corkageStore.domain.CorkageStore;
-import konkuk.corkCharge.domain.image.domain.Image;
-import konkuk.corkCharge.domain.review.domain.Review;
 import konkuk.corkCharge.global.entity.BaseEntity;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
 @Table(name = "restaurant")
@@ -47,17 +41,11 @@ public class Restaurant extends BaseEntity {
     @Column(name = "bookmark_count")
     private Integer bookmarkCount = 0;
 
+    @Column(name = "review_count")
+    private Integer reviewCount = 0;
+
     @Column(name = "has_corkage")
     private boolean hasCorkage;
-
-    @OneToOne(mappedBy = "restaurant", cascade = CascadeType.REMOVE)
-    private CorkageStore corkageStore;
-
-    @OneToMany(mappedBy = "restaurant", cascade = CascadeType.REMOVE)
-    private List<Review> reviews = new ArrayList<>();
-
-//    @OneToMany(mappedBy = "restaurant", cascade = CascadeType.REMOVE)
-//    private List<Image> images = new ArrayList<>();
 
     @Column(name = "represent_menu", length = 255)
     private String representMenu;
@@ -80,7 +68,11 @@ public class Restaurant extends BaseEntity {
     }
 
     public int getReviewCount() {
-        return reviews != null ? reviews.size() : 0;
+        return reviewCount != null ? reviewCount : 0;
+    }
+
+    public void setReviewCount(int reviewCount) {
+        this.reviewCount = reviewCount;
     }
 
     public void updateCoordinates(Double latitude, Double longitude) {

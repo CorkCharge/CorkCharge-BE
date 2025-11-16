@@ -157,11 +157,13 @@ public class CorkageStoreService {
         return mappings.stream()
                 .map(OwnerRestaurant::getRestaurant)
                 .map(restaurant -> {
-                    String thumbnailUrl = restaurant.getImages().stream()
-                            .filter(img -> img.getCategory() == ImageCategory.RESTAURANT)
-                            .filter(img -> img.getType()     == ImageType.MAIN)
+                    String thumbnailUrl = imageRepository
+                            .findFirstByCategoryAndTypeIdAndType(
+                                    ImageCategory.RESTAURANT,
+                                    restaurant.getRestaurantId(),
+                                    ImageType.MAIN
+                            )
                             .map(Image::getImageUrl)
-                            .findFirst()
                             .orElse(null);
 
                     return new GetCorkageVerificationResponse(
@@ -186,11 +188,13 @@ public class CorkageStoreService {
         Restaurant restaurant = restaurantRepository.findById(request.restaurantId())
                 .orElseThrow((() -> new CustomException(RESTAURANT_NOT_FOUND)));
 
-        String thumbnailUrl = restaurant.getImages().stream()
-                .filter(img -> img.getCategory() == ImageCategory.RESTAURANT)
-                .filter(img -> img.getType()     == ImageType.MENU)
+        String thumbnailUrl = imageRepository
+                .findFirstByCategoryAndTypeIdAndType(
+                        ImageCategory.RESTAURANT,
+                        restaurant.getRestaurantId(),
+                        ImageType.MENU
+                )
                 .map(Image::getImageUrl)
-                .findFirst()
                 .orElse(null);
 
         return new PostAdminCorkageResponse(

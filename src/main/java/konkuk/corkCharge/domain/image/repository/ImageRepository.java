@@ -13,12 +13,6 @@ import java.util.Optional;
 
 @Repository
 public interface ImageRepository extends JpaRepository<Image, Long> {
-//    Optional<Image> findProfileImageByUser_UserId(Long userId);
-//    Optional<Image> findFirstByReview_ReviewId(Long reviewId);
-//    List<Image> findAllByRestaurant_RestaurantId(Long restaurantId);
-//    List<Image> findAllByReview_ReviewId(Long reviewId);
-//    List<Image> findAllByTip_TipId(Long tipId);
-//    Optional<Image> findFirstByRestaurant_RestaurantIdAndCategoryAndType(Long restaurantId, ImageCategory imageCategory, ImageType imageType);
 
     List<Image> findByCategoryAndTypeId(ImageCategory category, Long typeId);
 
@@ -31,11 +25,11 @@ public interface ImageRepository extends JpaRepository<Image, Long> {
     void deleteByCategoryAndTypeId(ImageCategory category, Long typeId);
 
     @Query("""
-        select i.imageUrl
-          from Image i
-         where i.category = :category and i.typeId = :ownerId
-         order by i.createdAt asc
-    """)
+    select i.imageUrl
+      from Image i
+     where i.category = :category and i.typeId = :typeId
+     order by i.createdAt asc
+""")
     List<String> findUrlsByCategoryAndTypeId(@Param("category") ImageCategory category,
-                                              @Param("typeId") Long typeId);
+                                             @Param("typeId") Long typeId);
 }

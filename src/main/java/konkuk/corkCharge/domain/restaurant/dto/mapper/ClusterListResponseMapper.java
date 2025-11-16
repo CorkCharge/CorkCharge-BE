@@ -2,6 +2,7 @@ package konkuk.corkCharge.domain.restaurant.dto.mapper;
 
 import konkuk.corkCharge.domain.corkageStore.domain.CorkageStore;
 import konkuk.corkCharge.domain.corkageStore.domain.MultiCorkage;
+import konkuk.corkCharge.domain.corkageStore.repository.CorkageStoreRepository;
 import konkuk.corkCharge.domain.image.domain.Image;
 import konkuk.corkCharge.domain.image.repository.ImageRepository;
 import konkuk.corkCharge.domain.restaurant.domain.Restaurant;
@@ -20,9 +21,13 @@ import static konkuk.corkCharge.domain.image.domain.ImageType.MAIN;
 public class ClusterListResponseMapper {
 
     private final ImageRepository imageRepository;
+    private final CorkageStoreRepository corkageStoreRepository;
 
     public GetClusterListResponse toClusterListResponse(Restaurant restaurant) {
-        CorkageStore corkageStore = restaurant.getCorkageStore();
+
+        CorkageStore corkageStore = corkageStoreRepository
+                .findByRestaurant_RestaurantId(restaurant.getRestaurantId())
+                .orElseThrow(() -> new IllegalStateException("콜키지 정보가 없습니다. restaurantId=" + restaurant.getRestaurantId()));
 
         String corkagePrice = switch (corkageStore.getCorkageType()) {
             case FREE -> "FREE";

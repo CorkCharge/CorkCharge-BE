@@ -1,6 +1,7 @@
 package konkuk.corkCharge.domain.review.service;
 
 import konkuk.corkCharge.domain.image.domain.Image;
+import konkuk.corkCharge.domain.image.domain.ImageCategory;
 import konkuk.corkCharge.domain.image.repository.ImageRepository;
 import konkuk.corkCharge.domain.image.service.S3ImageService;
 import konkuk.corkCharge.domain.restaurant.domain.Restaurant;
@@ -73,7 +74,7 @@ public class ReviewService {
     }
 
     private void updateAverageRating(Restaurant restaurant) {
-        List<Review> reviews = restaurant.getReviews();
+        List<Review> reviews = reviewRepository.findAllByRestaurant_RestaurantId(restaurant.getRestaurantId());
 
         double avg = reviews.stream()
                 .mapToInt(Review::getRating)
@@ -81,6 +82,7 @@ public class ReviewService {
                 .orElse(0.0);
 
         restaurant.updateRating(avg);
+        restaurant.setReviewCount(reviews.size());
         restaurantRepository.save(restaurant);
     }
 
@@ -92,7 +94,17 @@ public class ReviewService {
 
         return reviews.stream()
                 .sorted(Comparator.comparing(Review::getCreatedAt).reversed())
-                .map(GetCorkageScoreResponse::from)
+                .map(review -> {
+                    String imageUrl = imageRepository
+                            .findFirstByCategoryAndTypeIdOrderByCreatedAtAsc(
+                                    ImageCategory.REVIEW,
+                                    review.getReviewId()
+                            )
+                            .map(Image::getImageUrl)
+                            .orElse(null);
+
+                    return GetCorkageScoreResponse.from(review, imageUrl);
+                })
                 .toList();
     }
 

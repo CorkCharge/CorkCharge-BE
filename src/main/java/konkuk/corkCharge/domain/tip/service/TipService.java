@@ -4,6 +4,8 @@ import konkuk.corkCharge.domain.image.domain.Image;
 import konkuk.corkCharge.domain.image.repository.ImageRepository;
 import konkuk.corkCharge.domain.image.service.S3ImageService;
 import konkuk.corkCharge.domain.tip.domain.Tip;
+import konkuk.corkCharge.domain.tip.dto.mapper.TipDetailResponseMapper;
+import konkuk.corkCharge.domain.tip.dto.mapper.TipListResponseMapper;
 import konkuk.corkCharge.domain.tip.dto.request.PostTipRequest;
 import konkuk.corkCharge.domain.tip.dto.response.GetTipDetailResponse;
 import konkuk.corkCharge.domain.tip.dto.response.GetTipListResponse;
@@ -27,6 +29,9 @@ public class TipService {
     private final TipRepository tipRepository;
     private final S3ImageService s3ImageService;
     private final ImageRepository imageRepository;
+
+    private final TipListResponseMapper tipListResponseMapper;
+    private final TipDetailResponseMapper tipDetailResponseMapper;
 
     @Transactional
     public void createTip(PostTipRequest request, List<MultipartFile> images){
@@ -59,7 +64,7 @@ public class TipService {
     @Transactional
     public List<GetTipListResponse> getTips(){
         return tipRepository.findAll().stream()
-                .map(GetTipListResponse::from)
+                .map(tipListResponseMapper::toResponse)
                 .toList();
     }
 
@@ -68,10 +73,7 @@ public class TipService {
         Tip tip = tipRepository.findById(tipId)
                 .orElseThrow(() -> new CustomException(TIP_NOT_FOUND));
 
-        return GetTipDetailResponse.from(tip);
+        return tipDetailResponseMapper.toResponse(tip);
     }
-
-
-
 
 }
