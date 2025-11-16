@@ -20,4 +20,8 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
             "JOIN FETCH r.user u " +
             "WHERE r.createdAt >= :from")
     List<Review> findRecentReviews(@Param("from") LocalDateTime from);
+
+    List<Review> findByRestaurant_RestaurantId(Long restaurantId);
+
+    List<Review> findAllByRestaurant_RestaurantId(Long restaurantId);
 }

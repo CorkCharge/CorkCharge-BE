@@ -4,6 +4,8 @@ import konkuk.corkCharge.domain.image.domain.Image;
 import konkuk.corkCharge.domain.image.repository.ImageRepository;
 import konkuk.corkCharge.domain.image.service.S3ImageService;
 import konkuk.corkCharge.domain.tip.domain.Tip;
+import konkuk.corkCharge.domain.tip.dto.mapper.TipDetailResponseMapper;
+import konkuk.corkCharge.domain.tip.dto.mapper.TipListResponseMapper;
 import konkuk.corkCharge.domain.tip.dto.request.PostTipRequest;
 import konkuk.corkCharge.domain.tip.dto.response.GetTipDetailResponse;
 import konkuk.corkCharge.domain.tip.dto.response.GetTipListResponse;
@@ -28,6 +30,9 @@ public class TipService {
     private final S3ImageService s3ImageService;
     private final ImageRepository imageRepository;
 
+    private final TipListResponseMapper tipListResponseMapper;
+    private final TipDetailResponseMapper tipDetailResponseMapper;
+
     @Transactional
     public void createTip(PostTipRequest request, List<MultipartFile> images){
 
@@ -39,27 +44,27 @@ public class TipService {
 
         tipRepository.save(tip);
 
-        if(images !=null && !images.isEmpty()){
+        if (images != null && !images.isEmpty()) {
             List<String> uploadedUrls = s3ImageService.uploadImages(images, TIP, null);
 
             List<Image> imageEntities = new ArrayList<>();
-            for(String url : uploadedUrls){
+            for (String url : uploadedUrls) {
                 Image image = Image.builder()
-                        .tip(tip)
-                        .imageUrl(url)
+                        .typeId(tip.getTipId())
                         .category(TIP)
+                        .imageUrl(url)
                         .build();
                 imageEntities.add(image);
             }
             imageRepository.saveAll(imageEntities);
-            tip.setImages(imageEntities);
+
         }
     }
 
     @Transactional
     public List<GetTipListResponse> getTips(){
         return tipRepository.findAll().stream()
-                .map(GetTipListResponse::from)
+                .map(tipListResponseMapper::toResponse)
                 .toList();
     }
 
@@ -68,10 +73,7 @@ public class TipService {
         Tip tip = tipRepository.findById(tipId)
                 .orElseThrow(() -> new CustomException(TIP_NOT_FOUND));
 
-        return GetTipDetailResponse.from(tip);
+        return tipDetailResponseMapper.toResponse(tip);
     }
-
-
-
 
 }

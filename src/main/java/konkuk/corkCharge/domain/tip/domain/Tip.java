@@ -30,8 +30,4 @@ public class Tip extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "tip_category", nullable = false)
     private TipCategory tipCategory;
-
-    @Builder.Default
-    @OneToMany(mappedBy = "tip", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Image> images = new ArrayList<>();
 }

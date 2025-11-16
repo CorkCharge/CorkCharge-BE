@@ -13,10 +13,7 @@ public record GetCorkageScoreResponse(
         String imageUrl,
         int bookmarkCount
 ) {
-    public static GetCorkageScoreResponse from(Review review) {
-        String imageUrl = review.getImages().isEmpty()
-                ? null
-                : review.getImages().get(0).getImageUrl();
+    public static GetCorkageScoreResponse from(Review review, String imageUrl) {
 
         return new GetCorkageScoreResponse(
                 review.getReviewId(),

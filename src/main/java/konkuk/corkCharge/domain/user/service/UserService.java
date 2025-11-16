@@ -24,8 +24,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static konkuk.corkCharge.domain.image.domain.ImageCategory.RESTAURANT;
-import static konkuk.corkCharge.domain.image.domain.ImageCategory.REVIEW;
+import static konkuk.corkCharge.domain.image.domain.ImageCategory.*;
 import static konkuk.corkCharge.domain.image.domain.ImageType.MAIN;
 import static konkuk.corkCharge.global.response.status.BaseExceptionResponseStatus.USER_NOT_FOUND;
 
@@ -43,57 +42,28 @@ public class UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(USER_NOT_FOUND));
 
-        String imageUrl = imageRepository.findProfileImageByUser_UserId(userId)
-                .map(Image::getImageUrl)
-                .orElse(null);
-
         return new GetUserProfileResponse(
                 user.getName(),
-                user.getEmail(),
-                imageUrl
+                user.getEmail()
         );
     }
 
     @Transactional
-    public void updateUserProfile(Long userId, String name, MultipartFile imageFile){
+    public void updateUserProfile(Long userId, String name){
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(USER_NOT_FOUND));
 
         if(name != null){
             user.setName(name);
         }
-
-        if(imageFile != null && !imageFile.isEmpty()){
-                    String newImageUrl = s3ImageService.uploadImages(List.of(imageFile), ImageCategory.USER, ImageType.PROFILE)
-                            .get(0);
-
-            imageRepository.findProfileImageByUser_UserId(userId)
-                    .ifPresentOrElse(
-                            existingImage-> {
-                                s3ImageService.deleteImage(existingImage.getImageUrl());
-                                existingImage.setImageUrl(newImageUrl);
-                                existingImage.setCategory(ImageCategory.USER);
-                            },
-                            () -> {
-                                Image newImage = Image.builder()
-                                        .user(user)
-                                        .imageUrl(newImageUrl)
-                                        .category(ImageCategory.USER)
-                                        .type(null)
-                                        .build();
-                                imageRepository.save(newImage);
-                            }
-                            );
-        }
     }
 
     @Transactional(readOnly = true)
     public List<GetReviewResponse> getUserReviews(Long userId){
-        User user = userRepository.findById(userId)
+        userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(USER_NOT_FOUND));
 
         List<Review> reviews = reviewRepository.findAllByUser_UserId(userId);
-
 
         return reviews.stream()
                 .map(review -> new GetReviewResponse(
@@ -102,13 +72,12 @@ public class UserService {
                         userId,
                         review.getContent(),
                         review.getRating(),
-                        review.getImages().stream()
-                                .filter(image -> image.getCategory() == REVIEW)
+                        imageRepository.findFirstByCategoryAndTypeIdOrderByCreatedAtAsc(REVIEW, review.getReviewId())
                                 .map(Image::getImageUrl)
-                                .findFirst().orElse(null),
+                                .orElse(null),
                         review.getCreatedAt()
-                )).collect(Collectors.toList());
-
+                ))
+                .collect(Collectors.toList());
     }
 
     @Transactional
@@ -119,7 +88,7 @@ public class UserService {
         userRepository.delete(user);
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public GetMyPageResponse getMyPage(Long userId){
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(USER_NOT_FOUND));
@@ -129,15 +98,16 @@ public class UserService {
         List<GetMyPageReviewResponse> reviewDtos = reviews.stream()
                 .map(review -> {
                     Restaurant restaurant = review.getRestaurant();
-                    String thumbnailUrl = imageRepository.findFirstByReview_ReviewId(review.getReviewId())
+                    String thumbnailUrl = imageRepository
+                            .findFirstByCategoryAndTypeIdOrderByCreatedAtAsc(REVIEW, review.getReviewId())
                             .map(Image::getImageUrl)
                             .orElse(null);
 
-                            return new GetMyPageReviewResponse(
-                                    restaurant.getName(),
-                                    restaurant.getAddress(),
-                                    thumbnailUrl
-                            );
+                    return new GetMyPageReviewResponse(
+                            restaurant.getName(),
+                            restaurant.getAddress(),
+                            thumbnailUrl
+                    );
                 })
                 .collect(Collectors.toList());
 
@@ -166,12 +136,25 @@ public class UserService {
             return;
         }
 
-        // 1) S3 업로드 (카테고리는 USER로 분류해 둠. 서비스 내부에서 경로 분리 가능)
         String imageUrl = s3ImageService
-                .uploadImages(List.of(registrationImage), ImageCategory.USER, ImageType.REGISTRATION_IMAGE)
+                .uploadImages(List.of(registrationImage), USER, null)
                 .get(0);
 
 
-        user.setRegistrationImageUrl(imageUrl);
+        imageRepository.findFirstByCategoryAndTypeId(USER, userId)
+                .ifPresentOrElse(existing -> {
+                    // 기존 S3 파일 삭제 후 URL 교체
+                    s3ImageService.deleteImage(existing.getImageUrl());
+                    existing.setImageUrl(imageUrl);
+                    existing.setCategory(USER);
+                    existing.setTypeId(userId);
+                }, () -> {
+                    Image newImage = Image.builder()
+                            .category(USER)
+                            .typeId(userId)
+                            .imageUrl(imageUrl)
+                            .build();
+                    imageRepository.save(newImage);
+                });
     }
 }

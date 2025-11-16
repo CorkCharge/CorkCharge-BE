@@ -31,10 +31,9 @@ public class UserController {
     @PutMapping("/modify")
     public BaseResponse<Void> editUserProfile(
             @LoginUserId Long userId,
-            @RequestParam(name="name") String name,
-            @RequestPart(required = false) MultipartFile image
+            @RequestParam(name="name") String name
     ){
-        userService.updateUserProfile(userId, name, image);
+        userService.updateUserProfile(userId, name);
         return BaseResponse.ok(null);
     }
 

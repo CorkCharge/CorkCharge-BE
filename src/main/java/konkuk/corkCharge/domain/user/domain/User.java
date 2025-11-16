@@ -1,15 +1,8 @@
 package konkuk.corkCharge.domain.user.domain;
 
 import jakarta.persistence.*;
-import konkuk.corkCharge.domain.helpRequest.domain.HelpRequest;
-import konkuk.corkCharge.domain.ownerRestaurant.domain.OwnerRestaurant;
-import konkuk.corkCharge.domain.review.domain.Review;
 import konkuk.corkCharge.global.entity.BaseEntity;
 import lombok.*;
-
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
 @Table(name = "user")
@@ -37,19 +30,16 @@ public class User extends BaseEntity {
     @Column(name = "role")
     private Role role;
 
-    @Column(name = "registrationImageUrl")
-    private String registrationImageUrl;
-
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Review> reviews = new ArrayList<>();
-
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<HelpRequest> helpRequests = new ArrayList<>();
-
-    @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE, orphanRemoval = true)
-    private List<OwnerRestaurant> ownerRestaurants = new ArrayList<>();
-
-    public void addReview(Review review) {
-        reviews.add(review);
-    }
+//    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+//    private List<Review> reviews = new ArrayList<>();
+//
+//    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+//    private List<HelpRequest> helpRequests = new ArrayList<>();
+//
+//    @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE, orphanRemoval = true)
+//    private List<OwnerRestaurant> ownerRestaurants = new ArrayList<>();
+//
+//    public void addReview(Review review) {
+//        reviews.add(review);
+//    }
 }

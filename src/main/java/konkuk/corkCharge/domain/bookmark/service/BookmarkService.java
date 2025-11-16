@@ -9,6 +9,7 @@ import konkuk.corkCharge.domain.bookmark.repository.BookmarkRepository;
 import konkuk.corkCharge.domain.corkageStore.domain.CorkageStore;
 import konkuk.corkCharge.domain.corkageStore.repository.CorkageStoreRepository;
 import konkuk.corkCharge.domain.image.domain.Image;
+import konkuk.corkCharge.domain.image.domain.ImageCategory;
 import konkuk.corkCharge.domain.image.repository.ImageRepository;
 import konkuk.corkCharge.domain.restaurant.domain.Restaurant;
 import konkuk.corkCharge.domain.bookmark.dto.response.GetSavedRestaurantResponse;
@@ -127,7 +128,10 @@ public class BookmarkService {
                     Restaurant restaurant = restaurantRepository
                             .findById(bookmark.getTargetId())
                             .orElseThrow(() -> new CustomException(RESTAURANT_NOT_FOUND));
-                    List<Image> images = imageRepository.findAllByRestaurant_RestaurantId(restaurant.getRestaurantId());
+                    List<Image> images = imageRepository.findByCategoryAndTypeId(
+                            ImageCategory.RESTAURANT,
+                            restaurant.getRestaurantId()
+                    );
 
                     CorkageStore corkageStore = corkageStoreRepository
                             .findByRestaurant_RestaurantId(restaurant.getRestaurantId())
@@ -156,10 +160,8 @@ public class BookmarkService {
                             .orElseThrow(() -> new CustomException(REVIEW_NOT_FOUND));
 
                     String imageUrl = imageRepository
-                            .findAllByReview_ReviewId(review.getReviewId())
-                            .stream()
-                            .map(img -> img.getImageUrl())
-                            .findFirst()
+                            .findFirstByCategoryAndTypeId(ImageCategory.REVIEW, review.getReviewId())
+                            .map(Image::getImageUrl)
                             .orElse("");
 
                     String authorName = review.getUser().getName();
@@ -198,10 +200,8 @@ public class BookmarkService {
                             .orElseThrow(()-> new CustomException(TIP_NOT_FOUND));
 
                     String imageUrl = imageRepository
-                            .findAllByTip_TipId(tip.getTipId())
-                            .stream()
-                            .map(img -> img.getImageUrl())
-                            .findFirst()
+                            .findFirstByCategoryAndTypeId(ImageCategory.TIP, tip.getTipId())
+                            .map(Image::getImageUrl)
                             .orElse("");
 
                     return new GetSavedTipResponse(

@@ -1,6 +1,7 @@
 package konkuk.corkCharge.domain.review.service;
 
 import konkuk.corkCharge.domain.image.domain.Image;
+import konkuk.corkCharge.domain.image.domain.ImageCategory;
 import konkuk.corkCharge.domain.image.repository.ImageRepository;
 import konkuk.corkCharge.domain.image.service.S3ImageService;
 import konkuk.corkCharge.domain.restaurant.domain.Restaurant;
@@ -36,9 +37,13 @@ public class ReviewService {
     private final ImageRepository imageRepository;
     private final S3ImageService s3ImageService;
 
-    public void createReview(Long userId, Long restaurantId, PostReviewCreateRequest requestDto, List<MultipartFile> images) {
-         User user = userRepository.findById(userId)
-                 .orElseThrow(() -> new CustomException(USER_NOT_FOUND));
+    @Transactional
+    public void createReview(Long userId, Long restaurantId,
+                             PostReviewCreateRequest requestDto,
+                             List<MultipartFile> images) {
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(USER_NOT_FOUND));
 
         Restaurant restaurant = restaurantRepository.findById(restaurantId)
                 .orElseThrow(() -> new CustomException(RESTAURANT_NOT_FOUND));
@@ -50,7 +55,6 @@ public class ReviewService {
                 .rating(requestDto.rating())
                 .build();
 
-        user.addReview(review);
         reviewRepository.save(review);
 
         if (images != null && !images.isEmpty()) {
@@ -58,18 +62,19 @@ public class ReviewService {
 
             for (String url : uploadedUrls) {
                 Image image = Image.builder()
-                        .review(review)
-                        .imageUrl(url)
+                        .typeId(review.getReviewId())
                         .category(REVIEW)
+                        .imageUrl(url)
                         .build();
                 imageRepository.save(image);
             }
         }
+
         updateAverageRating(restaurant);
     }
 
     private void updateAverageRating(Restaurant restaurant) {
-        List<Review> reviews = restaurant.getReviews();
+        List<Review> reviews = reviewRepository.findAllByRestaurant_RestaurantId(restaurant.getRestaurantId());
 
         double avg = reviews.stream()
                 .mapToInt(Review::getRating)
@@ -77,6 +82,7 @@ public class ReviewService {
                 .orElse(0.0);
 
         restaurant.updateRating(avg);
+        restaurant.setReviewCount(reviews.size());
         restaurantRepository.save(restaurant);
     }
 
@@ -88,12 +94,25 @@ public class ReviewService {
 
         return reviews.stream()
                 .sorted(Comparator.comparing(Review::getCreatedAt).reversed())
-                .map(GetCorkageScoreResponse::from)
+                .map(review -> {
+                    String imageUrl = imageRepository
+                            .findFirstByCategoryAndTypeIdOrderByCreatedAtAsc(
+                                    ImageCategory.REVIEW,
+                                    review.getReviewId()
+                            )
+                            .map(Image::getImageUrl)
+                            .orElse(null);
+
+                    return GetCorkageScoreResponse.from(review, imageUrl);
+                })
                 .toList();
     }
 
     @Transactional
-    public void updateReview(Long userId, Long reviewId, PatchUpdateReviewRequest request, List<MultipartFile> images) {
+    public void updateReview(Long userId, Long reviewId,
+                             PatchUpdateReviewRequest request,
+                             List<MultipartFile> images) {
+
         Review review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new CustomException(REVIEW_NOT_FOUND));
 
@@ -108,23 +127,22 @@ public class ReviewService {
         review.updateRating(request.rating());
 
         if (images != null && !images.isEmpty()) {
-            for (Image image : review.getImages()) {
-                s3ImageService.deleteImage(image.getImageUrl());
-            }
-            imageRepository.deleteAll(review.getImages());
-            review.getImages().clear();
+            imageRepository.findByCategoryAndTypeId(REVIEW, reviewId)
+                    .forEach(img -> s3ImageService.deleteImage(img.getImageUrl()));
+            imageRepository.deleteByCategoryAndTypeId(REVIEW, reviewId);
 
+            // 새 이미지 업로드/저장
             List<String> uploadedUrls = s3ImageService.uploadImages(images, REVIEW, null);
             for (String url : uploadedUrls) {
                 Image image = Image.builder()
-                        .review(review)
-                        .imageUrl(url)
+                        .typeId(reviewId)
                         .category(REVIEW)
+                        .imageUrl(url)
                         .build();
                 imageRepository.save(image);
-                review.getImages().add(image);
             }
         }
+
         updateAverageRating(review.getRestaurant());
     }
 
@@ -140,12 +158,14 @@ public class ReviewService {
             throw new CustomException(FORBIDDEN_REVIEW_EDIT);
         }
 
-        for (Image image : review.getImages()) {
-            s3ImageService.deleteImage(image.getImageUrl());
-        }
+        // 이미지 삭제
+        imageRepository.findByCategoryAndTypeId(REVIEW, reviewId)
+                .forEach(img -> s3ImageService.deleteImage(img.getImageUrl()));
+        imageRepository.deleteByCategoryAndTypeId(REVIEW, reviewId);
 
-        imageRepository.deleteAll(review.getImages());
         reviewRepository.delete(review);
+
+        updateAverageRating(review.getRestaurant());
     }
 
 }
