@@ -85,6 +85,16 @@ public class CorkageStoreService {
         }
 
         if (request.optionTypes() != null) {
+
+            List<OptionType> bitTypes = request.optionTypes().stream()
+                    .map(OptionType::valueOf)
+                    .toList();
+
+            // 비트 OR 연산으로 optionBits 저장
+            corkageStore.addOptionBits(bitTypes);
+
+            // 기존 엔티티는 그대로 저장 (ETC 텍스트 포함)
+            // Todo 이거 엔티티 삭제하거나 수정하면 이 부분 리팩토링해야 함
             for (String option : request.optionTypes()) {
                 OptionType optionType = OptionType.valueOf(option);
                 String etcContent = (optionType == OptionType.ETC) ? request.etcContent() : null;
@@ -129,16 +139,19 @@ public class CorkageStoreService {
                         case MULTIPLE, FREE -> true;  // 가격 필터링 없이 다중 콜키지 여부로 필터링 적용
                     };
                 })
-                .filter(store -> {      // 콜키지 옵션 필터링
+                .filter(store -> { // 콜키지 옵션 필터링
                     if (request.optionTypes().isEmpty())
                         return true;
 
-                    List<String> storeOptions = store.getCorkageOptions().stream()
-                            .map(opt -> opt.getOptionType().name())
-                            .toList();
+                    // 비트마스크로 변환
+                    int filterMask = 0;
+                    for (String opt : request.optionTypes()) {
+                        OptionType type = OptionType.valueOf(opt);
+                        filterMask |= (1 << type.ordinal());
+                    }
 
-                    return request.optionTypes().stream()
-                            .anyMatch(storeOptions::contains);
+                    // optionBits와 AND 연산으로 옵션 포함 여부 판단
+                    return (store.getOptionBits() & filterMask) != 0;
                 })
                 .map(store -> GetSearchRestaurantResponse.from(store.getRestaurant()))
                 .toList();

@@ -47,6 +47,19 @@ public class CorkageStore extends BaseEntity {
     @OneToMany(mappedBy = "corkageStore", cascade = CascadeType.REMOVE)
     private List<CorkageOption> corkageOptions = new ArrayList<>();
 
+    @Column(name = "option_bits")
+    private Integer optionBits = 0; // Todo 따로 값 설정해주는 로직 있어야 함.
+
+    public void addOptionBit(OptionType type) {
+        this.optionBits |= (1 << type.ordinal());
+    }
+
+    public void addOptionBits(List<OptionType> optionTypes) {
+        for (OptionType type : optionTypes) {
+            this.optionBits |= (1 << type.ordinal());
+        }
+    }
+
     @Column(name = "pairing", columnDefinition = "TEXT")
     private String pairing;
 
