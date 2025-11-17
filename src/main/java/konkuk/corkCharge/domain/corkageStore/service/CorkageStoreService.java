@@ -71,7 +71,6 @@ public class CorkageStoreService {
 
         corkageStoreRepository.save(corkageStore);
 
-        // 다중 콜키지인 경우
         if (corkageType == CorkageType.MULTIPLE && request.multiCorkages() != null) {
             for (MultiCorkageRequest multiCorkage : request.multiCorkages()) {
                 MultiCorkage entity = MultiCorkage.builder()
@@ -79,11 +78,12 @@ public class CorkageStoreService {
                         .price(multiCorkage.price())
                         .corkageStore(corkageStore)
                         .build();
+
                 multiCorkageRepository.save(entity);
+                corkageStore.addMultiPrice(entity);   // addMultiPrice 내부에서 recalcMinMax 호출
             }
         }
 
-        // 옵션
         if (request.optionTypes() != null) {
             for (String option : request.optionTypes()) {
                 OptionType optionType = OptionType.valueOf(option);
@@ -98,6 +98,7 @@ public class CorkageStoreService {
                 corkageOptionRepository.save(entity);
             }
         }
+
         restaurant.setHasCorkage(true);
     }
 

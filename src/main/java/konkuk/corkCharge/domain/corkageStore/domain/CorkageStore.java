@@ -32,6 +32,12 @@ public class CorkageStore extends BaseEntity {
     @Column(nullable = false, length = 30)
     private CorkageType corkageType;
 
+    @Column(name = "min_corkage_price")
+    private Integer minCorkagePrice;
+
+    @Column(name = "max_corkage_price")
+    private Integer maxCorkagePrice;
+
     @Column(name = "corkage_price", length = 100)   // 병당, 인당, 테이블당 가격
     private Integer corkagePrice;
 
@@ -47,19 +53,67 @@ public class CorkageStore extends BaseEntity {
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
+    // MULTIPLE 외에는 min/max를 공통적으로 세팅
+    private void initializeSinglePriceMinMax() {
+        if (this.corkageType == CorkageType.PER_BOTTLE ||
+                this.corkageType == CorkageType.PER_PERSON ||
+                this.corkageType == CorkageType.PER_TABLE) {
+
+            this.minCorkagePrice = this.corkagePrice;
+            this.maxCorkagePrice = this.corkagePrice;
+
+        } else if (this.corkageType == CorkageType.FREE) {
+            this.minCorkagePrice = null;
+            this.maxCorkagePrice = null;
+        }
+    }
+
+    // MULTIPLE일 경우 multiPrices 기반으로 min/max 계산
+    public void recalcMinMaxFromMulti() {
+        if (this.multiPrices.isEmpty()) {
+            this.minCorkagePrice = null;
+            this.maxCorkagePrice = null;
+            return;
+        }
+
+        int min = Integer.MAX_VALUE;
+        int max = Integer.MIN_VALUE;
+
+        for (MultiCorkage mc : multiPrices) {
+            min = Math.min(min, mc.getPrice());
+            max = Math.max(max, mc.getPrice());
+        }
+
+        this.minCorkagePrice = min;
+        this.maxCorkagePrice = max;
+    }
+
+
     public void addMultiPrice(MultiCorkage price) {
         this.multiPrices.add(price);
+        if (this.corkageType == CorkageType.MULTIPLE) {
+            recalcMinMaxFromMulti();
+        }
     }
 
     public void addAdditionalOption(CorkageOption option) {
         this.corkageOptions.add(option);
     }
 
+
     @Builder
     public CorkageStore(Restaurant restaurant, CorkageType corkageType, Integer corkagePrice){
         this.restaurant = restaurant;
         this.corkageType = corkageType;
         this.corkagePrice = corkagePrice;
-    }
 
+        // min/max 초기화 로직
+        if (corkageType == CorkageType.MULTIPLE) {
+            // multiPrices는 store 생성 후 따로 계산 로직에서 계산됨
+            this.minCorkagePrice = null;
+            this.maxCorkagePrice = null;
+        } else {
+            initializeSinglePriceMinMax();
+        }
+    }
 }
