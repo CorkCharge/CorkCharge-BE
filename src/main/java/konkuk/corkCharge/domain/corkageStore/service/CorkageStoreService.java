@@ -7,7 +7,6 @@ import konkuk.corkCharge.domain.corkageStore.dto.request.PostAddCorkageRequest;
 import konkuk.corkCharge.domain.corkageStore.dto.request.PostAdminCorkageRequest;
 import konkuk.corkCharge.domain.corkageStore.dto.response.GetCorkageVerificationResponse;
 import konkuk.corkCharge.domain.corkageStore.dto.response.PostAdminCorkageResponse;
-import konkuk.corkCharge.domain.corkageStore.repository.CorkageOptionRepository;
 import konkuk.corkCharge.domain.corkageStore.repository.CorkageStoreRepository;
 import konkuk.corkCharge.domain.corkageStore.repository.MultiCorkageRepository;
 import konkuk.corkCharge.domain.image.domain.Image;
@@ -39,7 +38,6 @@ public class CorkageStoreService {
     private final RestaurantRepository restaurantRepository;
     private final CorkageStoreRepository corkageStoreRepository;
     private final MultiCorkageRepository multiCorkageRepository;
-    private final CorkageOptionRepository corkageOptionRepository;
     private final UserRepository userRepository;
     private final OwnerRestaurantRepository ownerRestaurantRepository;
     private final ImageRepository imageRepository;
@@ -80,32 +78,22 @@ public class CorkageStoreService {
                         .build();
 
                 multiCorkageRepository.save(entity);
-                corkageStore.addMultiPrice(entity);   // addMultiPrice 내부에서 recalcMinMax 호출
+
+                corkageStore.getMultiPrices().add(entity);
             }
         }
 
         if (request.optionTypes() != null) {
-
             List<OptionType> bitTypes = request.optionTypes().stream()
                     .map(OptionType::valueOf)
                     .toList();
 
-            // 비트 OR 연산으로 optionBits 저장
+            // optionBits 저장
             corkageStore.addOptionBits(bitTypes);
 
-            // 기존 엔티티는 그대로 저장 (ETC 텍스트 포함)
-            // Todo 이거 엔티티 삭제하거나 수정하면 이 부분 리팩토링해야 함
-            for (String option : request.optionTypes()) {
-                OptionType optionType = OptionType.valueOf(option);
-                String etcContent = (optionType == OptionType.ETC) ? request.etcContent() : null;
-
-                CorkageOption entity = CorkageOption.builder()
-                        .optionType(optionType)
-                        .etcContent(etcContent)
-                        .corkageStore(corkageStore)
-                        .build();
-
-                corkageOptionRepository.save(entity);
+            // ETC 텍스트 저장 (옵션에 ETC 포함될 때만)
+            if (bitTypes.contains(OptionType.ETC)) {
+                corkageStore.updateEtcContent(request.etcContent());
             }
         }
 
