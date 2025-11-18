@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import konkuk.corkCharge.domain.image.domain.Image;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -78,15 +79,29 @@ public class RestaurantDetailResponseMapper {
                 };
             }
 
-            corkageOptions = corkage.getCorkageOptions().stream()
-                    .map(option -> {
-                        if (option.getOptionType() == OptionType.ETC && option.getEtcContent() != null) {
-                            return option.getEtcContent();
-                        } else {
-                            return option.getOptionType().getLabel();
+            List<String> corkageOptionsList = new ArrayList<>();
+
+            int bits = corkage.getOptionBits();
+
+            // OptionType ENUM 전체 순회
+            for (OptionType optionType : OptionType.values()) {
+
+                // 해당 옵션이 켜져 있으면
+                if ((bits & (1 << optionType.ordinal())) != 0) {
+
+                    if (optionType == OptionType.ETC) {
+                        // etcContent가 있을 경우 텍스트로 표시
+                        if (corkage.getEtcContent() != null) {
+                            corkageOptionsList.add(corkage.getEtcContent());
                         }
-                    })
-                    .toList();
+                    } else {
+                        // 기타 옵션들은 label로 표시
+                        corkageOptionsList.add(optionType.getLabel());
+                    }
+                }
+            }
+
+            corkageOptions = corkageOptionsList;
 
             pairingAlcohol = corkage.getPairing();
             pairingDescription = corkage.getDescription();

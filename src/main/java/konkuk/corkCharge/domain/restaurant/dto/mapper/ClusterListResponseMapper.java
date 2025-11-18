@@ -43,10 +43,20 @@ public class ClusterListResponseMapper {
             case PER_TABLE -> "테이블당 " + corkageStore.getCorkagePrice() + "원";
         };
 
-        List<String> corkageOptions = corkageStore.getCorkageOptions().stream()
-                .map(opt -> opt.getOptionType() == ETC
-                        ? opt.getEtcContent()
-                        : opt.getOptionType().getLabel())
+        List<String> corkageOptions;
+
+        int bits = corkageStore.getOptionBits();
+
+        corkageOptions = java.util.Arrays.stream(konkuk.corkCharge.domain.corkageStore.domain.OptionType.values())
+                .filter(type -> (bits & (1 << type.ordinal())) != 0)
+                .map(type -> {
+                    if (type == ETC) {
+                        return corkageStore.getEtcContent();
+                    } else {
+                        return type.getLabel();
+                    }
+                })
+                .filter(opt -> opt != null && !opt.isBlank())
                 .toList();
 
         String imageUrl = imageRepository
