@@ -1,7 +1,6 @@
 package konkuk.corkCharge.domain.corkageStore.domain;
 
 import jakarta.persistence.*;
-import konkuk.corkCharge.domain.image.domain.Image;
 import konkuk.corkCharge.domain.restaurant.domain.Restaurant;
 import konkuk.corkCharge.global.entity.BaseEntity;
 import lombok.AccessLevel;
@@ -9,7 +8,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -38,8 +36,21 @@ public class CorkageStore extends BaseEntity {
     @OneToMany(mappedBy = "corkageStore", cascade = CascadeType.REMOVE)  // 다중 콜키지
     private Set<MultiCorkage> multiPrices = new HashSet<>();
 
-    @OneToMany(mappedBy = "corkageStore", cascade = CascadeType.REMOVE)
-    private List<CorkageOption> corkageOptions = new ArrayList<>();
+    @Column(name = "option_bits")
+    private Integer optionBits = 0;
+
+    @Column(name = "etc_content", columnDefinition = "TEXT")
+    private String etcContent;
+
+    public void updateEtcContent(String etcContent) {
+        this.etcContent = etcContent;
+    }
+
+    public void addOptionBits(List<OptionType> optionTypes) {
+        for (OptionType type : optionTypes) {
+            this.optionBits |= (1 << type.ordinal());
+        }
+    }
 
     @Column(name = "pairing", columnDefinition = "TEXT")
     private String pairing;
@@ -47,19 +58,10 @@ public class CorkageStore extends BaseEntity {
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
-    public void addMultiPrice(MultiCorkage price) {
-        this.multiPrices.add(price);
-    }
-
-    public void addAdditionalOption(CorkageOption option) {
-        this.corkageOptions.add(option);
-    }
-
     @Builder
     public CorkageStore(Restaurant restaurant, CorkageType corkageType, Integer corkagePrice){
         this.restaurant = restaurant;
         this.corkageType = corkageType;
         this.corkagePrice = corkagePrice;
     }
-
 }

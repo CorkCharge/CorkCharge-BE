@@ -7,7 +7,6 @@ import konkuk.corkCharge.domain.corkageStore.dto.request.PostAddCorkageRequest;
 import konkuk.corkCharge.domain.corkageStore.dto.request.PostAdminCorkageRequest;
 import konkuk.corkCharge.domain.corkageStore.dto.response.GetCorkageVerificationResponse;
 import konkuk.corkCharge.domain.corkageStore.dto.response.PostAdminCorkageResponse;
-import konkuk.corkCharge.domain.corkageStore.repository.CorkageOptionRepository;
 import konkuk.corkCharge.domain.corkageStore.repository.CorkageStoreRepository;
 import konkuk.corkCharge.domain.corkageStore.repository.MultiCorkageRepository;
 import konkuk.corkCharge.domain.image.domain.Image;
@@ -39,7 +38,6 @@ public class CorkageStoreService {
     private final RestaurantRepository restaurantRepository;
     private final CorkageStoreRepository corkageStoreRepository;
     private final MultiCorkageRepository multiCorkageRepository;
-    private final CorkageOptionRepository corkageOptionRepository;
     private final UserRepository userRepository;
     private final OwnerRestaurantRepository ownerRestaurantRepository;
     private final ImageRepository imageRepository;
@@ -71,7 +69,6 @@ public class CorkageStoreService {
 
         corkageStoreRepository.save(corkageStore);
 
-        // 다중 콜키지인 경우
         if (corkageType == CorkageType.MULTIPLE && request.multiCorkages() != null) {
             for (MultiCorkageRequest multiCorkage : request.multiCorkages()) {
                 MultiCorkage entity = MultiCorkage.builder()
@@ -79,25 +76,27 @@ public class CorkageStoreService {
                         .price(multiCorkage.price())
                         .corkageStore(corkageStore)
                         .build();
+
                 multiCorkageRepository.save(entity);
+
+                corkageStore.getMultiPrices().add(entity);
             }
         }
 
-        // 옵션
         if (request.optionTypes() != null) {
-            for (String option : request.optionTypes()) {
-                OptionType optionType = OptionType.valueOf(option);
-                String etcContent = (optionType == OptionType.ETC) ? request.etcContent() : null;
+            List<OptionType> bitTypes = request.optionTypes().stream()
+                    .map(OptionType::valueOf)
+                    .toList();
 
-                CorkageOption entity = CorkageOption.builder()
-                        .optionType(optionType)
-                        .etcContent(etcContent)
-                        .corkageStore(corkageStore)
-                        .build();
+            // optionBits 저장
+            corkageStore.addOptionBits(bitTypes);
 
-                corkageOptionRepository.save(entity);
+            // ETC 텍스트 저장 (옵션에 ETC 포함될 때만)
+            if (bitTypes.contains(OptionType.ETC)) {
+                corkageStore.updateEtcContent(request.etcContent());
             }
         }
+
         restaurant.setHasCorkage(true);
     }
 
@@ -128,16 +127,19 @@ public class CorkageStoreService {
                         case MULTIPLE, FREE -> true;  // 가격 필터링 없이 다중 콜키지 여부로 필터링 적용
                     };
                 })
-                .filter(store -> {      // 콜키지 옵션 필터링
+                .filter(store -> { // 콜키지 옵션 필터링
                     if (request.optionTypes().isEmpty())
                         return true;
 
-                    List<String> storeOptions = store.getCorkageOptions().stream()
-                            .map(opt -> opt.getOptionType().name())
-                            .toList();
+                    // 비트마스크로 변환
+                    int filterMask = 0;
+                    for (String opt : request.optionTypes()) {
+                        OptionType type = OptionType.valueOf(opt);
+                        filterMask |= (1 << type.ordinal());
+                    }
 
-                    return request.optionTypes().stream()
-                            .anyMatch(storeOptions::contains);
+                    // optionBits와 AND 연산으로 옵션 포함 여부 판단
+                    return (store.getOptionBits() & filterMask) != 0;
                 })
                 .map(store -> GetSearchRestaurantResponse.from(store.getRestaurant()))
                 .toList();
