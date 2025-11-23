@@ -1,137 +1,83 @@
 package konkuk.corkCharge.domain.restaurant.dto.mapper;
 
-import konkuk.corkCharge.domain.corkageStore.domain.CorkageStore;
-import konkuk.corkCharge.domain.corkageStore.domain.CorkageType;
 import konkuk.corkCharge.domain.corkageStore.domain.OptionType;
-import konkuk.corkCharge.domain.corkageStore.repository.CorkageStoreRepository;
-import konkuk.corkCharge.domain.image.repository.ImageRepository;
-import konkuk.corkCharge.domain.restaurant.domain.Restaurant;
+import konkuk.corkCharge.domain.restaurant.domain.RestaurantSummary;
 import konkuk.corkCharge.domain.restaurant.dto.response.GetRestaurantDetailResponse;
 import konkuk.corkCharge.domain.restaurant.dto.response.ReviewResponse;
 import konkuk.corkCharge.domain.review.domain.Review;
 import konkuk.corkCharge.domain.review.repository.ReviewRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-import konkuk.corkCharge.domain.image.domain.Image;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
-
-import static konkuk.corkCharge.domain.image.domain.ImageCategory.CORKAGE;
-import static konkuk.corkCharge.domain.image.domain.ImageCategory.RESTAURANT;
-import static konkuk.corkCharge.domain.image.domain.ImageType.MAIN;
-import static konkuk.corkCharge.domain.image.domain.ImageType.MENU;
 
 @Component
 @RequiredArgsConstructor
 public class RestaurantDetailResponseMapper {
 
-    private final ImageRepository imageRepository;
-    private final CorkageStoreRepository corkageStoreRepository;
     private final ReviewRepository reviewRepository;
     private final ReviewResponseMapper reviewResponseMapper;
 
-    public GetRestaurantDetailResponse toResponse(Restaurant restaurant) {
+    public GetRestaurantDetailResponse toResponse(RestaurantSummary summary) {
 
-        // 메인 / 메뉴 이미지
-        String mainImageUrl = imageRepository
-                .findFirstByCategoryAndTypeIdAndType(RESTAURANT, restaurant.getRestaurantId(), MAIN)
-                .map(Image::getImageUrl)
-                .orElse(null);
+        Long restaurantId = summary.getRestaurantId();
 
-        String menuImageUrl = imageRepository
-                .findFirstByCategoryAndTypeIdAndType(RESTAURANT, restaurant.getRestaurantId(), MENU)
-                .map(Image::getImageUrl)
-                .orElse(null);
+        // 옵션 비트 → 문자열 리스트
+        List<String> corkageOptions = decodeCorkageOptions(
+                summary.getOptionBits(),
+                summary.getOptionEtcContent()
+        );
 
-        // 콜키지 정보
-        CorkageStore corkage = corkageStoreRepository
-                .findByRestaurant_RestaurantId(restaurant.getRestaurantId())
-                .orElse(null);
-
-        String corkagePrice = null;
-        String pairingAlcohol = null;
-        String pairingDescription = null;
-        String pairingImageUrl = null;
-        List<String> corkageOptions = List.of();
-
-        // 콜키지
-        if (corkage != null) {
-            pairingImageUrl = imageRepository
-                    .findFirstByCategoryAndTypeIdAndType(CORKAGE, corkage.getCorkageStoreId(), MAIN)
-                    .map(Image::getImageUrl)
-                    .orElse(null);
-
-            CorkageType type = corkage.getCorkageType();
-            if (type == CorkageType.MULTIPLE) {
-                corkagePrice = corkage.getMultiPrices().stream()
-                        .map(mp -> mp.getLiquorType() + " 병당: " + mp.getPrice() + "원")
-                        .collect(Collectors.joining(", "));
-            } else if (type == CorkageType.FREE) {
-                corkagePrice = "콜키지 프리";
-            } else {
-                corkagePrice = switch (type) {
-                    case PER_BOTTLE -> "병당 " + corkage.getCorkagePrice() + "원";
-                    case PER_PERSON -> "인당 " + corkage.getCorkagePrice() + "원";
-                    case PER_TABLE -> "테이블당 " + corkage.getCorkagePrice() + "원";
-                    default -> null;
-                };
-            }
-
-            List<String> corkageOptionsList = new ArrayList<>();
-
-            int bits = corkage.getOptionBits();
-
-            // OptionType ENUM 전체 순회
-            for (OptionType optionType : OptionType.values()) {
-
-                // 해당 옵션이 켜져 있으면
-                if ((bits & (1 << optionType.ordinal())) != 0) {
-
-                    if (optionType == OptionType.ETC) {
-                        // etcContent가 있을 경우 텍스트로 표시
-                        if (corkage.getEtcContent() != null) {
-                            corkageOptionsList.add(corkage.getEtcContent());
-                        }
-                    } else {
-                        // 기타 옵션들은 label로 표시
-                        corkageOptionsList.add(optionType.getLabel());
-                    }
-                }
-            }
-
-            corkageOptions = corkageOptionsList;
-
-            pairingAlcohol = corkage.getPairing();
-            pairingDescription = corkage.getDescription();
-        }
-
-        // 리뷰
+        // 리뷰 목록은 요약에 없으니 DB 조회
         List<Review> reviews =
-                reviewRepository.findByRestaurant_RestaurantId(restaurant.getRestaurantId());
+                reviewRepository.findByRestaurant_RestaurantId(restaurantId);
 
         List<ReviewResponse> reviewResponses = reviews.stream()
                 .map(reviewResponseMapper::toResponse)
                 .toList();
 
         return new GetRestaurantDetailResponse(
-                restaurant.getRestaurantId(),
-                restaurant.getName(),
-                restaurant.getAddress(),
-                restaurant.getPhone(),
-                restaurant.getRating(),
-                restaurant.getReviewCount(),
-                mainImageUrl,
-                menuImageUrl,
-                corkagePrice,
+                restaurantId,
+                summary.getName(),
+                summary.getAddress(),
+                summary.getPhone(),
+                summary.getAvgRating(),
+                summary.getReviewCount() != null ? summary.getReviewCount() : 0,
+                summary.getMainImageUrl(),
+                summary.getMenuImageUrl(),
+                summary.getCorkagePrice(),
                 corkageOptions,
-                restaurant.getRepresentMenu(),
-                pairingAlcohol,
-                pairingDescription,
-                pairingImageUrl,
-                restaurant.getOpeningHours(),
+                summary.getRepresentMenu(),
+                summary.getPairingAlcohol(),
+                summary.getPairingDescription(),
+                summary.getPairingImageUrl(),
+                summary.getOpeningHours(),
                 reviewResponses
         );
+    }
+
+    private List<String> decodeCorkageOptions(Integer optionBits, String etcContent) {
+        if (optionBits == null) {
+            return List.of();
+        }
+
+        List<String> result = new ArrayList<>();
+
+        for (OptionType type : OptionType.values()) {
+            // 해당 비트가 켜져 있으면
+            if ((optionBits & (1 << type.ordinal())) != 0) {
+
+                if (type == OptionType.ETC) {
+                    if (etcContent != null && !etcContent.isBlank()) {
+                        result.add(etcContent);
+                    }
+                } else {
+                    result.add(type.getLabel());
+                }
+            }
+        }
+
+        return result;
     }
 }

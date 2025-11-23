@@ -6,6 +6,7 @@ import konkuk.corkCharge.domain.corkageStore.domain.CorkageStore;
 import konkuk.corkCharge.domain.corkageStore.domain.MultiCorkage;
 import konkuk.corkCharge.domain.image.repository.ImageRepository;
 import konkuk.corkCharge.domain.restaurant.domain.Restaurant;
+import konkuk.corkCharge.domain.restaurant.domain.RestaurantSummary;
 import konkuk.corkCharge.domain.restaurant.dto.mapper.*;
 import konkuk.corkCharge.domain.restaurant.dto.request.GetFilterRequest;
 import konkuk.corkCharge.domain.restaurant.dto.response.*;
@@ -40,6 +41,8 @@ public class RestaurantService {
     private final MapRestaurantResponseMapper mapRestaurantResponseMapper;
     private final RestaurantListResponseMapper restaurantListResponseMapper;
 
+    private final RestaurantSummaryService restaurantSummaryService;
+
     @Transactional(readOnly = true)
     public List<GetRestaurantListResponse> getCorkageRestaurants() {
         List<Restaurant> restaurants = restaurantRepository.findByHasCorkageTrue();
@@ -54,10 +57,12 @@ public class RestaurantService {
     }
 
     public GetRestaurantDetailResponse getRestaurantDetail(Long restaurantId) {
-        Restaurant restaurant = restaurantRepository.findById(restaurantId)
+        restaurantRepository.findById(restaurantId)
                 .orElseThrow(() -> new CustomException(RESTAURANT_NOT_FOUND));
 
-        return restaurantDetailResponseMapper.toResponse(restaurant);
+        RestaurantSummary summary = restaurantSummaryService.getSummary(restaurantId);
+
+        return restaurantDetailResponseMapper.toResponse(summary);
     }
 
     @Transactional

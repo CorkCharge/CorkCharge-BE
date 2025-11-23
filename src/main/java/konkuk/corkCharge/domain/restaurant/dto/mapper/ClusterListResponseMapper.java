@@ -2,6 +2,7 @@ package konkuk.corkCharge.domain.restaurant.dto.mapper;
 
 import konkuk.corkCharge.domain.corkageStore.domain.CorkageStore;
 import konkuk.corkCharge.domain.corkageStore.domain.MultiCorkage;
+import konkuk.corkCharge.domain.corkageStore.domain.OptionType;
 import konkuk.corkCharge.domain.corkageStore.repository.CorkageStoreRepository;
 import konkuk.corkCharge.domain.image.domain.Image;
 import konkuk.corkCharge.domain.image.repository.ImageRepository;
@@ -10,8 +11,10 @@ import konkuk.corkCharge.domain.restaurant.dto.response.GetClusterListResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.Arrays;
 import java.util.List;
 
+import static java.util.Arrays.stream;
 import static konkuk.corkCharge.domain.corkageStore.domain.OptionType.ETC;
 import static konkuk.corkCharge.domain.image.domain.ImageCategory.RESTAURANT;
 import static konkuk.corkCharge.domain.image.domain.ImageType.MAIN;
@@ -47,7 +50,7 @@ public class ClusterListResponseMapper {
 
         int bits = corkageStore.getOptionBits();
 
-        corkageOptions = java.util.Arrays.stream(konkuk.corkCharge.domain.corkageStore.domain.OptionType.values())
+        corkageOptions = stream(OptionType.values())
                 .filter(type -> (bits & (1 << type.ordinal())) != 0)
                 .map(type -> {
                     if (type == ETC) {

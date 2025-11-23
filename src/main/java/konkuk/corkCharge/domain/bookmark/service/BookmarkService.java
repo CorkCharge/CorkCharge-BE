@@ -14,6 +14,7 @@ import konkuk.corkCharge.domain.image.repository.ImageRepository;
 import konkuk.corkCharge.domain.restaurant.domain.Restaurant;
 import konkuk.corkCharge.domain.bookmark.dto.response.GetSavedRestaurantResponse;
 import konkuk.corkCharge.domain.restaurant.repository.RestaurantRepository;
+import konkuk.corkCharge.domain.restaurant.service.RestaurantSummaryService;
 import konkuk.corkCharge.domain.review.domain.Review;
 import konkuk.corkCharge.domain.review.repository.ReviewRepository;
 import konkuk.corkCharge.domain.tip.domain.Tip;
@@ -40,6 +41,7 @@ public class BookmarkService {
     private final TipRepository tipRepository;
     private final ImageRepository imageRepository;
     private final CorkageStoreRepository corkageStoreRepository;
+    private final RestaurantSummaryService restaurantSummaryService;
 
     @Transactional
     public void createBookmark(Long userId, PostBookmarkRequest request){
@@ -53,6 +55,9 @@ public class BookmarkService {
 
                 restaurant.setBookmarkCount(restaurant.getBookmarkCount() + 1);
                 restaurantRepository.save(restaurant);
+
+                // 캐시 무효화
+                restaurantSummaryService.evictSummary(request.targetId());
             }
             case REVIEW -> {
                 Review review = reviewRepository.findById(request.targetId())
@@ -100,6 +105,9 @@ public class BookmarkService {
 
                 restaurant.setBookmarkCount(restaurant.getBookmarkCount() - 1);
                 restaurantRepository.save(restaurant);
+
+                // 캐시 무효화
+                restaurantSummaryService.evictSummary(request.targetId());
             }
             case REVIEW -> {
                 Review review = reviewRepository.findById(bookmark.getTargetId())
