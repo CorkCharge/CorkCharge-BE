@@ -1,4 +1,20 @@
 services:
+  redis:
+    image: redis:7
+    container_name: corkcharge-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    command: [
+      "redis-server",
+      "--appendonly", "yes",
+      "--requirepass", "${REDIS_PASSWORD}"
+    ]
+    volumes:
+      - redis-data:/data
+    env_file:
+      - .env
+
   corkCharge:
     image: jaypark0205/corkcharge:latest
     env_file:
@@ -20,4 +36,10 @@ services:
       - NAVER_OAUTH_CLIENT_ID=${NAVER_OAUTH_CLIENT_ID}
       - NAVER_OAUTH_CLIENT_SECRET=${NAVER_OAUTH_CLIENT_SECRET}
       - JWT_SECRET=${JWT_SECRET}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
       - TZ=Asia/Seoul
+
+volumes:
+  redis-data:
