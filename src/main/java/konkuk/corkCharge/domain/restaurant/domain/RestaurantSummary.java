@@ -1,13 +1,17 @@
 package konkuk.corkCharge.domain.restaurant.domain;
 
 import konkuk.corkCharge.domain.corkageStore.domain.CorkageType;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 
 @Getter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class RestaurantSummary implements Serializable {
 
     private Long restaurantId;

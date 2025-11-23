@@ -6,7 +6,6 @@ import konkuk.corkCharge.domain.corkageStore.repository.CorkageStoreRepository;
 import konkuk.corkCharge.domain.image.domain.ImageCategory;
 import konkuk.corkCharge.domain.image.domain.ImageType;
 import konkuk.corkCharge.domain.image.domain.Image;
-import konkuk.corkCharge.domain.corkageStore.domain.MultiCorkage;
 import konkuk.corkCharge.domain.image.repository.ImageRepository;
 import konkuk.corkCharge.domain.restaurant.domain.Restaurant;
 import konkuk.corkCharge.domain.restaurant.domain.RestaurantSummary;
@@ -18,7 +17,6 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.stream.Collectors;
 
 import static konkuk.corkCharge.global.response.status.BaseExceptionResponseStatus.*;
