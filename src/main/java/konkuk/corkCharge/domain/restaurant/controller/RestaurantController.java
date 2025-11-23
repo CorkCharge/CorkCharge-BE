@@ -36,10 +36,10 @@ public class RestaurantController {
         return BaseResponse.ok(restaurantService.searchRestaurants(keyword));
     }
 
-    @GetMapping("/hot")
-    public BaseResponse<List<GetHotRestaurantResponse>> getHotRestaurant() {
-        return BaseResponse.ok(restaurantService.getHotRestaurants());
-    }
+//    @GetMapping("/hot")
+//    public BaseResponse<List<GetHotRestaurantResponse>> getHotRestaurant() {
+//        return BaseResponse.ok(restaurantService.getHotRestaurants());
+//    }
 
     @GetMapping("/filter")
     public BaseResponse<List<?>> filterRestaurant(

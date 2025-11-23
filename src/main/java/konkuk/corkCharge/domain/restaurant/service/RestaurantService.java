@@ -52,6 +52,7 @@ public class RestaurantService {
         }
 
         return restaurants.stream()
+                .map(r -> restaurantSummaryService.getSummary(r.getRestaurantId()))
                 .map(restaurantListResponseMapper::toResponse)
                 .toList();
     }
@@ -67,7 +68,6 @@ public class RestaurantService {
 
     @Transactional
     public List<GetSearchRestaurantResponse> searchRestaurants(String keyword) {
-
         List<Restaurant> matchedRestaurants = restaurantRepository.findByNameContaining(keyword);
 
         return matchedRestaurants.stream()
@@ -75,14 +75,14 @@ public class RestaurantService {
                 .toList();
     }
 
-    @Transactional
-    public List<GetHotRestaurantResponse> getHotRestaurants() {
-        List<Restaurant> hotRestaurants = restaurantRepository.findByHasCorkageFalseAndBookmarkCountGreaterThanEqual(5);
-
-        return hotRestaurants.stream()
-                .map(hotRestaurantResponseMapper::toResponse)
-                .toList();
-    }
+//    @Transactional
+//    public List<GetHotRestaurantResponse> getHotRestaurants() {
+//        List<Restaurant> hotRestaurants = restaurantRepository.findByHasCorkageFalseAndBookmarkCountGreaterThanEqual(5);
+//
+//        return hotRestaurants.stream()
+//                .map(hotRestaurantResponseMapper::toResponse)
+//                .toList();
+//    }
 
     @Transactional
     public List<?> filterRestaurants(GetFilterRequest request) {
@@ -91,12 +91,18 @@ public class RestaurantService {
         return switch (request.type()) {
             case "hot" -> matchedRestaurants.stream()
                     .filter(r -> r.getBookmarkCount() >= 5)
+                    .map(r -> restaurantSummaryService.getSummary(r.getRestaurantId()))
                     .map(hotRestaurantResponseMapper::toResponse)
                     .toList();
 
             case "map" -> matchedRestaurants.stream()
                     .filter(Restaurant::isHasCorkage)
-                    .map(GetSearchRestaurantResponse::from)
+                    .map(r -> restaurantSummaryService.getSummary(r.getRestaurantId()))
+                    .map(s -> new GetSearchRestaurantResponse(
+                            s.getRestaurantId(),
+                            s.getName(),
+                            s.getAddress()
+                    ))
                     .toList();
 
             default -> throw new CustomException(NOT_EXIT_TYPE);
