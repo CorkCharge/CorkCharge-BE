@@ -46,7 +46,4 @@ public class RestaurantSummary implements Serializable {
     // 위치
     private Double latitude;
     private Double longitude;
-
-    private LocalDateTime updatedAt;
-
 }
