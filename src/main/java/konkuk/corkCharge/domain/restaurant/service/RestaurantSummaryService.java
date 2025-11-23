@@ -136,7 +136,6 @@ public class RestaurantSummaryService {
                 .latitude(restaurant.getLatitude())
                 .longitude(restaurant.getLongitude())
 
-                .updatedAt(LocalDateTime.now())
                 .build();
     }
 
