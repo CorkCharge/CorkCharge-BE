@@ -6,6 +6,7 @@ import konkuk.corkCharge.domain.image.repository.ImageRepository;
 import konkuk.corkCharge.domain.image.service.S3ImageService;
 import konkuk.corkCharge.domain.restaurant.domain.Restaurant;
 import konkuk.corkCharge.domain.restaurant.repository.RestaurantRepository;
+import konkuk.corkCharge.domain.restaurant.service.RestaurantSummaryService;
 import konkuk.corkCharge.domain.review.domain.Review;
 import konkuk.corkCharge.domain.review.domain.ReviewRange;
 import konkuk.corkCharge.domain.review.dto.request.PatchUpdateReviewRequest;
@@ -36,6 +37,7 @@ public class ReviewService {
     private final RestaurantRepository restaurantRepository;
     private final ImageRepository imageRepository;
     private final S3ImageService s3ImageService;
+    private final RestaurantSummaryService restaurantSummaryService;
 
     @Transactional
     public void createReview(Long userId, Long restaurantId,
@@ -71,6 +73,8 @@ public class ReviewService {
         }
 
         updateAverageRating(restaurant);
+        // 캐시 무효화
+        restaurantSummaryService.evictSummary(restaurantId);
     }
 
     private void updateAverageRating(Restaurant restaurant) {
