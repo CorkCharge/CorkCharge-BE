@@ -9,7 +9,9 @@ import konkuk.corkCharge.domain.restaurant.domain.Restaurant;
 import konkuk.corkCharge.domain.restaurant.domain.RestaurantSummary;
 import konkuk.corkCharge.domain.restaurant.dto.mapper.*;
 import konkuk.corkCharge.domain.restaurant.dto.request.GetFilterRequest;
+import konkuk.corkCharge.domain.restaurant.dto.request.GetNewResaurantRequest;
 import konkuk.corkCharge.domain.restaurant.dto.response.*;
+import konkuk.corkCharge.domain.restaurant.repository.NewRestaurantDistanceProjection;
 import konkuk.corkCharge.domain.restaurant.repository.RestaurantRepository;
 import konkuk.corkCharge.global.api.naverMapsApi.NaverGeocodingClient;
 import konkuk.corkCharge.global.api.naverMapsApi.dto.Address;
@@ -19,8 +21,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import static konkuk.corkCharge.domain.image.domain.ImageCategory.RESTAURANT;
 import static konkuk.corkCharge.domain.image.domain.ImageType.MAIN;
@@ -29,6 +34,8 @@ import static konkuk.corkCharge.global.response.status.BaseExceptionResponseStat
 @Service
 @RequiredArgsConstructor
 public class RestaurantService {
+
+    private static final int NEW_RESTAURANT_DAYS = 14;
 
     private final RestaurantRepository restaurantRepository;
     private final NaverGeocodingClient naverGeocodingClient;
@@ -42,6 +49,7 @@ public class RestaurantService {
     private final RestaurantListResponseMapper restaurantListResponseMapper;
 
     private final RestaurantSummaryService restaurantSummaryService;
+    private final NewRestaurantResponseMapper newRestaurantResponseMapper;
 
     @Transactional(readOnly = true)
     public List<GetRestaurantListResponse> getCorkageRestaurants() {
@@ -236,6 +244,44 @@ public class RestaurantService {
                 r.getBookmarkCount() == null ? 0 : r.getBookmarkCount(),
                 imageUrl
         );
+    }
+
+    @Transactional
+    public List<GetNewRestaurantResponse> getNewRestaurants(GetNewResaurantRequest request) {
+        LocalDateTime from = LocalDateTime.now().minusDays(NEW_RESTAURANT_DAYS);
+
+        // 사용자 좌표가 있는 경우
+        if (request.hasUserLocation()) {
+            List<NewRestaurantDistanceProjection> rows =
+                    restaurantRepository.findNewRestaurantsWithDistance(from, request.lat(), request.lon());
+
+            Map<Long, Double> distanceMap = rows.stream()
+                    .collect(Collectors.toMap(
+                            NewRestaurantDistanceProjection::getRestaurantId,
+                            NewRestaurantDistanceProjection::getDistanceKm
+                    ));
+
+            return rows.stream()
+                    .map(row -> {
+                        Long id = row.getRestaurantId();
+                        RestaurantSummary summary = restaurantSummaryService.getSummary(id);
+
+                        return newRestaurantResponseMapper.toResponse(summary, distanceMap.get(id));
+                    })
+                    .toList();
+        }
+
+        // 사용자 좌표가 없는 경우
+        List<Restaurant> restaurants = restaurantRepository.findByCreatedAtGreaterThanEqualOrderByCreatedAtDesc(from);
+
+        return restaurants.stream()
+                .map(r -> {
+                    Long id = r.getRestaurantId();
+                    RestaurantSummary summary = restaurantSummaryService.getSummary(id);
+
+                    return newRestaurantResponseMapper.toResponse(summary, null);
+                })
+                .toList();
     }
 
 }
