@@ -9,7 +9,7 @@ import konkuk.corkCharge.domain.restaurant.domain.Restaurant;
 import konkuk.corkCharge.domain.restaurant.domain.RestaurantSummary;
 import konkuk.corkCharge.domain.restaurant.dto.mapper.*;
 import konkuk.corkCharge.domain.restaurant.dto.request.GetFilterRequest;
-import konkuk.corkCharge.domain.restaurant.dto.request.GetNewResaurantRequest;
+import konkuk.corkCharge.domain.restaurant.dto.request.GetNewRestaurantRequest;
 import konkuk.corkCharge.domain.restaurant.dto.response.*;
 import konkuk.corkCharge.domain.restaurant.repository.NewRestaurantDistanceProjection;
 import konkuk.corkCharge.domain.restaurant.repository.RestaurantRepository;
@@ -246,8 +246,8 @@ public class RestaurantService {
         );
     }
 
-    @Transactional
-    public List<GetNewRestaurantResponse> getNewRestaurants(GetNewResaurantRequest request) {
+    @Transactional(readOnly = true)
+    public List<GetNewRestaurantResponse> getNewRestaurants(GetNewRestaurantRequest request) {
         LocalDateTime from = LocalDateTime.now().minusDays(NEW_RESTAURANT_DAYS);
 
         // 사용자 좌표가 있는 경우
