@@ -32,7 +32,7 @@ public class BookmarkController {
     public BaseResponse<Void> deleteBookmark(
             @LoginUserId Long userId,
             @RequestBody DeleteBookmarkRequest request
-            ){
+    ) {
         bookmarkService.deleteBookmark(userId, request);
         return BaseResponse.ok(null);
     }
@@ -40,21 +40,21 @@ public class BookmarkController {
     @GetMapping("/restaurant")
     public BaseResponse<List<GetSavedRestaurantResponse>> getSavedRestaurants(
             @LoginUserId Long userId
-    ){
+    ) {
         return BaseResponse.ok(bookmarkService.getSavedRestaurants(userId));
     }
 
     @GetMapping("/review")
     public BaseResponse<List<GetSavedReviewResponse>> getSavedReviews(
             @LoginUserId Long userId
-    ){
+    ) {
         return BaseResponse.ok(bookmarkService.getSavedReviews(userId));
     }
 
     @GetMapping("/tip")
     public BaseResponse<List<GetSavedTipResponse>> getSavedTips(
             @LoginUserId Long userId
-    ){
+    ) {
         return BaseResponse.ok(bookmarkService.getSavedTips(userId));
     }
 }

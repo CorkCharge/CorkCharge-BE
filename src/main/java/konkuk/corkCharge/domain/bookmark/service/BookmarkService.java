@@ -1,11 +1,15 @@
 package konkuk.corkCharge.domain.bookmark.service;
 
 import konkuk.corkCharge.domain.bookmark.domain.Bookmark;
+import konkuk.corkCharge.domain.bookmark.domain.RestaurantBookmarkGroup;
+import konkuk.corkCharge.domain.bookmark.domain.RestaurantBookmarkGroupItem;
 import konkuk.corkCharge.domain.bookmark.dto.request.DeleteBookmarkRequest;
 import konkuk.corkCharge.domain.bookmark.dto.request.PostBookmarkRequest;
 import konkuk.corkCharge.domain.bookmark.dto.response.GetSavedReviewResponse;
 import konkuk.corkCharge.domain.bookmark.dto.response.GetSavedTipResponse;
 import konkuk.corkCharge.domain.bookmark.repository.BookmarkRepository;
+import konkuk.corkCharge.domain.bookmark.repository.RestaurantBookmarkGroupItemRepository;
+import konkuk.corkCharge.domain.bookmark.repository.RestaurantBookmarkGroupRepository;
 import konkuk.corkCharge.domain.corkageStore.domain.CorkageStore;
 import konkuk.corkCharge.domain.corkageStore.repository.CorkageStoreRepository;
 import konkuk.corkCharge.domain.image.domain.Image;
@@ -42,16 +46,23 @@ public class BookmarkService {
     private final ImageRepository imageRepository;
     private final CorkageStoreRepository corkageStoreRepository;
     private final RestaurantSummaryService restaurantSummaryService;
+    private final RestaurantBookmarkGroupRepository restaurantBookmarkGroupRepository;
+    private final RestaurantBookmarkGroupItemRepository restaurantBookmarkGroupItemRepository;
 
     @Transactional
-    public void createBookmark(Long userId, PostBookmarkRequest request){
+    public void createBookmark(Long userId, PostBookmarkRequest request) {
+
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(USER_NOT_FOUND));
 
-        switch(request.targetType()) {
+        switch (request.targetType()) {
             case RESTAURANT -> {
                 Restaurant restaurant = restaurantRepository.findById(request.targetId())
                         .orElseThrow(() -> new CustomException(RESTAURANT_NOT_FOUND));
+
+                if (request.groupIds() == null || request.groupIds().isEmpty()) {
+                    throw new CustomException(BAD_REQUEST);
+                }
 
                 restaurant.setBookmarkCount(restaurant.getBookmarkCount() + 1);
                 restaurantRepository.save(restaurant);
@@ -67,22 +78,34 @@ public class BookmarkService {
                 reviewRepository.save(review);
             }
             case TIP -> {
-
                 if (!tipRepository.existsById(request.targetId())) {
                     throw new CustomException(TIP_NOT_FOUND);
                 }
             }
         }
 
-        Bookmark bookmark = Bookmark.builder()
-                .user(user)
-                .targetId(request.targetId())
-                .targetType(request.targetType())
-                .build();
+        Bookmark bookmark = bookmarkRepository.save(
+                Bookmark.builder()
+                        .user(user)
+                        .targetId(request.targetId())
+                        .targetType(request.targetType())
+                        .build()
+        );
 
-        bookmarkRepository.save(bookmark);
+        // 북마크 그룹 매핑
+        if (request.targetType() == RESTAURANT) {
+            List<RestaurantBookmarkGroup> groups =
+                    restaurantBookmarkGroupRepository.findAllByIdIn(request.groupIds());
 
-
+            for (RestaurantBookmarkGroup group : groups) {
+                restaurantBookmarkGroupItemRepository.save(
+                        RestaurantBookmarkGroupItem.builder()
+                                .bookmark(bookmark)
+                                .group(group)
+                                .build()
+                );
+            }
+        }
     }
 
     @Transactional
