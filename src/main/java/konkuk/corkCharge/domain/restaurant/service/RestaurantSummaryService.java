@@ -33,7 +33,7 @@ public class RestaurantSummaryService {
      * cacheNames = "restaurantSummary"
      */
     @Transactional(readOnly = true)
-    @Cacheable(cacheNames = "restaurantSummary", key = "#restaurantId")
+    @Cacheable(cacheNames = "restaurantSummary", key = "#p0")
     public RestaurantSummary getSummary(Long restaurantId) {
 
         Restaurant restaurant = restaurantRepository.findById(restaurantId)

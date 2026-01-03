@@ -2,6 +2,7 @@ package konkuk.corkCharge.domain.restaurant.controller;
 
 import konkuk.corkCharge.domain.restaurant.dto.request.GetClusterListRequest;
 import konkuk.corkCharge.domain.restaurant.dto.request.GetFilterRequest;
+import konkuk.corkCharge.domain.restaurant.dto.request.GetNewRestaurantRequest;
 import konkuk.corkCharge.domain.restaurant.dto.response.*;
 import konkuk.corkCharge.domain.restaurant.service.RestaurantService;
 import konkuk.corkCharge.global.response.BaseResponse;
@@ -69,6 +70,13 @@ public class RestaurantController {
     @GetMapping("/home")
     public BaseResponse<GetHomeRestaurantResponse> getHomeRestaurant() {
         return BaseResponse.ok(restaurantService.getHomeRestaurant());
+    }
+
+    @GetMapping("/new")
+    public BaseResponse<List<GetNewRestaurantResponse>> getNewRestaurant(
+            @RequestBody GetNewRestaurantRequest request
+            ) {
+        return BaseResponse.ok(restaurantService.getNewRestaurants(request));
     }
 
 }
