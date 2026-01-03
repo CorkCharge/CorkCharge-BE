@@ -109,29 +109,24 @@ public class BookmarkService {
     }
 
     @Transactional
-    public void deleteBookmark(Long userId, DeleteBookmarkRequest request){
+    public void deleteBookmark(Long userId, DeleteBookmarkRequest request) {
 
         User user = userRepository.findById(userId)
-                .orElseThrow(()-> new CustomException(USER_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(USER_NOT_FOUND));
 
         Bookmark bookmark = bookmarkRepository
                 .findByUser_UserIdAndTargetTypeAndTargetId(
                         userId, request.targetType(), request.targetId())
                 .orElseThrow(() -> new CustomException(BOOKMARK_NOT_FOUND));
 
+        // restaurant는 이 함수에서 편집 불가
+        if (bookmark.getTargetType() == RESTAURANT) {
+            throw new CustomException(BAD_REQUEST);
+        }
 
         bookmarkRepository.delete(bookmark);
-        switch(bookmark.getTargetType()) {
-            case RESTAURANT -> {
-                Restaurant restaurant = restaurantRepository.findById(bookmark.getTargetId())
-                        .orElseThrow(() -> new CustomException(RESTAURANT_NOT_FOUND));
 
-                restaurant.setBookmarkCount(restaurant.getBookmarkCount() - 1);
-                restaurantRepository.save(restaurant);
-
-                // 캐시 무효화
-                restaurantSummaryService.evictSummary(request.targetId());
-            }
+        switch (bookmark.getTargetType()) {
             case REVIEW -> {
                 Review review = reviewRepository.findById(bookmark.getTargetId())
                         .orElseThrow(() -> new CustomException(REVIEW_NOT_FOUND));
