@@ -5,6 +5,7 @@ import konkuk.corkCharge.domain.bookmark.domain.RestaurantBookmarkGroup;
 import konkuk.corkCharge.domain.bookmark.domain.RestaurantBookmarkGroupItem;
 import konkuk.corkCharge.domain.bookmark.dto.request.DeleteBookmarkRequest;
 import konkuk.corkCharge.domain.bookmark.dto.request.PostBookmarkRequest;
+import konkuk.corkCharge.domain.bookmark.dto.request.PutRestaurantBookmarkGroupsRequest;
 import konkuk.corkCharge.domain.bookmark.dto.response.GetSavedReviewResponse;
 import konkuk.corkCharge.domain.bookmark.dto.response.GetSavedTipResponse;
 import konkuk.corkCharge.domain.bookmark.repository.BookmarkRepository;
@@ -139,6 +140,77 @@ public class BookmarkService {
                     throw new CustomException(TIP_NOT_FOUND);
                 }
             }
+        }
+    }
+
+    @Transactional
+    public void updateRestaurantBookmarkGroups(
+            Long userId,
+            PutRestaurantBookmarkGroupsRequest request
+    ) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(USER_NOT_FOUND));
+
+        Restaurant restaurant = restaurantRepository.findById(request.restaurantId())
+                .orElseThrow(() -> new CustomException(RESTAURANT_NOT_FOUND));
+
+        Bookmark bookmark = bookmarkRepository
+                .findByUser_UserIdAndTargetTypeAndTargetId(
+                        userId,
+                        RESTAURANT,
+                        restaurant.getRestaurantId()
+                )
+                .orElse(null);
+
+        List<Long> groupIds =
+                request.groupIds() == null ? List.of() : request.groupIds();
+
+        if (groupIds.isEmpty()) { // 모든 그룹에서 삭제하는 경우
+            if (bookmark != null) {
+                restaurantBookmarkGroupItemRepository.deleteAllByBookmark(bookmark);
+                bookmarkRepository.delete(bookmark);
+
+                restaurant.setBookmarkCount(restaurant.getBookmarkCount() - 1);
+                restaurantRepository.save(restaurant);
+                restaurantSummaryService.evictSummary(restaurant.getRestaurantId());
+            }
+            return;
+        }
+
+        if (bookmark == null) { // 저장 API를 호출해야 하는 경우
+            throw new CustomException(BOOKMARK_NOT_FOUND);
+        }
+
+        // 기존 그룹 매핑 조회
+        List<RestaurantBookmarkGroupItem> existingItems =
+                restaurantBookmarkGroupItemRepository.findAllByBookmark(bookmark);
+
+        List<Long> existingGroupIds = existingItems.stream()
+                .map(item -> item.getGroup().getId())
+                .toList();
+
+        // 제거 대상
+        List<RestaurantBookmarkGroupItem> toRemove = existingItems.stream()
+                .filter(item -> !groupIds.contains(item.getGroup().getId()))
+                .toList();
+
+        restaurantBookmarkGroupItemRepository.deleteAll(toRemove);
+
+        // 추가 대상
+        List<Long> toAdd = groupIds.stream()
+                .filter(id -> !existingGroupIds.contains(id))
+                .toList();
+
+        List<RestaurantBookmarkGroup> groupsToAdd =
+                restaurantBookmarkGroupRepository.findAllByIdIn(toAdd);
+
+        for (RestaurantBookmarkGroup group : groupsToAdd) {
+            restaurantBookmarkGroupItemRepository.save(
+                    RestaurantBookmarkGroupItem.builder()
+                            .bookmark(bookmark)
+                            .group(group)
+                            .build()
+            );
         }
     }
 

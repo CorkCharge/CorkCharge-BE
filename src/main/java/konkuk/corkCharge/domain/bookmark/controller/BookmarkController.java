@@ -2,6 +2,7 @@ package konkuk.corkCharge.domain.bookmark.controller;
 
 import konkuk.corkCharge.domain.bookmark.dto.request.DeleteBookmarkRequest;
 import konkuk.corkCharge.domain.bookmark.dto.request.PostBookmarkRequest;
+import konkuk.corkCharge.domain.bookmark.dto.request.PutRestaurantBookmarkGroupsRequest;
 import konkuk.corkCharge.domain.bookmark.dto.response.GetSavedRestaurantResponse;
 import konkuk.corkCharge.domain.bookmark.dto.response.GetSavedReviewResponse;
 import konkuk.corkCharge.domain.bookmark.dto.response.GetSavedTipResponse;
@@ -34,6 +35,15 @@ public class BookmarkController {
             @RequestBody DeleteBookmarkRequest request
     ) {
         bookmarkService.deleteBookmark(userId, request);
+        return BaseResponse.ok(null);
+    }
+
+    @PutMapping("/restaurants")
+    public BaseResponse<Void> updateRestaurantBookmarkGroups(
+            @LoginUserId Long userId,
+            @RequestBody PutRestaurantBookmarkGroupsRequest request
+    ) {
+        bookmarkService.updateRestaurantBookmarkGroups(userId, request);
         return BaseResponse.ok(null);
     }
 
