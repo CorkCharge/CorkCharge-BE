@@ -27,7 +27,7 @@ public class BookmarkGroupController {
         );
     }
 
-    @PutMapping("/groups/{groupId}")
+    @PutMapping("/{groupId}")
     public BaseResponse<PutBookmarkGroupResponse> updateGroup(
             @LoginUserId Long userId,
             @PathVariable Long groupId,
@@ -36,5 +36,14 @@ public class BookmarkGroupController {
         return BaseResponse.ok(
                 bookmarkGroupService.updateGroup(userId, groupId, request)
         );
+    }
+
+    @DeleteMapping("/{groupId}")
+    public BaseResponse<Void> deleteGroup(
+            @LoginUserId Long userId,
+            @PathVariable Long groupId
+    ) {
+        bookmarkGroupService.deleteGroup(userId, groupId);
+        return BaseResponse.ok(null);
     }
 }
