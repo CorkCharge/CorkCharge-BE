@@ -31,13 +31,21 @@ public class RestaurantBookmarkGroup extends BaseEntity {
     private User user;
 
     @Column(name = "name", nullable = false, length = 30)
+    @Setter
     private String name;
 
     // 그룹 정렬 순서 결정할 때 사용
     @Column(name = "display_order")
+    @Setter
     private Integer displayOrder;
 
     // 그룹 아이콘
-    @Column(name = "icon")
-    private String icon;
+    @Column(name = "color")
+    @Setter
+    private String color;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    @Setter
+    private BookmarkGroupVisibility visibility;
 }

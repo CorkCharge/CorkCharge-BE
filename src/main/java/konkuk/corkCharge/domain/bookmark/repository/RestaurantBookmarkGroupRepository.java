@@ -7,4 +7,6 @@ import java.util.List;
 
 public interface RestaurantBookmarkGroupRepository extends JpaRepository<RestaurantBookmarkGroup, Long> {
     List<RestaurantBookmarkGroup> findAllByIdIn(List<Long> ids);
+    boolean existsByUser_UserIdAndName(Long userId, String name);
+    int countByUser_UserId(Long userId);
 }
