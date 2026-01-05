@@ -1,7 +1,6 @@
 package konkuk.corkCharge.domain.restaurant.service;
 
 import konkuk.corkCharge.domain.corkageStore.repository.CorkageStoreRepository;
-import konkuk.corkCharge.domain.image.domain.Image;
 import konkuk.corkCharge.domain.corkageStore.domain.CorkageStore;
 import konkuk.corkCharge.domain.corkageStore.domain.MultiCorkage;
 import konkuk.corkCharge.domain.image.repository.ImageRepository;
@@ -27,8 +26,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static konkuk.corkCharge.domain.image.domain.ImageCategory.RESTAURANT;
-import static konkuk.corkCharge.domain.image.domain.ImageType.MAIN;
 import static konkuk.corkCharge.global.response.status.BaseExceptionResponseStatus.*;
 
 @Service
@@ -49,7 +46,7 @@ public class RestaurantService {
     private final RestaurantListResponseMapper restaurantListResponseMapper;
 
     private final RestaurantSummaryService restaurantSummaryService;
-    private final NewRestaurantResponseMapper newRestaurantResponseMapper;
+    private final HomeRestaurantResponseMapper newRestaurantResponseMapper;
 
     @Transactional(readOnly = true)
     public List<GetRestaurantListResponse> getCorkageRestaurants() {
@@ -224,30 +221,30 @@ public class RestaurantService {
         };
     }
 
+//    @Transactional(readOnly = true)
+//    public GetHomeRestaurantResponse getHomeRestaurant() {
+//        Restaurant r = restaurantRepository
+//                .findFirstByHasCorkageFalseOrderByBookmarkCountDesc()
+//                .orElseThrow(() -> new CustomException(RESTAURANT_NOT_FOUND));
+//
+//        // 1순위: 레스토랑 MAIN 이미지
+//        String imageUrl = imageRepository
+//                .findFirstByCategoryAndTypeIdAndType(RESTAURANT, r.getRestaurantId(), MAIN)
+//                // 2순위(없으면): 아무 레스토랑 이미지 한 장
+//                .or(() -> imageRepository.findFirstByCategoryAndTypeIdOrderByCreatedAtAsc(RESTAURANT, r.getRestaurantId()))
+//                .map(Image::getImageUrl)
+//                .orElse(null);
+//
+//        return new GetHomeRestaurantResponse(
+//                r.getRestaurantId(),
+//                r.getName(),
+//                r.getBookmarkCount() == null ? 0 : r.getBookmarkCount(),
+//                imageUrl
+//        );
+//    }
+
     @Transactional(readOnly = true)
-    public GetHomeRestaurantResponse getHomeRestaurant() {
-        Restaurant r = restaurantRepository
-                .findFirstByHasCorkageFalseOrderByBookmarkCountDesc()
-                .orElseThrow(() -> new CustomException(RESTAURANT_NOT_FOUND));
-
-        // 1순위: 레스토랑 MAIN 이미지
-        String imageUrl = imageRepository
-                .findFirstByCategoryAndTypeIdAndType(RESTAURANT, r.getRestaurantId(), MAIN)
-                // 2순위(없으면): 아무 레스토랑 이미지 한 장
-                .or(() -> imageRepository.findFirstByCategoryAndTypeIdOrderByCreatedAtAsc(RESTAURANT, r.getRestaurantId()))
-                .map(Image::getImageUrl)
-                .orElse(null);
-
-        return new GetHomeRestaurantResponse(
-                r.getRestaurantId(),
-                r.getName(),
-                r.getBookmarkCount() == null ? 0 : r.getBookmarkCount(),
-                imageUrl
-        );
-    }
-
-    @Transactional(readOnly = true)
-    public List<GetNewRestaurantResponse> getNewRestaurants(GetNewRestaurantRequest request) {
+    public List<GetHomeRestaurantResponse> getNewRestaurants(GetNewRestaurantRequest request) {
         LocalDateTime from = LocalDateTime.now().minusDays(NEW_RESTAURANT_DAYS);
 
         // 사용자 좌표가 있는 경우

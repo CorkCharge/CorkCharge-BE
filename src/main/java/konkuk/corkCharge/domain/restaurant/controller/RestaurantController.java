@@ -67,13 +67,13 @@ public class RestaurantController {
         return BaseResponse.ok(restaurantService.getClusterList(request.restaurantIds()));
     }
 
-    @GetMapping("/home")
-    public BaseResponse<GetHomeRestaurantResponse> getHomeRestaurant() {
-        return BaseResponse.ok(restaurantService.getHomeRestaurant());
-    }
+//    @GetMapping("/home")
+//    public BaseResponse<GetHomeRestaurantResponse> getHomeRestaurant() {
+//        return BaseResponse.ok(restaurantService.getHomeRestaurant());
+//    }
 
     @GetMapping("/new")
-    public BaseResponse<List<GetNewRestaurantResponse>> getNewRestaurant(
+    public BaseResponse<List<GetHomeRestaurantResponse>> getNewRestaurant(
             @RequestBody GetNewRestaurantRequest request
             ) {
         return BaseResponse.ok(restaurantService.getNewRestaurants(request));
