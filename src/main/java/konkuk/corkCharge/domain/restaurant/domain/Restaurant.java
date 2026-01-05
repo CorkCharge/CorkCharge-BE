@@ -64,6 +64,9 @@ public class Restaurant extends BaseEntity {
     @Column(name = "opening_hours", columnDefinition = "TEXT")
     private String openingHours;
 
+    @Column(name = "raw_category", length = 100)
+    private String rawCategory;
+
     @Builder
     public Restaurant(String name, String address, String roadZipCode, String phone,
                       Double latitude, Double longitude,
