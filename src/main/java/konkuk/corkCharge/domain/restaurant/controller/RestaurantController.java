@@ -3,7 +3,7 @@ package konkuk.corkCharge.domain.restaurant.controller;
 import konkuk.corkCharge.domain.restaurant.dto.request.GetCategoryRestaurantRequest;
 import konkuk.corkCharge.domain.restaurant.dto.request.GetClusterListRequest;
 import konkuk.corkCharge.domain.restaurant.dto.request.GetFilterRequest;
-import konkuk.corkCharge.domain.restaurant.dto.request.GetNewRestaurantRequest;
+import konkuk.corkCharge.domain.restaurant.dto.request.UserLocationRequest;
 import konkuk.corkCharge.domain.restaurant.dto.response.*;
 import konkuk.corkCharge.domain.restaurant.service.RestaurantService;
 import konkuk.corkCharge.global.response.BaseResponse;
@@ -75,7 +75,7 @@ public class RestaurantController {
 
     @PostMapping("/new")
     public BaseResponse<List<GetHomeRestaurantResponse>> getNewRestaurant(
-            @RequestBody GetNewRestaurantRequest request
+            @RequestBody UserLocationRequest request
             ) {
         return BaseResponse.ok(restaurantService.getNewRestaurants(request));
     }
@@ -85,6 +85,13 @@ public class RestaurantController {
             @RequestBody GetCategoryRestaurantRequest request
             ) {
         return BaseResponse.ok(restaurantService.getCategoryRestaurants(request));
+    }
+
+    @PostMapping("/nearby")
+    public BaseResponse<List<GetHomeRestaurantResponse>> getNearbyRestaurants(
+            @RequestBody UserLocationRequest request
+    ) {
+        return BaseResponse.ok(restaurantService.getNearByRestaurants(request));
     }
 
 }
