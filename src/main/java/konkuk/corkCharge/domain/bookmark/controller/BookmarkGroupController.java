@@ -50,7 +50,7 @@ public class BookmarkGroupController {
         return BaseResponse.ok(null);
     }
 
-    @GetMapping("/groups")
+    @GetMapping
     public BaseResponse<GetBookmarkGroupListResponse> getGroupList(
             @LoginUserId Long userId
     ) {
@@ -59,7 +59,7 @@ public class BookmarkGroupController {
         );
     }
 
-    @GetMapping("/groups/{groupId}")
+    @GetMapping("/{groupId}")
     public BaseResponse<GetBookmarkGroupDetailResponse> getGroupDetail(
             @LoginUserId Long userId,
             @PathVariable Long groupId,

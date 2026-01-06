@@ -165,7 +165,8 @@ public class BookmarkService {
         List<Long> groupIds =
                 request.groupIds() == null ? List.of() : request.groupIds();
 
-        if (groupIds.isEmpty()) { // 모든 그룹에서 삭제하는 경우
+        // 모든 그룹에서 삭제
+        if (groupIds.isEmpty()) {
             if (bookmark != null) {
                 restaurantBookmarkGroupItemRepository.deleteAllByBookmark(bookmark);
                 bookmarkRepository.delete(bookmark);
@@ -177,8 +178,23 @@ public class BookmarkService {
             return;
         }
 
-        if (bookmark == null) { // 저장 API를 호출해야 하는 경우
+        if (bookmark == null) {
             throw new CustomException(BOOKMARK_NOT_FOUND);
+        }
+
+        List<RestaurantBookmarkGroup> groups =
+                restaurantBookmarkGroupRepository.findAllByIdIn(groupIds);
+
+        if (groups.size() != groupIds.size()) {
+            throw new CustomException(GROUP_NOT_FOUND);
+        }
+
+        // 그룹 소유자 검증
+        boolean invalidOwner = groups.stream()
+                .anyMatch(group -> !group.getUser().getUserId().equals(userId));
+
+        if (invalidOwner) {
+            throw new CustomException(GROUP_FORBIDDEN);
         }
 
         // 기존 그룹 매핑 조회
@@ -201,8 +217,9 @@ public class BookmarkService {
                 .filter(id -> !existingGroupIds.contains(id))
                 .toList();
 
-        List<RestaurantBookmarkGroup> groupsToAdd =
-                restaurantBookmarkGroupRepository.findAllByIdIn(toAdd);
+        List<RestaurantBookmarkGroup> groupsToAdd = groups.stream()
+                .filter(group -> toAdd.contains(group.getId()))
+                .toList();
 
         for (RestaurantBookmarkGroup group : groupsToAdd) {
             restaurantBookmarkGroupItemRepository.save(
