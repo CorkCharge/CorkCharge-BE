@@ -9,4 +9,5 @@ public interface RestaurantBookmarkGroupRepository extends JpaRepository<Restaur
     List<RestaurantBookmarkGroup> findAllByIdIn(List<Long> ids);
     boolean existsByUser_UserIdAndName(Long userId, String name);
     int countByUser_UserId(Long userId);
+    List<RestaurantBookmarkGroup> findAllByUser_UserIdOrderByDisplayOrderAsc(Long userId);
 }

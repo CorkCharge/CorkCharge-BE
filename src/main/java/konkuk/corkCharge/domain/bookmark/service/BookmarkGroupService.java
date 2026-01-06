@@ -5,6 +5,7 @@ import konkuk.corkCharge.domain.bookmark.domain.RestaurantBookmarkGroup;
 import konkuk.corkCharge.domain.bookmark.domain.RestaurantBookmarkGroupItem;
 import konkuk.corkCharge.domain.bookmark.dto.request.PostBookmarkGroupRequest;
 import konkuk.corkCharge.domain.bookmark.dto.request.PutBookmarkGroupRequest;
+import konkuk.corkCharge.domain.bookmark.dto.response.GetBookmarkGroupListResponse;
 import konkuk.corkCharge.domain.bookmark.dto.response.PostBookmarkGroupResponse;
 import konkuk.corkCharge.domain.bookmark.dto.response.PutBookmarkGroupResponse;
 import konkuk.corkCharge.domain.bookmark.repository.BookmarkRepository;
@@ -150,5 +151,33 @@ public class BookmarkGroupService {
 
         // 그룹 삭제
         groupRepository.delete(group);
+    }
+
+    @Transactional(readOnly = true)
+    public GetBookmarkGroupListResponse getGroupList(Long userId) {
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(USER_NOT_FOUND));
+
+        List<RestaurantBookmarkGroup> groups =
+                groupRepository.findAllByUser_UserIdOrderByDisplayOrderAsc(userId);
+
+        List<GetBookmarkGroupListResponse.GroupDto> groupDtos =
+                groups.stream()
+                        .map(group -> new GetBookmarkGroupListResponse.GroupDto(
+                                group.getId(),
+                                group.getName(),
+                                group.getColor(),
+                                group.getVisibility(),
+                                restaurantBookmarkGroupItemRepository.countByGroup_Id(group.getId()),
+                                group.getCreatedAt(),
+                                group.getUpdatedAt()
+                        ))
+                        .toList();
+
+        return new GetBookmarkGroupListResponse(
+                groupDtos.size(),
+                groupDtos
+        );
     }
 }

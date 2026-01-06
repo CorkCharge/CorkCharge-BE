@@ -12,4 +12,5 @@ public interface RestaurantBookmarkGroupItemRepository extends JpaRepository<Res
     List<RestaurantBookmarkGroupItem> findAllByGroup_Id(Long groupId);
     long countByBookmark_Id(Long bookmarkId);
     void deleteAllByGroup_Id(Long groupId);
+    int countByGroup_Id(Long groupId);
 }
