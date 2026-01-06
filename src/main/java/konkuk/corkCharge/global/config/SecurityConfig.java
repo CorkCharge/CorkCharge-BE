@@ -50,7 +50,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST,
                                 "/corkages/filter",
                                 "/restaurants/cluster/list",
-                                "/tips")
+                                "/tips",
+                                "/restaurants/new",
+                                "/restaurants/category")
                         .permitAll()
 
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()

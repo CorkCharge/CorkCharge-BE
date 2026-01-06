@@ -1,5 +1,6 @@
 package konkuk.corkCharge.domain.restaurant.controller;
 
+import konkuk.corkCharge.domain.restaurant.dto.request.GetCategoryRestaurantRequest;
 import konkuk.corkCharge.domain.restaurant.dto.request.GetClusterListRequest;
 import konkuk.corkCharge.domain.restaurant.dto.request.GetFilterRequest;
 import konkuk.corkCharge.domain.restaurant.dto.request.GetNewRestaurantRequest;
@@ -67,16 +68,23 @@ public class RestaurantController {
         return BaseResponse.ok(restaurantService.getClusterList(request.restaurantIds()));
     }
 
-    @GetMapping("/home")
-    public BaseResponse<GetHomeRestaurantResponse> getHomeRestaurant() {
-        return BaseResponse.ok(restaurantService.getHomeRestaurant());
-    }
+//    @GetMapping("/home")
+//    public BaseResponse<GetHomeRestaurantResponse> getHomeRestaurant() {
+//        return BaseResponse.ok(restaurantService.getHomeRestaurant());
+//    }
 
-    @GetMapping("/new")
-    public BaseResponse<List<GetNewRestaurantResponse>> getNewRestaurant(
+    @PostMapping("/new")
+    public BaseResponse<List<GetHomeRestaurantResponse>> getNewRestaurant(
             @RequestBody GetNewRestaurantRequest request
             ) {
         return BaseResponse.ok(restaurantService.getNewRestaurants(request));
+    }
+
+    @PostMapping("/category")
+    public BaseResponse<List<GetHomeRestaurantResponse>> getCategoryRestaurants(
+            @RequestBody GetCategoryRestaurantRequest request
+            ) {
+        return BaseResponse.ok(restaurantService.getCategoryRestaurants(request));
     }
 
 }

@@ -1,17 +1,17 @@
 package konkuk.corkCharge.domain.restaurant.service;
 
 import konkuk.corkCharge.domain.corkageStore.repository.CorkageStoreRepository;
-import konkuk.corkCharge.domain.image.domain.Image;
 import konkuk.corkCharge.domain.corkageStore.domain.CorkageStore;
 import konkuk.corkCharge.domain.corkageStore.domain.MultiCorkage;
 import konkuk.corkCharge.domain.image.repository.ImageRepository;
 import konkuk.corkCharge.domain.restaurant.domain.Restaurant;
 import konkuk.corkCharge.domain.restaurant.domain.RestaurantSummary;
 import konkuk.corkCharge.domain.restaurant.dto.mapper.*;
+import konkuk.corkCharge.domain.restaurant.dto.request.GetCategoryRestaurantRequest;
 import konkuk.corkCharge.domain.restaurant.dto.request.GetFilterRequest;
 import konkuk.corkCharge.domain.restaurant.dto.request.GetNewRestaurantRequest;
 import konkuk.corkCharge.domain.restaurant.dto.response.*;
-import konkuk.corkCharge.domain.restaurant.repository.NewRestaurantDistanceProjection;
+import konkuk.corkCharge.domain.restaurant.repository.RestaurantDistanceProjection;
 import konkuk.corkCharge.domain.restaurant.repository.RestaurantRepository;
 import konkuk.corkCharge.global.api.naverMapsApi.NaverGeocodingClient;
 import konkuk.corkCharge.global.api.naverMapsApi.dto.Address;
@@ -25,15 +25,22 @@ import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
-import static konkuk.corkCharge.domain.image.domain.ImageCategory.RESTAURANT;
-import static konkuk.corkCharge.domain.image.domain.ImageType.MAIN;
 import static konkuk.corkCharge.global.response.status.BaseExceptionResponseStatus.*;
 
 @Service
 @RequiredArgsConstructor
 public class RestaurantService {
+
+    private static final Set<String> ALLOWED_CATEGORIES = Set.of(
+            "중국요리",
+            "회",
+            "이탈리안",
+            "초밥",
+            "육류,고기"
+    );
 
     private static final int NEW_RESTAURANT_DAYS = 14;
 
@@ -49,7 +56,7 @@ public class RestaurantService {
     private final RestaurantListResponseMapper restaurantListResponseMapper;
 
     private final RestaurantSummaryService restaurantSummaryService;
-    private final NewRestaurantResponseMapper newRestaurantResponseMapper;
+    private final HomeRestaurantResponseMapper newRestaurantResponseMapper;
 
     @Transactional(readOnly = true)
     public List<GetRestaurantListResponse> getCorkageRestaurants() {
@@ -224,41 +231,41 @@ public class RestaurantService {
         };
     }
 
+//    @Transactional(readOnly = true)
+//    public GetHomeRestaurantResponse getHomeRestaurant() {
+//        Restaurant r = restaurantRepository
+//                .findFirstByHasCorkageFalseOrderByBookmarkCountDesc()
+//                .orElseThrow(() -> new CustomException(RESTAURANT_NOT_FOUND));
+//
+//        // 1순위: 레스토랑 MAIN 이미지
+//        String imageUrl = imageRepository
+//                .findFirstByCategoryAndTypeIdAndType(RESTAURANT, r.getRestaurantId(), MAIN)
+//                // 2순위(없으면): 아무 레스토랑 이미지 한 장
+//                .or(() -> imageRepository.findFirstByCategoryAndTypeIdOrderByCreatedAtAsc(RESTAURANT, r.getRestaurantId()))
+//                .map(Image::getImageUrl)
+//                .orElse(null);
+//
+//        return new GetHomeRestaurantResponse(
+//                r.getRestaurantId(),
+//                r.getName(),
+//                r.getBookmarkCount() == null ? 0 : r.getBookmarkCount(),
+//                imageUrl
+//        );
+//    }
+
     @Transactional(readOnly = true)
-    public GetHomeRestaurantResponse getHomeRestaurant() {
-        Restaurant r = restaurantRepository
-                .findFirstByHasCorkageFalseOrderByBookmarkCountDesc()
-                .orElseThrow(() -> new CustomException(RESTAURANT_NOT_FOUND));
-
-        // 1순위: 레스토랑 MAIN 이미지
-        String imageUrl = imageRepository
-                .findFirstByCategoryAndTypeIdAndType(RESTAURANT, r.getRestaurantId(), MAIN)
-                // 2순위(없으면): 아무 레스토랑 이미지 한 장
-                .or(() -> imageRepository.findFirstByCategoryAndTypeIdOrderByCreatedAtAsc(RESTAURANT, r.getRestaurantId()))
-                .map(Image::getImageUrl)
-                .orElse(null);
-
-        return new GetHomeRestaurantResponse(
-                r.getRestaurantId(),
-                r.getName(),
-                r.getBookmarkCount() == null ? 0 : r.getBookmarkCount(),
-                imageUrl
-        );
-    }
-
-    @Transactional(readOnly = true)
-    public List<GetNewRestaurantResponse> getNewRestaurants(GetNewRestaurantRequest request) {
+    public List<GetHomeRestaurantResponse> getNewRestaurants(GetNewRestaurantRequest req) {
         LocalDateTime from = LocalDateTime.now().minusDays(NEW_RESTAURANT_DAYS);
 
         // 사용자 좌표가 있는 경우
-        if (request.hasUserLocation()) {
-            List<NewRestaurantDistanceProjection> rows =
-                    restaurantRepository.findNewRestaurantsWithDistance(from, request.lat(), request.lon());
+        if (req.hasUserLocation()) {
+            List<RestaurantDistanceProjection> rows =
+                    restaurantRepository.findNewRestaurantsWithDistance(from, req.lat(), req.lon());
 
             Map<Long, Double> distanceMap = rows.stream()
                     .collect(Collectors.toMap(
-                            NewRestaurantDistanceProjection::getRestaurantId,
-                            NewRestaurantDistanceProjection::getDistanceKm
+                            RestaurantDistanceProjection::getRestaurantId,
+                            RestaurantDistanceProjection::getDistanceKm
                     ));
 
             return rows.stream()
@@ -279,6 +286,42 @@ public class RestaurantService {
                     Long id = r.getRestaurantId();
                     RestaurantSummary summary = restaurantSummaryService.getSummary(id);
 
+                    return newRestaurantResponseMapper.toResponse(summary, null);
+                })
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<GetHomeRestaurantResponse> getCategoryRestaurants(GetCategoryRestaurantRequest req) {
+        if (!ALLOWED_CATEGORIES.contains(req.category())) {
+            throw new CustomException(CATEGORY_NOT_FOUND);
+        }
+
+        if (req.hasUserLocation()) {
+            List<RestaurantDistanceProjection> rows =
+                    restaurantRepository.findCategoryRestaurantsWithDistance(
+                            req.category(),
+                            req.lat(),
+                            req.lon()
+                    );
+
+            return rows.stream()
+                    .map(row -> {
+                        Long id = row.getRestaurantId();
+                        RestaurantSummary summary = restaurantSummaryService.getSummary(id);
+                        return newRestaurantResponseMapper.toResponse(summary, row.getDistanceKm());
+                    })
+                    .toList();
+        }
+
+        // 좌표 없는 경우
+        List<Restaurant> restaurants =
+                restaurantRepository.findByHasCorkageTrueAndRawCategoryContainingOrderByBookmarkCountDesc(req.category());
+
+        return restaurants.stream()
+                .map(r -> {
+                    Long id = r.getRestaurantId();
+                    RestaurantSummary summary = restaurantSummaryService.getSummary(id);
                     return newRestaurantResponseMapper.toResponse(summary, null);
                 })
                 .toList();

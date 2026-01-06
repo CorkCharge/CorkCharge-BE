@@ -60,11 +60,38 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
             ) AS distanceKm
         FROM restaurant r
         WHERE r.created_at >= :from
+          AND r.has_corkage = 1
           AND ST_X(r.location) != 0 AND ST_Y(r.location) != 0
         ORDER BY r.created_at DESC
         """, nativeQuery = true)
-    List<NewRestaurantDistanceProjection> findNewRestaurantsWithDistance(
+    List<RestaurantDistanceProjection> findNewRestaurantsWithDistance(
             @Param("from") LocalDateTime from,
+            @Param("lat") double lat,
+            @Param("lon") double lon
+    );
+
+    // 사용자 좌표 없을 때(저장 수 순) : 카테고리별 매장 리스트
+    List<Restaurant> findByHasCorkageTrueAndRawCategoryContainingOrderByBookmarkCountDesc(String category);
+
+    // 사용자 좌표 있을 때(저장 수 순) : 카테고리별 매장 리스트
+    @Query(value = """
+    SELECT
+        r.restaurant_id AS restaurantId,
+        ROUND(
+            ST_Distance_Sphere(
+                r.location,
+                ST_SRID(POINT(:lon, :lat), 4326)
+            ) / 1000,
+            1
+        ) AS distanceKm
+    FROM restaurant r
+    WHERE r.has_corkage = 1
+      AND r.raw_category LIKE CONCAT('%', :category, '%')
+      AND ST_X(r.location) != 0 AND ST_Y(r.location) != 0
+    ORDER BY distanceKm ASC, r.bookmark_count DESC
+    """, nativeQuery = true)
+    List<RestaurantDistanceProjection> findCategoryRestaurantsWithDistance(
+            @Param("category") String category,
             @Param("lat") double lat,
             @Param("lon") double lon
     );

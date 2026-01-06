@@ -1,6 +1,6 @@
 package konkuk.corkCharge.domain.restaurant.repository;
 
-public interface NewRestaurantDistanceProjection {
+public interface RestaurantDistanceProjection {
     Long getRestaurantId();
 
     Double getDistanceKm();

@@ -2,7 +2,7 @@ package konkuk.corkCharge.domain.restaurant.dto.mapper;
 
 import konkuk.corkCharge.domain.corkageStore.domain.OptionType;
 import konkuk.corkCharge.domain.restaurant.domain.RestaurantSummary;
-import konkuk.corkCharge.domain.restaurant.dto.response.GetNewRestaurantResponse;
+import konkuk.corkCharge.domain.restaurant.dto.response.GetHomeRestaurantResponse;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -11,15 +11,15 @@ import java.util.stream.Stream;
 import static konkuk.corkCharge.domain.corkageStore.domain.OptionType.ETC;
 
 @Component
-public class NewRestaurantResponseMapper {
+public class HomeRestaurantResponseMapper {
 
-    public GetNewRestaurantResponse toResponse(
+    public GetHomeRestaurantResponse toResponse(
             RestaurantSummary summary,
             Double distanceKm
     ) {
         List<String> corkageOptions = decodeOptions(summary.getOptionBits(), summary.getOptionEtcContent());
 
-        return new GetNewRestaurantResponse(
+        return new GetHomeRestaurantResponse(
                 summary.getRestaurantId(),
                 summary.getName(),
                 summary.getAddress(),
