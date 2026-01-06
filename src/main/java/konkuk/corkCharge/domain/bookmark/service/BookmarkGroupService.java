@@ -1,22 +1,25 @@
 package konkuk.corkCharge.domain.bookmark.service;
 
-import konkuk.corkCharge.domain.bookmark.domain.Bookmark;
-import konkuk.corkCharge.domain.bookmark.domain.RestaurantBookmarkGroup;
-import konkuk.corkCharge.domain.bookmark.domain.RestaurantBookmarkGroupItem;
+import konkuk.corkCharge.domain.bookmark.domain.*;
 import konkuk.corkCharge.domain.bookmark.dto.request.PostBookmarkGroupRequest;
 import konkuk.corkCharge.domain.bookmark.dto.request.PutBookmarkGroupRequest;
+import konkuk.corkCharge.domain.bookmark.dto.response.GetBookmarkGroupDetailResponse;
 import konkuk.corkCharge.domain.bookmark.dto.response.GetBookmarkGroupListResponse;
 import konkuk.corkCharge.domain.bookmark.dto.response.PostBookmarkGroupResponse;
 import konkuk.corkCharge.domain.bookmark.dto.response.PutBookmarkGroupResponse;
 import konkuk.corkCharge.domain.bookmark.repository.BookmarkRepository;
 import konkuk.corkCharge.domain.bookmark.repository.RestaurantBookmarkGroupItemRepository;
 import konkuk.corkCharge.domain.bookmark.repository.RestaurantBookmarkGroupRepository;
+import konkuk.corkCharge.domain.corkageStore.domain.CorkageStore;
+import konkuk.corkCharge.domain.corkageStore.repository.CorkageStoreRepository;
+import konkuk.corkCharge.domain.image.domain.Image;
+import konkuk.corkCharge.domain.image.domain.ImageCategory;
+import konkuk.corkCharge.domain.image.repository.ImageRepository;
 import konkuk.corkCharge.domain.restaurant.domain.Restaurant;
 import konkuk.corkCharge.domain.restaurant.repository.RestaurantRepository;
 import konkuk.corkCharge.domain.restaurant.service.RestaurantSummaryService;
 import konkuk.corkCharge.domain.user.domain.User;
 import konkuk.corkCharge.domain.user.repository.UserRepository;
-import konkuk.corkCharge.domain.user.service.UserService;
 import konkuk.corkCharge.global.exception.CustomException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -36,6 +39,8 @@ public class BookmarkGroupService {
     private final BookmarkRepository bookmarkRepository;
     private final RestaurantRepository restaurantRepository;
     private final RestaurantSummaryService restaurantSummaryService;
+    private final ImageRepository imageRepository;
+    private final CorkageStoreRepository corkageStoreRepository;
 
 
     @Transactional
@@ -179,5 +184,123 @@ public class BookmarkGroupService {
                 groupDtos.size(),
                 groupDtos
         );
+    }
+
+    @Transactional(readOnly = true)
+    public GetBookmarkGroupDetailResponse getGroupDetail(
+            Long userId,
+            Long groupId,
+            BookmarkGroupSort sort
+    ) {
+        RestaurantBookmarkGroup group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new CustomException(GROUP_NOT_FOUND));
+
+        // PRIVATE 접근 권한 체크
+        if (group.getVisibility() == BookmarkGroupVisibility.PRIVATE
+                && !group.getUser().getUserId().equals(userId)) {
+            throw new CustomException(PERMISSION_DENIED);
+        }
+
+        List<RestaurantBookmarkGroupItem> items =
+                restaurantBookmarkGroupItemRepository.findAllByGroup_Id(groupId);
+
+        BookmarkGroupSort appliedSort =
+                (sort == null) ? BookmarkGroupSort.LATEST : sort;
+
+        items = switch (appliedSort) {
+
+            case LATEST -> items.stream()
+                    .sorted((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()))
+                    .toList();
+
+            case REVIEW_COUNT_DESC -> items.stream()
+                    .sorted((a, b) -> {
+                        Restaurant ra = restaurantRepository.findById(
+                                a.getBookmark().getTargetId()
+                        ).orElseThrow(() -> new CustomException(RESTAURANT_NOT_FOUND));
+
+                        Restaurant rb = restaurantRepository.findById(
+                                b.getBookmark().getTargetId()
+                        ).orElseThrow(() -> new CustomException(RESTAURANT_NOT_FOUND));
+
+                        return Integer.compare(
+                                rb.getReviewCount(),
+                                ra.getReviewCount()
+                        );
+                    })
+                    .toList();
+
+            case RATING_DESC -> items.stream()
+                    .sorted((a, b) -> {
+                        Restaurant ra = restaurantRepository.findById(
+                                a.getBookmark().getTargetId()
+                        ).orElseThrow(() -> new CustomException(RESTAURANT_NOT_FOUND));
+
+                        Restaurant rb = restaurantRepository.findById(
+                                b.getBookmark().getTargetId()
+                        ).orElseThrow(() -> new CustomException(RESTAURANT_NOT_FOUND));
+
+                        return Double.compare(
+                                rb.getRating(),
+                                ra.getRating()
+                        );
+                    })
+                    .toList();
+        };
+
+        // Restaurant 조회 (정렬 이후)
+        List<Restaurant> restaurants = items.stream()
+                .map(item -> restaurantRepository.findById(
+                        item.getBookmark().getTargetId()
+                ).orElseThrow(() -> new CustomException(RESTAURANT_NOT_FOUND)))
+                .toList();
+
+        List<GetBookmarkGroupDetailResponse.RestaurantDto> restaurantDtos =
+                restaurants.stream()
+                        .map(restaurant -> {
+                            List<String> imageUrls =
+                                    imageRepository.findByCategoryAndTypeId(
+                                                    ImageCategory.RESTAURANT,
+                                                    restaurant.getRestaurantId()
+                                            ).stream()
+                                            .map(Image::getImageUrl)
+                                            .toList();
+
+                            CorkageStore corkageStore = null;
+                            if (restaurant.isHasCorkage()) {
+                                corkageStore = corkageStoreRepository
+                                        .findByRestaurant_RestaurantId(
+                                                restaurant.getRestaurantId()
+                                        )
+                                        .orElse(null);
+                            }
+
+                            return new GetBookmarkGroupDetailResponse.RestaurantDto(
+                                    restaurant.getRestaurantId(),
+                                    restaurant.getName(),
+                                    restaurant.getRating() != null ? restaurant.getRating() : 0.0,
+                                    restaurant.getReviewCount(),
+                                    restaurant.getOpeningHours(),
+                                    imageUrls,
+                                    corkageStore != null
+                                            ? formatCorkagePrice(corkageStore)
+                                            : null,
+                                    corkageStore != null
+                                            ? corkageStore.getEtcContent()
+                                            : null
+                            );
+                        })
+                        .toList();
+
+        return new GetBookmarkGroupDetailResponse(
+                group.getName(),
+                restaurantDtos.size(),
+                restaurantDtos
+        );
+    }
+
+    private String formatCorkagePrice(CorkageStore store) {
+        if (store.getCorkagePrice() == null) return null;
+        return "병당 " + store.getCorkagePrice() + "원";
     }
 }

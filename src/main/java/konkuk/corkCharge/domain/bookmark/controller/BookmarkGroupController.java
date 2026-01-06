@@ -1,7 +1,9 @@
 package konkuk.corkCharge.domain.bookmark.controller;
 
+import konkuk.corkCharge.domain.bookmark.domain.BookmarkGroupSort;
 import konkuk.corkCharge.domain.bookmark.dto.request.PostBookmarkGroupRequest;
 import konkuk.corkCharge.domain.bookmark.dto.request.PutBookmarkGroupRequest;
+import konkuk.corkCharge.domain.bookmark.dto.response.GetBookmarkGroupDetailResponse;
 import konkuk.corkCharge.domain.bookmark.dto.response.GetBookmarkGroupListResponse;
 import konkuk.corkCharge.domain.bookmark.dto.response.PostBookmarkGroupResponse;
 import konkuk.corkCharge.domain.bookmark.dto.response.PutBookmarkGroupResponse;
@@ -54,6 +56,18 @@ public class BookmarkGroupController {
     ) {
         return BaseResponse.ok(
                 bookmarkGroupService.getGroupList(userId)
+        );
+    }
+
+    @GetMapping("/groups/{groupId}")
+    public BaseResponse<GetBookmarkGroupDetailResponse> getGroupDetail(
+            @LoginUserId Long userId,
+            @PathVariable Long groupId,
+            @RequestParam(required = false, defaultValue = "LATEST")
+            BookmarkGroupSort sort
+    ) {
+        return BaseResponse.ok(
+                bookmarkGroupService.getGroupDetail(userId, groupId, sort)
         );
     }
 }
