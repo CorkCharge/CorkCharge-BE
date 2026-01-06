@@ -25,8 +25,9 @@ public enum BaseExceptionResponseStatus implements ResponseStatus {
     NOT_EXIT_TYPE(60003, "유효하지 않은 type 입니다."),
     ALREADY_REGISTERED_CORKAGE(60004, "해당 매장은 이미 콜키지 등록이 돼 있습니다."),
     CATEGORY_NOT_FOUND(60005, "올바르지 않은 카테고리입니다."),
+    LOCATION_REQUIRED(60006, "사용자 위치(좌표)값은 필수입니다."),
 
-    /**
+    /**LOCATION_REQUIRED
      * 70000 : User
      */
     USER_NOT_FOUND(70000, "해당 사용자를 찾을 수 없습니다."),
