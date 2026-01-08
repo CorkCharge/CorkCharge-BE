@@ -9,7 +9,7 @@ import konkuk.corkCharge.domain.restaurant.domain.RestaurantSummary;
 import konkuk.corkCharge.domain.restaurant.dto.mapper.*;
 import konkuk.corkCharge.domain.restaurant.dto.request.GetCategoryRestaurantRequest;
 import konkuk.corkCharge.domain.restaurant.dto.request.GetFilterRequest;
-import konkuk.corkCharge.domain.restaurant.dto.request.GetNewRestaurantRequest;
+import konkuk.corkCharge.domain.restaurant.dto.request.UserLocationRequest;
 import konkuk.corkCharge.domain.restaurant.dto.response.*;
 import konkuk.corkCharge.domain.restaurant.repository.RestaurantDistanceProjection;
 import konkuk.corkCharge.domain.restaurant.repository.RestaurantRepository;
@@ -34,6 +34,8 @@ import static konkuk.corkCharge.global.response.status.BaseExceptionResponseStat
 @RequiredArgsConstructor
 public class RestaurantService {
 
+    private static final int RADIUS_METERS = 3000;
+
     private static final Set<String> ALLOWED_CATEGORIES = Set.of(
             "중국요리",
             "회",
@@ -56,7 +58,7 @@ public class RestaurantService {
     private final RestaurantListResponseMapper restaurantListResponseMapper;
 
     private final RestaurantSummaryService restaurantSummaryService;
-    private final HomeRestaurantResponseMapper newRestaurantResponseMapper;
+    private final HomeRestaurantResponseMapper homeRestaurantResponseMapper;
 
     @Transactional(readOnly = true)
     public List<GetRestaurantListResponse> getCorkageRestaurants() {
@@ -254,7 +256,7 @@ public class RestaurantService {
 //    }
 
     @Transactional(readOnly = true)
-    public List<GetHomeRestaurantResponse> getNewRestaurants(GetNewRestaurantRequest req) {
+    public List<GetHomeRestaurantResponse> getNewRestaurants(UserLocationRequest req) {
         LocalDateTime from = LocalDateTime.now().minusDays(NEW_RESTAURANT_DAYS);
 
         // 사용자 좌표가 있는 경우
@@ -273,7 +275,7 @@ public class RestaurantService {
                         Long id = row.getRestaurantId();
                         RestaurantSummary summary = restaurantSummaryService.getSummary(id);
 
-                        return newRestaurantResponseMapper.toResponse(summary, distanceMap.get(id));
+                        return homeRestaurantResponseMapper.toResponse(summary, distanceMap.get(id));
                     })
                     .toList();
         }
@@ -286,7 +288,7 @@ public class RestaurantService {
                     Long id = r.getRestaurantId();
                     RestaurantSummary summary = restaurantSummaryService.getSummary(id);
 
-                    return newRestaurantResponseMapper.toResponse(summary, null);
+                    return homeRestaurantResponseMapper.toResponse(summary, null);
                 })
                 .toList();
     }
@@ -309,7 +311,7 @@ public class RestaurantService {
                     .map(row -> {
                         Long id = row.getRestaurantId();
                         RestaurantSummary summary = restaurantSummaryService.getSummary(id);
-                        return newRestaurantResponseMapper.toResponse(summary, row.getDistanceKm());
+                        return homeRestaurantResponseMapper.toResponse(summary, row.getDistanceKm());
                     })
                     .toList();
         }
@@ -322,7 +324,25 @@ public class RestaurantService {
                 .map(r -> {
                     Long id = r.getRestaurantId();
                     RestaurantSummary summary = restaurantSummaryService.getSummary(id);
-                    return newRestaurantResponseMapper.toResponse(summary, null);
+                    return homeRestaurantResponseMapper.toResponse(summary, null);
+                })
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<GetHomeRestaurantResponse> getNearByRestaurants(UserLocationRequest req) {
+        if (req == null || !req.hasUserLocation()) {
+            throw new CustomException(LOCATION_REQUIRED);
+        }
+
+        List<RestaurantDistanceProjection> rows =
+                restaurantRepository.findNearbyRestaurantsWithinRadius(req.lat(), req.lon(), RADIUS_METERS);
+
+        return rows.stream()
+                .map(row -> {
+                    Long id = row.getRestaurantId();
+                    RestaurantSummary summary = restaurantSummaryService.getSummary(id);
+                    return homeRestaurantResponseMapper.toResponse(summary, row.getDistanceKm());
                 })
                 .toList();
     }

@@ -1,6 +1,6 @@
 package konkuk.corkCharge.domain.restaurant.dto.request;
 
-public record GetNewRestaurantRequest(
+public record UserLocationRequest(
         Double lat,
         Double lon
 ) {

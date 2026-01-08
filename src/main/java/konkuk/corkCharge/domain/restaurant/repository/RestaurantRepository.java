@@ -44,10 +44,10 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
         """)
     List<Restaurant> findRestaurantsWithoutValidCoordinates();
 
-    // lat/lon 없을 때(그냥 2주 이내 최신순 전체)
+    // lat/lon 없을 때(그냥 2주 이내 최신순 전체) : 신규 매장 리스트
     List<Restaurant> findByCreatedAtGreaterThanEqualOrderByCreatedAtDesc(LocalDateTime from);
 
-    // lat/lon 있을 때: DB에서 distance(km) 계산해서 함께 반환
+    // lat/lon 있을 때: DB에서 distance(km) 계산해서 함께 반환 : 신규 매장 리스트
     @Query(value = """
         SELECT
             r.restaurant_id AS restaurantId,
@@ -94,5 +94,32 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
             @Param("category") String category,
             @Param("lat") double lat,
             @Param("lon") double lon
+    );
+
+    // 사용자 위치 기준 3Km 이내에 있는 모든 매장 : 가까운 매장 리스트
+    @Query(value = """
+        SELECT
+            r.restaurant_id AS restaurantId,
+            ROUND(
+                ST_Distance_Sphere(
+                    r.location,
+                    ST_SRID(POINT(:lon, :lat), 4326)
+                ) / 1000,
+                1
+            ) AS distanceKm
+        FROM restaurant r
+        WHERE r.has_corkage = 1
+          AND ST_X(r.location) != 0
+          AND ST_Y(r.location) != 0
+          AND ST_Distance_Sphere(
+                r.location,
+                ST_SRID(POINT(:lon, :lat), 4326)
+              ) <= :radiusMeters
+        ORDER BY distanceKm ASC, r.bookmark_count DESC
+        """, nativeQuery = true)
+    List<RestaurantDistanceProjection> findNearbyRestaurantsWithinRadius(
+            @Param("lat") double lat,
+            @Param("lon") double lon,
+            @Param("radiusMeters") int radiusMeters
     );
 }
