@@ -27,7 +27,7 @@ public enum BaseExceptionResponseStatus implements ResponseStatus {
     CATEGORY_NOT_FOUND(60005, "올바르지 않은 카테고리입니다."),
     LOCATION_REQUIRED(60006, "사용자 위치(좌표)값은 필수입니다."),
 
-    /**LOCATION_REQUIRED
+    /**
      * 70000 : User
      */
     USER_NOT_FOUND(70000, "해당 사용자를 찾을 수 없습니다."),
