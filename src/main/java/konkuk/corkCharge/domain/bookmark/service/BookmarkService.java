@@ -56,55 +56,86 @@ public class BookmarkService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(USER_NOT_FOUND));
 
-        switch (request.targetType()) {
-            case RESTAURANT -> {
-                Restaurant restaurant = restaurantRepository.findById(request.targetId())
-                        .orElseThrow(() -> new CustomException(RESTAURANT_NOT_FOUND));
+        if (request.targetType() == RESTAURANT) {
+            if (request.groupIds() == null || request.groupIds().isEmpty()) {
+                throw new CustomException(BAD_REQUEST);
+            }
 
-                if (request.groupIds() == null || request.groupIds().isEmpty()) {
-                    throw new CustomException(BAD_REQUEST);
-                }
+            restaurantRepository.findById(request.targetId())
+                    .orElseThrow(() -> new CustomException(RESTAURANT_NOT_FOUND));
+        }
+
+        if (request.targetType() == REVIEW) {
+            reviewRepository.findById(request.targetId())
+                    .orElseThrow(() -> new CustomException(REVIEW_NOT_FOUND));
+        }
+
+        if (request.targetType() == TIP) {
+            if (!tipRepository.existsById(request.targetId())) {
+                throw new CustomException(TIP_NOT_FOUND);
+            }
+        }
+
+        Bookmark bookmark = bookmarkRepository
+                .findByUser_UserIdAndTargetTypeAndTargetId(
+                        userId,
+                        request.targetType(),
+                        request.targetId()
+                )
+                .orElse(null);
+
+        if (bookmark != null && request.targetType() == RESTAURANT) {
+            throw new CustomException(BOOKMARK_ALREADY_EXISTS);
+        }
+
+        if (bookmark == null) {
+            bookmark = bookmarkRepository.save(
+                    Bookmark.builder()
+                            .user(user)
+                            .targetType(request.targetType())
+                            .targetId(request.targetId())
+                            .build()
+            );
+
+            if (request.targetType() == RESTAURANT) {
+                Restaurant restaurant = restaurantRepository
+                        .findById(request.targetId())
+                        .orElseThrow();
 
                 restaurant.setBookmarkCount(restaurant.getBookmarkCount() + 1);
                 restaurantRepository.save(restaurant);
-
-                // 캐시 무효화
                 restaurantSummaryService.evictSummary(request.targetId());
             }
-            case REVIEW -> {
+
+            if (request.targetType() == REVIEW) {
                 Review review = reviewRepository.findById(request.targetId())
-                        .orElseThrow(() -> new CustomException(REVIEW_NOT_FOUND));
+                        .orElseThrow();
 
                 review.setBookmarkCount(review.getBookmarkCount() + 1);
                 reviewRepository.save(review);
             }
-            case TIP -> {
-                if (!tipRepository.existsById(request.targetId())) {
-                    throw new CustomException(TIP_NOT_FOUND);
-                }
-            }
         }
 
-        Bookmark bookmark = bookmarkRepository.save(
-                Bookmark.builder()
-                        .user(user)
-                        .targetId(request.targetId())
-                        .targetType(request.targetType())
-                        .build()
-        );
-
-        // 북마크 그룹 매핑
         if (request.targetType() == RESTAURANT) {
             List<RestaurantBookmarkGroup> groups =
                     restaurantBookmarkGroupRepository.findAllByIdIn(request.groupIds());
 
             for (RestaurantBookmarkGroup group : groups) {
-                restaurantBookmarkGroupItemRepository.save(
-                        RestaurantBookmarkGroupItem.builder()
-                                .bookmark(bookmark)
-                                .group(group)
-                                .build()
-                );
+                boolean exists =
+                        restaurantBookmarkGroupItemRepository
+                                .existsByBookmark_IdAndGroup_Id(
+                                        bookmark.getId(),
+                                        group.getId()
+                                );
+
+                if (!exists) {
+                    restaurantBookmarkGroupItemRepository.save(
+                            RestaurantBookmarkGroupItem.builder()
+                                    .bookmark(bookmark)
+                                    .group(group)
+                                    .build()
+                    );
+                }
             }
         }
     }
