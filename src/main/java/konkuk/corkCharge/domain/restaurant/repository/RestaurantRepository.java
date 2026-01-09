@@ -122,4 +122,44 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
             @Param("lon") double lon,
             @Param("radiusMeters") int radiusMeters
     );
+
+    // 6개의 역 위치 기준 2km 이내에 있는 모든 매장 : 추천 매장 리스트
+    @Query(value = """
+        SELECT
+            r.restaurant_id AS restaurantId,
+            ROUND(
+                LEAST(
+                    ST_Distance_Sphere(r.location, ST_SRID(POINT(:gangnamLon, :gangnamLat), 4326)),
+                    ST_Distance_Sphere(r.location, ST_SRID(POINT(:hongdaeLon, :hongdaeLat), 4326)),
+                    ST_Distance_Sphere(r.location, ST_SRID(POINT(:seongsuLon, :seongsuLat), 4326)),
+                    ST_Distance_Sphere(r.location, ST_SRID(POINT(:konkukLon, :konkukLat), 4326)),
+                    ST_Distance_Sphere(r.location, ST_SRID(POINT(:itaewonLon, :itaewonLat), 4326)),
+                    ST_Distance_Sphere(r.location, ST_SRID(POINT(:yongsanLon, :yongsanLat), 4326))
+                ) / 1000,
+                1
+            ) AS distanceKm
+        FROM restaurant r
+        WHERE r.has_corkage = 1
+          AND ST_X(r.location) != 0
+          AND ST_Y(r.location) != 0
+          AND (
+                ST_Distance_Sphere(r.location, ST_SRID(POINT(:gangnamLon, :gangnamLat), 4326)) <= :radiusMeters
+             OR ST_Distance_Sphere(r.location, ST_SRID(POINT(:hongdaeLon, :hongdaeLat), 4326)) <= :radiusMeters
+             OR ST_Distance_Sphere(r.location, ST_SRID(POINT(:seongsuLon, :seongsuLat), 4326)) <= :radiusMeters
+             OR ST_Distance_Sphere(r.location, ST_SRID(POINT(:konkukLon, :konkukLat), 4326)) <= :radiusMeters
+             OR ST_Distance_Sphere(r.location, ST_SRID(POINT(:itaewonLon, :itaewonLat), 4326)) <= :radiusMeters
+             OR ST_Distance_Sphere(r.location, ST_SRID(POINT(:yongsanLon, :yongsanLat), 4326)) <= :radiusMeters
+          )
+        ORDER BY distanceKm ASC, r.bookmark_count DESC
+        """, nativeQuery = true)
+    List<RestaurantDistanceProjection> findRecommandRestaurantsWithinRadius(
+            @Param("radiusMeters") int radiusMeters,
+            @Param("gangnamLat") double gangnamLat, @Param("gangnamLon") double gangnamLon,
+            @Param("hongdaeLat") double hongdaeLat, @Param("hongdaeLon") double hongdaeLon,
+            @Param("seongsuLat") double seongsuLat, @Param("seongsuLon") double seongsuLon,
+            @Param("konkukLat") double konkukLat, @Param("konkukLon") double konkukLon,
+            @Param("itaewonLat") double itaewonLat, @Param("itaewonLon") double itaewonLon,
+            @Param("yongsanLat") double yongsanLat, @Param("yongsanLon") double yongsanLon
+    );
+
 }
