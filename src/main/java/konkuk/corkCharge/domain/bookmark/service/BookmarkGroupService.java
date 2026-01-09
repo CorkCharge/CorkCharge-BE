@@ -59,7 +59,7 @@ public class BookmarkGroupService {
             throw new CustomException(BAD_REQUEST);
         }
 
-        int nextOrder = groupRepository.countByUser_UserId(userId) + 1;
+        int nextOrder = groupRepository.findMaxDisplayOrderByUserId(userId) + 1;
 
         RestaurantBookmarkGroup group = groupRepository.save(
                 RestaurantBookmarkGroup.builder()
