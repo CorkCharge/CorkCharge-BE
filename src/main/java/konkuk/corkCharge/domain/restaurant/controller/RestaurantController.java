@@ -94,4 +94,9 @@ public class RestaurantController {
         return BaseResponse.ok(restaurantService.getNearByRestaurants(request));
     }
 
+    @GetMapping("/recommand")
+    public BaseResponse<List<GetHomeRestaurantResponse>> getRecommandRestaurants() {
+        return BaseResponse.ok(restaurantService.getRecommandRestaurants());
+    }
+
 }
