@@ -87,21 +87,28 @@ public class BookmarkGroupService {
     ) {
         RestaurantBookmarkGroup group = groupRepository.findById(groupId)
                 .orElseThrow(() -> new CustomException(GROUP_NOT_FOUND));
+
         // 소유자 검증
         if (!group.getUser().getUserId().equals(userId)) {
             throw new CustomException(PERMISSION_DENIED);
         }
 
-        // 이름 검증
+        // 이름 null / blank 검증
         if (request.name() == null || request.name().isBlank()) {
             throw new CustomException(BAD_REQUEST);
         }
 
-        if (!group.getName().equals(request.name())
-                && groupRepository.existsByUser_UserIdAndName(userId, request.name())) {
-            throw new CustomException(BAD_REQUEST);
+        // 기존 이름과 완전히 동일한 경우
+        if (group.getName().equals(request.name())) {
+            throw new CustomException(GROUP_NAME_SAME_AS_BEFORE);
         }
 
+        // 다른 그룹이 이미 사용 중인 이름인 경우
+        if (groupRepository.existsByUser_UserIdAndName(userId, request.name())) {
+            throw new CustomException(GROUP_NAME_ALREADY_EXISTS);
+        }
+
+        // 정상 업데이트
         group.setName(request.name());
         group.setColor(request.color());
         group.setVisibility(request.visibility());
