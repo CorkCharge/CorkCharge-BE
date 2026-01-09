@@ -34,7 +34,26 @@ import static konkuk.corkCharge.global.response.status.BaseExceptionResponseStat
 @RequiredArgsConstructor
 public class RestaurantService {
 
-    private static final int RADIUS_METERS = 3000;
+    private static final double GANGNAM_LAT = 37.498774;
+    private static final double GANGNAM_LON = 127.027829;
+
+    private static final double HONGDAE_LAT = 37.556574;
+    private static final double HONGDAE_LON = 126.923405;
+
+    private static final double SEONGSU_LAT = 37.544501;
+    private static final double SEONGSU_LON = 127.056079;
+
+    private static final double KONKUK_LAT = 37.540412;
+    private static final double KONKUK_LON = 127.069166;
+
+    private static final double ITAEWON_LAT = 37.534489;
+    private static final double ITAEWON_LON = 126.993705;
+
+    private static final double YONGSAN_LAT = 37.529764;
+    private static final double YONGSAN_LON = 126.964741;
+
+    private static final int RADIUS_METERS_RECOMMAND = 2000;
+    private static final int RADIUS_METERS_NEAR_BY = 3000;
 
     private static final Set<String> ALLOWED_CATEGORIES = Set.of(
             "중국요리",
@@ -336,7 +355,29 @@ public class RestaurantService {
         }
 
         List<RestaurantDistanceProjection> rows =
-                restaurantRepository.findNearbyRestaurantsWithinRadius(req.lat(), req.lon(), RADIUS_METERS);
+                restaurantRepository.findNearbyRestaurantsWithinRadius(req.lat(), req.lon(), RADIUS_METERS_NEAR_BY);
+
+        return rows.stream()
+                .map(row -> {
+                    Long id = row.getRestaurantId();
+                    RestaurantSummary summary = restaurantSummaryService.getSummary(id);
+                    return homeRestaurantResponseMapper.toResponse(summary, row.getDistanceKm());
+                })
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<GetHomeRestaurantResponse> getRecommandRestaurants() {
+        List<RestaurantDistanceProjection> rows =
+                restaurantRepository.findRecommandRestaurantsWithinRadius(
+                        RADIUS_METERS_RECOMMAND,
+                        GANGNAM_LAT, GANGNAM_LON,
+                        HONGDAE_LAT, HONGDAE_LON,
+                        SEONGSU_LAT, SEONGSU_LON,
+                        KONKUK_LAT, KONKUK_LON,
+                        ITAEWON_LAT, ITAEWON_LON,
+                        YONGSAN_LAT, YONGSAN_LON
+                );
 
         return rows.stream()
                 .map(row -> {
