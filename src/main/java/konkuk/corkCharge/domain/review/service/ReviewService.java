@@ -10,10 +10,12 @@ import konkuk.corkCharge.domain.restaurant.service.RestaurantSummaryService;
 import konkuk.corkCharge.domain.review.domain.Review;
 import konkuk.corkCharge.domain.review.domain.ReviewRange;
 import konkuk.corkCharge.domain.review.dto.mapper.GetRestaurantReviewResponseMapper;
+import konkuk.corkCharge.domain.review.dto.request.CorkageReviewSort;
 import konkuk.corkCharge.domain.review.dto.request.PatchUpdateReviewRequest;
 import konkuk.corkCharge.domain.review.dto.request.PostReviewCreateRequest;
-import konkuk.corkCharge.domain.review.dto.response.GetCorkageScoreResponse;
+import konkuk.corkCharge.domain.review.dto.response.GetCorkageReviewResponse;
 import konkuk.corkCharge.domain.review.dto.response.GetRestaurantReviewResponse;
+import konkuk.corkCharge.domain.review.repository.CorkageReviewProjection;
 import konkuk.corkCharge.domain.review.repository.ReviewRepository;
 import konkuk.corkCharge.domain.user.domain.User;
 import konkuk.corkCharge.domain.user.repository.UserRepository;
@@ -96,25 +98,39 @@ public class ReviewService {
         restaurantRepository.save(restaurant);
     }
 
-    public List<GetCorkageScoreResponse> getCorkageScores(String range) {
-        ReviewRange reviewRange = ReviewRange.fromValue(range);
-        LocalDateTime from = reviewRange.getFromDate();
+    public List<GetCorkageReviewResponse> getCorkageScores(CorkageReviewSort sort) {
 
-        List<Review> reviews = reviewRepository.findRecentReviews(from);
+        List<CorkageReviewProjection> rows = switch (sort) {
+            case LATEST -> reviewRepository.findAllCorkageReviewsOrderByLatest();
+            case BOOKMARK -> reviewRepository.findAllCorkageReviewsOrderByBookmark();
+        };
 
-        return reviews.stream()
-                .sorted(Comparator.comparing(Review::getCreatedAt).reversed())
-                .map(review -> {
-                    String imageUrl = imageRepository
-                            .findFirstByCategoryAndTypeIdOrderByCreatedAtAsc(
-                                    ImageCategory.REVIEW,
-                                    review.getReviewId()
-                            )
-                            .map(Image::getImageUrl)
-                            .orElse(null);
+        if (rows.isEmpty())
+            return List.of();
 
-                    return GetCorkageScoreResponse.from(review, imageUrl);
-                })
+        List<Long> reviewIds = rows.stream()
+                .map(CorkageReviewProjection::getReviewId)
+                .toList();
+
+        Map<Long, List<String>> imageMap =
+                imageRepository.findReviewImagesByReviewIds(reviewIds).stream()
+                        .collect(Collectors.groupingBy(
+                                Image::getTypeId,
+                                Collectors.mapping(Image::getImageUrl, Collectors.toList())
+                        ));
+
+        return rows.stream()
+                .map(row -> new GetCorkageReviewResponse(
+                        row.getReviewId(),
+                        row.getRestaurantId(),
+                        row.getRestaurantName(),
+                        row.getWriter(),
+                        row.getContent(),
+                        row.getRating() == null ? 0 : row.getRating(),
+                        row.getCreatedAt(),
+                        imageMap.getOrDefault(row.getReviewId(), List.of()),
+                        row.getBookmarkCount() == null ? 0 : row.getBookmarkCount()
+                ))
                 .toList();
     }
 
