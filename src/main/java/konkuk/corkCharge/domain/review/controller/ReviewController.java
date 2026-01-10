@@ -32,11 +32,11 @@ public class ReviewController {
         return BaseResponse.ok(null);
     }
 
-    @GetMapping("/corkageScore")
+    @GetMapping("/corkageReview")
     public BaseResponse<List<GetCorkageReviewResponse>> getCorkageReview(
             @RequestParam(name = "sort", defaultValue = "BOOKMARK") CorkageReviewSort sort
     ) {
-        return BaseResponse.ok(reviewService.getCorkageScores(sort));
+        return BaseResponse.ok(reviewService.getCorkageReviews(sort));
     }
 
     @PatchMapping("/{reviewId}")

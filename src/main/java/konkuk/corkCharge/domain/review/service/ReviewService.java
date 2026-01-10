@@ -1,14 +1,12 @@
 package konkuk.corkCharge.domain.review.service;
 
 import konkuk.corkCharge.domain.image.domain.Image;
-import konkuk.corkCharge.domain.image.domain.ImageCategory;
 import konkuk.corkCharge.domain.image.repository.ImageRepository;
 import konkuk.corkCharge.domain.image.service.S3ImageService;
 import konkuk.corkCharge.domain.restaurant.domain.Restaurant;
 import konkuk.corkCharge.domain.restaurant.repository.RestaurantRepository;
 import konkuk.corkCharge.domain.restaurant.service.RestaurantSummaryService;
 import konkuk.corkCharge.domain.review.domain.Review;
-import konkuk.corkCharge.domain.review.domain.ReviewRange;
 import konkuk.corkCharge.domain.review.dto.mapper.GetRestaurantReviewResponseMapper;
 import konkuk.corkCharge.domain.review.dto.request.CorkageReviewSort;
 import konkuk.corkCharge.domain.review.dto.request.PatchUpdateReviewRequest;
@@ -25,8 +23,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.time.LocalDateTime;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -98,7 +94,7 @@ public class ReviewService {
         restaurantRepository.save(restaurant);
     }
 
-    public List<GetCorkageReviewResponse> getCorkageScores(CorkageReviewSort sort) {
+    public List<GetCorkageReviewResponse> getCorkageReviews(CorkageReviewSort sort) {
 
         List<CorkageReviewProjection> rows = switch (sort) {
             case LATEST -> reviewRepository.findAllCorkageReviewsOrderByLatest();
