@@ -1,8 +1,9 @@
 package konkuk.corkCharge.domain.review.controller;
 
+import konkuk.corkCharge.domain.review.dto.request.CorkageReviewSort;
 import konkuk.corkCharge.domain.review.dto.request.PatchUpdateReviewRequest;
 import konkuk.corkCharge.domain.review.dto.request.PostReviewCreateRequest;
-import konkuk.corkCharge.domain.review.dto.response.GetCorkageScoreResponse;
+import konkuk.corkCharge.domain.review.dto.response.GetCorkageReviewResponse;
 import konkuk.corkCharge.domain.review.dto.response.GetRestaurantReviewResponse;
 import konkuk.corkCharge.domain.review.service.ReviewService;
 import konkuk.corkCharge.global.annotation.LoginUserId;
@@ -32,10 +33,10 @@ public class ReviewController {
     }
 
     @GetMapping("/corkageScore")
-    public BaseResponse<List<GetCorkageScoreResponse>> getCorkageScore(
-            @RequestParam(name = "range", defaultValue = "1") String range
+    public BaseResponse<List<GetCorkageReviewResponse>> getCorkageReview(
+            @RequestParam(name = "sort", defaultValue = "BOOKMARK") CorkageReviewSort sort
     ) {
-        return BaseResponse.ok(reviewService.getCorkageScores(range));
+        return BaseResponse.ok(reviewService.getCorkageScores(sort));
     }
 
     @PatchMapping("/{reviewId}")
