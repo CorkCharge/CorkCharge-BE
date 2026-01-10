@@ -52,4 +52,13 @@ public interface ImageRepository extends JpaRepository<Image, Long> {
       and i.typeId in :corkageIds
 """)
     List<Image> findCorkageImagesByCorkageIds(@Param("corkageIds") List<Long> corkageIds);
+
+    @Query("""
+    select i
+      from Image i
+     where i.category = konkuk.corkCharge.domain.image.domain.ImageCategory.REVIEW
+       and i.typeId in :reviewIds
+     order by i.createdAt asc
+""")
+    List<Image> findReviewImagesByReviewIds(@Param("reviewIds") List<Long> reviewIds);
 }
