@@ -3,6 +3,7 @@ package konkuk.corkCharge.domain.review.controller;
 import konkuk.corkCharge.domain.review.dto.request.PatchUpdateReviewRequest;
 import konkuk.corkCharge.domain.review.dto.request.PostReviewCreateRequest;
 import konkuk.corkCharge.domain.review.dto.response.GetCorkageScoreResponse;
+import konkuk.corkCharge.domain.review.dto.response.GetRestaurantReviewResponse;
 import konkuk.corkCharge.domain.review.service.ReviewService;
 import konkuk.corkCharge.global.annotation.LoginUserId;
 import konkuk.corkCharge.global.response.BaseResponse;
@@ -55,6 +56,13 @@ public class ReviewController {
     ) {
         reviewService.deleteReview(userId, reviewId);
         return BaseResponse.ok(null);
+    }
+
+    @GetMapping("/{restaurantId}")
+    public BaseResponse<List<GetRestaurantReviewResponse>> getRestaurantReviews(
+            @PathVariable(name = "restaurantId") Long restaurantId
+    ) {
+        return BaseResponse.ok(reviewService.getRestaurantReviews(restaurantId));
     }
 
 }

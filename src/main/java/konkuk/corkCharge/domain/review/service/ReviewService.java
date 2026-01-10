@@ -9,9 +9,11 @@ import konkuk.corkCharge.domain.restaurant.repository.RestaurantRepository;
 import konkuk.corkCharge.domain.restaurant.service.RestaurantSummaryService;
 import konkuk.corkCharge.domain.review.domain.Review;
 import konkuk.corkCharge.domain.review.domain.ReviewRange;
+import konkuk.corkCharge.domain.review.dto.mapper.GetRestaurantReviewResponseMapper;
 import konkuk.corkCharge.domain.review.dto.request.PatchUpdateReviewRequest;
 import konkuk.corkCharge.domain.review.dto.request.PostReviewCreateRequest;
 import konkuk.corkCharge.domain.review.dto.response.GetCorkageScoreResponse;
+import konkuk.corkCharge.domain.review.dto.response.GetRestaurantReviewResponse;
 import konkuk.corkCharge.domain.review.repository.ReviewRepository;
 import konkuk.corkCharge.domain.user.domain.User;
 import konkuk.corkCharge.domain.user.repository.UserRepository;
@@ -24,6 +26,8 @@ import org.springframework.web.multipart.MultipartFile;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import static konkuk.corkCharge.domain.image.domain.ImageCategory.REVIEW;
 import static konkuk.corkCharge.global.response.status.BaseExceptionResponseStatus.*;
@@ -38,6 +42,8 @@ public class ReviewService {
     private final ImageRepository imageRepository;
     private final S3ImageService s3ImageService;
     private final RestaurantSummaryService restaurantSummaryService;
+
+    private final GetRestaurantReviewResponseMapper getRestaurantReviewResponseMapper;
 
     @Transactional
     public void createReview(Long userId, Long restaurantId,
@@ -170,6 +176,38 @@ public class ReviewService {
         reviewRepository.delete(review);
 
         updateAverageRating(review.getRestaurant());
+    }
+
+    @Transactional(readOnly = true)
+    public List<GetRestaurantReviewResponse> getRestaurantReviews(Long restaurantId) {
+
+        List<Review> reviews =
+                reviewRepository.findByRestaurant_RestaurantIdOrderByCreatedAtDesc(restaurantId);
+
+        if (reviews.isEmpty()) {
+            return List.of();
+        }
+
+        List<Long> reviewIds = reviews.stream()
+                .map(Review::getReviewId)
+                .toList();
+
+        // 리뷰 이미지
+        Map<Long, List<String>> imageMap =
+                imageRepository.findReviewImagesByReviewIds(reviewIds)
+                        .stream()
+                        .collect(Collectors.groupingBy(
+                                Image::getTypeId,
+                                Collectors.mapping(Image::getImageUrl, Collectors.toList())
+                        ));
+
+        return reviews.stream()
+                .map(review -> getRestaurantReviewResponseMapper.toResponse(
+                        review,
+                        imageMap.getOrDefault(review.getReviewId(), List.of())
+                ))
+                .toList();
+
     }
 
 }

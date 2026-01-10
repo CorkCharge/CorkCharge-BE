@@ -3,9 +3,6 @@ package konkuk.corkCharge.domain.restaurant.dto.mapper;
 import konkuk.corkCharge.domain.corkageStore.domain.OptionType;
 import konkuk.corkCharge.domain.restaurant.domain.RestaurantSummary;
 import konkuk.corkCharge.domain.restaurant.dto.response.GetRestaurantDetailResponse;
-import konkuk.corkCharge.domain.restaurant.dto.response.ReviewResponse;
-import konkuk.corkCharge.domain.review.domain.Review;
-import konkuk.corkCharge.domain.review.repository.ReviewRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -16,9 +13,6 @@ import java.util.List;
 @RequiredArgsConstructor
 public class RestaurantDetailResponseMapper {
 
-    private final ReviewRepository reviewRepository;
-    private final ReviewResponseMapper reviewResponseMapper;
-
     public GetRestaurantDetailResponse toResponse(RestaurantSummary summary) {
 
         Long restaurantId = summary.getRestaurantId();
@@ -28,14 +22,6 @@ public class RestaurantDetailResponseMapper {
                 summary.getOptionBits(),
                 summary.getOptionEtcContent()
         );
-
-        // 리뷰 목록은 요약에 없으니 DB 조회
-        List<Review> reviews =
-                reviewRepository.findByRestaurant_RestaurantId(restaurantId);
-
-        List<ReviewResponse> reviewResponses = reviews.stream()
-                .map(reviewResponseMapper::toResponse)
-                .toList();
 
         return new GetRestaurantDetailResponse(
                 restaurantId,
@@ -52,8 +38,7 @@ public class RestaurantDetailResponseMapper {
                 summary.getPairingAlcohol(),
                 summary.getPairingDescription(),
                 summary.getPairingImageUrl(),
-                summary.getOpeningHours(),
-                reviewResponses
+                summary.getOpeningHours()
         );
     }
 
