@@ -96,7 +96,7 @@ public class RestaurantController {
 
     @GetMapping("/recommand")
     public BaseResponse<List<GetHomeRestaurantResponse>> getRecommandRestaurants() {
-        return BaseResponse.ok(restaurantService.getRecommandRestaurants());
+        return BaseResponse.ok(restaurantService.getRecommendRestaurants());
     }
 
     @PostMapping("/home/restaurant-tab")

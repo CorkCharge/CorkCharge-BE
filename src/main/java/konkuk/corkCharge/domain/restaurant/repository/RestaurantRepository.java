@@ -152,7 +152,7 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
           )
         ORDER BY distanceKm ASC, r.bookmark_count DESC
         """, nativeQuery = true)
-    List<RestaurantDistanceProjection> findRecommandRestaurantsWithinRadius(
+    List<RestaurantDistanceProjection> findRecommendRestaurantsWithinRadius(
             @Param("radiusMeters") int radiusMeters,
             @Param("gangnamLat") double gangnamLat, @Param("gangnamLon") double gangnamLon,
             @Param("hongdaeLat") double hongdaeLat, @Param("hongdaeLon") double hongdaeLon,
@@ -221,7 +221,7 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
         ORDER BY distanceKm ASC, r.bookmark_count DESC
         LIMIT :limit
         """, nativeQuery = true)
-    List<RestaurantDistanceProjection> findRecommandRestaurantsWithinRadiusLimit(
+    List<RestaurantDistanceProjection> findRecommendRestaurantsWithinRadiusLimit(
             @Param("radiusMeters") int radiusMeters,
             @Param("gangnamLat") double gangnamLat, @Param("gangnamLon") double gangnamLon,
             @Param("hongdaeLat") double hongdaeLat, @Param("hongdaeLon") double hongdaeLon,
