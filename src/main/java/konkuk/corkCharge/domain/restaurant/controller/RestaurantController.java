@@ -99,4 +99,11 @@ public class RestaurantController {
         return BaseResponse.ok(restaurantService.getRecommandRestaurants());
     }
 
+    @PostMapping("/home/restaurant-tab")
+    public BaseResponse<GetRestaurantTabResponse> getHomeRestaurantTab(
+            @RequestBody UserLocationRequest request
+    ) {
+        return BaseResponse.ok(restaurantService.getHomeRestaurantTab(request));
+    }
+
 }
