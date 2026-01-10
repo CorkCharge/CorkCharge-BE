@@ -66,4 +66,9 @@ public class ReviewController {
         return BaseResponse.ok(reviewService.getRestaurantReviews(restaurantId));
     }
 
+    @GetMapping("/home")
+    public BaseResponse<List<GetCorkageReviewResponse>> getHomeCorkageReviews() {
+        return BaseResponse.ok(reviewService.getHomeCorkageReviews());
+    }
+
 }
