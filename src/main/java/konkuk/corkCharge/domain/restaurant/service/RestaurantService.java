@@ -398,20 +398,20 @@ public class RestaurantService {
         if (req == null || !req.hasUserLocation()) {
             nearbyCard = List.of();
         } else {
-            List<RestaurantDistanceProjection> nearbyRows =
-                    restaurantRepository.findNearbyRestaurantsWithinRadiusLimit(
+            List<Long> nearbyIds =
+                    restaurantRepository.findNearbyRestaurantIdsWithinRadiusLimit(
                             req.lat(), req.lon(), RADIUS_METERS_NEAR_BY, LIMIT
                     );
 
-            nearbyCard = nearbyRows.stream()
-                    .map(row -> restaurantSummaryService.getSummary(row.getRestaurantId()))
+            nearbyCard = nearbyIds.stream()
+                    .map(restaurantSummaryService::getSummary)
                     .map(homeRestaurantCardMapper::toCard)
                     .toList();
         }
 
         // 추천 매장 top5
-        List<RestaurantDistanceProjection> recommendRows =
-                restaurantRepository.findRecommendRestaurantsWithinRadiusLimit(
+        List<Long> recommendIds =
+                restaurantRepository.findRecommendRestaurantIdsWithinRadiusLimit(
                         RADIUS_METERS_RECOMMEND,
                         GANGNAM_LAT, GANGNAM_LON,
                         HONGDAE_LAT, HONGDAE_LON,
@@ -422,8 +422,8 @@ public class RestaurantService {
                         LIMIT
                 );
 
-        List<HomeRestaurantCard> recommendCard = recommendRows.stream()
-                .map(row -> restaurantSummaryService.getSummary(row.getRestaurantId()))
+        List<HomeRestaurantCard> recommendCard = recommendIds.stream()
+                .map(restaurantSummaryService::getSummary)
                 .map(homeRestaurantCardMapper::toCard)
                 .toList();
 
