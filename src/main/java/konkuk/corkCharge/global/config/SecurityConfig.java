@@ -43,7 +43,7 @@ public class SecurityConfig {
                                 "/restaurants/map",
                                 "/reviews/corkageReview",
                                 "/reviews/{restaurantId}",
-                                "reviews/home",
+                                "/reviews/home",
                                 "/tips",
                                 "/tips/*")
                         .permitAll()
