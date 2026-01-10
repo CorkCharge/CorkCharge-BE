@@ -94,6 +94,7 @@ public class ReviewService {
         restaurantRepository.save(restaurant);
     }
 
+    @Transactional(readOnly = true)
     public List<GetCorkageReviewResponse> getCorkageReviews(CorkageReviewSort sort) {
 
         List<CorkageReviewProjection> rows = switch (sort) {
@@ -219,7 +220,42 @@ public class ReviewService {
                         imageMap.getOrDefault(review.getReviewId(), List.of())
                 ))
                 .toList();
+    }
 
+    @Transactional(readOnly = true)
+    public List<GetCorkageReviewResponse> getHomeCorkageReviews() {
+        final int LIMIT = 5;
+
+        List<CorkageReviewProjection> rows =
+                reviewRepository.findTopCorkageReviewsOrderByBookmark(LIMIT);
+
+        if (rows.isEmpty())
+            return List.of();
+
+        List<Long> reviewIds = rows.stream()
+                .map(CorkageReviewProjection::getReviewId)
+                .toList();
+
+        Map<Long, List<String>> imageMap =
+                imageRepository.findReviewImagesByReviewIds(reviewIds).stream()
+                        .collect(Collectors.groupingBy(
+                                Image::getTypeId,
+                                Collectors.mapping(Image::getImageUrl, Collectors.toList())
+                        ));
+
+        return rows.stream()
+                .map(row -> new GetCorkageReviewResponse(
+                        row.getReviewId(),
+                        row.getRestaurantId(),
+                        row.getRestaurantName(),
+                        row.getWriter(),
+                        row.getContent(),
+                        row.getRating() == null ? 0 : row.getRating(),
+                        row.getCreatedAt(),
+                        imageMap.getOrDefault(row.getReviewId(), List.of()),
+                        row.getBookmarkCount() == null ? 0 : row.getBookmarkCount()
+                ))
+                .toList();
     }
 
 }
