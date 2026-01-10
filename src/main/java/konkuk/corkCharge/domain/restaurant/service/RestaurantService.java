@@ -394,19 +394,20 @@ public class RestaurantService {
         final int LIMIT = 5;
 
         // 가까운 매장 top5
+        List<HomeRestaurantCard> nearbyCard;
         if (req == null || !req.hasUserLocation()) {
-            throw new CustomException(LOCATION_REQUIRED);
+            nearbyCard = List.of();
+        } else {
+            List<RestaurantDistanceProjection> nearbyRows =
+                    restaurantRepository.findNearbyRestaurantsWithinRadiusLimit(
+                            req.lat(), req.lon(), RADIUS_METERS_NEAR_BY, LIMIT
+                    );
+
+            nearbyCard = nearbyRows.stream()
+                    .map(row -> restaurantSummaryService.getSummary(row.getRestaurantId()))
+                    .map(homeRestaurantCardMapper::toCard)
+                    .toList();
         }
-
-        List<RestaurantDistanceProjection> nearbyRows =
-                restaurantRepository.findNearbyRestaurantsWithinRadiusLimit(
-                        req.lat(), req.lon(), RADIUS_METERS_NEAR_BY, LIMIT
-                );
-
-        List<HomeRestaurantCard> nearbyCard = nearbyRows.stream()
-                .map(row -> restaurantSummaryService.getSummary(row.getRestaurantId()))
-                .map(homeRestaurantCardMapper::toCard)
-                .toList();
 
         // 추천 매장 top5
         List<RestaurantDistanceProjection> recommendRows =

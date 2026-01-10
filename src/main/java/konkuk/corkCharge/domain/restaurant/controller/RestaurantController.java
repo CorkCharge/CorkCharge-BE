@@ -101,7 +101,7 @@ public class RestaurantController {
 
     @PostMapping("/home/restaurant-tab")
     public BaseResponse<GetRestaurantTabResponse> getHomeRestaurantTab(
-            @RequestBody UserLocationRequest request
+            @RequestBody(required = false) UserLocationRequest request
     ) {
         return BaseResponse.ok(restaurantService.getHomeRestaurantTab(request));
     }
