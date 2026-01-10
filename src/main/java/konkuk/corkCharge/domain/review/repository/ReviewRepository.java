@@ -21,7 +21,7 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
             "WHERE r.createdAt >= :from")
     List<Review> findRecentReviews(@Param("from") LocalDateTime from);
 
-    List<Review> findByRestaurant_RestaurantId(Long restaurantId);
+    List<Review> findByRestaurant_RestaurantIdOrderByCreatedAtDesc(Long restaurantId);
 
     List<Review> findAllByRestaurant_RestaurantId(Long restaurantId);
 }
