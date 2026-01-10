@@ -25,7 +25,7 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 
     List<Review> findAllByRestaurant_RestaurantId(Long restaurantId);
 
-    // 최신순
+    // 최신순 (콜키지리뷰)
     @Query("""
         select
             rv.reviewId as reviewId,
@@ -44,7 +44,7 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     """)
     List<CorkageReviewProjection> findAllCorkageReviewsOrderByLatest();
 
-    // 저장수순
+    // 저장수순 (콜키지리뷰)
     @Query("""
         select
             rv.reviewId as reviewId,
@@ -64,5 +64,25 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
                  rv.reviewId desc
     """)
     List<CorkageReviewProjection> findAllCorkageReviewsOrderByBookmark();
+
+    // 콜키지리뷰 저장수순 top5
+    @Query(value = """
+        SELECT
+            rv.review_id AS reviewId,
+            r.restaurant_id AS restaurantId,
+            r.name AS restaurantName,
+            u.name AS writer,
+            rv.content AS content,
+            rv.rating AS rating,
+            rv.created_at AS createdAt,
+            COALESCE(rv.bookmark_count, 0) AS bookmarkCount
+        FROM review rv
+          JOIN restaurant r ON rv.restaurant_id = r.restaurant_id
+          JOIN user u ON rv.user_id = u.user_id
+        WHERE r.has_corkage = 1
+        ORDER BY COALESCE(rv.bookmark_count, 0) DESC, rv.created_at DESC, rv.review_id DESC
+        LIMIT :limit
+        """, nativeQuery = true)
+    List<CorkageReviewProjection> findTopCorkageReviewsOrderByBookmark(@Param("limit") int limit);
 
 }
