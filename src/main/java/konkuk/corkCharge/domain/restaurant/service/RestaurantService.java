@@ -75,6 +75,7 @@ public class RestaurantService {
     private final HotRestaurantResponseMapper hotRestaurantResponseMapper;
     private final MapRestaurantResponseMapper mapRestaurantResponseMapper;
     private final RestaurantListResponseMapper restaurantListResponseMapper;
+    private final HomeRestaurantCardMapper homeRestaurantCardMapper;
 
     private final RestaurantSummaryService restaurantSummaryService;
     private final HomeRestaurantResponseMapper homeRestaurantResponseMapper;
@@ -386,6 +387,46 @@ public class RestaurantService {
                     return homeRestaurantResponseMapper.toResponse(summary, row.getDistanceKm());
                 })
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public GetRestaurantTabResponse getHomeRestaurantTab(UserLocationRequest req) {
+        final int LIMIT = 5;
+
+        // 가까운 매장 top5
+        if (req == null || !req.hasUserLocation()) {
+            throw new CustomException(LOCATION_REQUIRED);
+        }
+
+        List<RestaurantDistanceProjection> nearbyRows =
+                restaurantRepository.findNearbyRestaurantsWithinRadiusLimit(
+                        req.lat(), req.lon(), RADIUS_METERS_NEAR_BY, LIMIT
+                );
+
+        List<HomeRestaurantCard> nearbyCard = nearbyRows.stream()
+                .map(row -> restaurantSummaryService.getSummary(row.getRestaurantId()))
+                .map(homeRestaurantCardMapper::toCard)
+                .toList();
+
+        // 추천 매장 top5
+        List<RestaurantDistanceProjection> recommandRows =
+                restaurantRepository.findRecommandRestaurantsWithinRadiusLimit(
+                        RADIUS_METERS_RECOMMAND,
+                        GANGNAM_LAT, GANGNAM_LON,
+                        HONGDAE_LAT, HONGDAE_LON,
+                        SEONGSU_LAT, SEONGSU_LON,
+                        KONKUK_LAT, KONKUK_LON,
+                        ITAEWON_LAT, ITAEWON_LON,
+                        YONGSAN_LAT, YONGSAN_LON,
+                        LIMIT
+                );
+
+        List<HomeRestaurantCard> recommandCard = recommandRows.stream()
+                .map(row -> restaurantSummaryService.getSummary(row.getRestaurantId()))
+                .map(homeRestaurantCardMapper::toCard)
+                .toList();
+
+        return new GetRestaurantTabResponse(nearbyCard, recommandCard);
     }
 
 }
