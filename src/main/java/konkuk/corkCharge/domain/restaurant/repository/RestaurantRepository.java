@@ -162,4 +162,74 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
             @Param("yongsanLat") double yongsanLat, @Param("yongsanLon") double yongsanLon
     );
 
+    // Home 매장 탭 top5(가까운) 매장
+    @Query(value = """
+        SELECT
+            r.restaurant_id AS restaurantId,
+            ROUND(
+                ST_Distance_Sphere(
+                    r.location,
+                    ST_SRID(POINT(:lon, :lat), 4326)
+                ) / 1000,
+                1
+            ) AS distanceKm
+        FROM restaurant r
+        WHERE r.has_corkage = 1
+          AND ST_X(r.location) != 0
+          AND ST_Y(r.location) != 0
+          AND ST_Distance_Sphere(
+                r.location,
+                ST_SRID(POINT(:lon, :lat), 4326)
+              ) <= :radiusMeters
+        ORDER BY distanceKm ASC, r.bookmark_count DESC
+        LIMIT :limit
+        """, nativeQuery = true)
+    List<RestaurantDistanceProjection> findNearbyRestaurantsWithinRadiusLimit(
+            @Param("lat") double lat,
+            @Param("lon") double lon,
+            @Param("radiusMeters") int radiusMeters,
+            @Param("limit") int limit
+    );
+
+    // Home 매장 탭 top5(추천) 매장
+    @Query(value = """
+        SELECT
+            r.restaurant_id AS restaurantId,
+            ROUND(
+                LEAST(
+                    ST_Distance_Sphere(r.location, ST_SRID(POINT(:gangnamLon, :gangnamLat), 4326)),
+                    ST_Distance_Sphere(r.location, ST_SRID(POINT(:hongdaeLon, :hongdaeLat), 4326)),
+                    ST_Distance_Sphere(r.location, ST_SRID(POINT(:seongsuLon, :seongsuLat), 4326)),
+                    ST_Distance_Sphere(r.location, ST_SRID(POINT(:konkukLon, :konkukLat), 4326)),
+                    ST_Distance_Sphere(r.location, ST_SRID(POINT(:itaewonLon, :itaewonLat), 4326)),
+                    ST_Distance_Sphere(r.location, ST_SRID(POINT(:yongsanLon, :yongsanLat), 4326))
+                ) / 1000,
+                1
+            ) AS distanceKm
+        FROM restaurant r
+        WHERE r.has_corkage = 1
+          AND ST_X(r.location) != 0
+          AND ST_Y(r.location) != 0
+          AND (
+                ST_Distance_Sphere(r.location, ST_SRID(POINT(:gangnamLon, :gangnamLat), 4326)) <= :radiusMeters
+             OR ST_Distance_Sphere(r.location, ST_SRID(POINT(:hongdaeLon, :hongdaeLat), 4326)) <= :radiusMeters
+             OR ST_Distance_Sphere(r.location, ST_SRID(POINT(:seongsuLon, :seongsuLat), 4326)) <= :radiusMeters
+             OR ST_Distance_Sphere(r.location, ST_SRID(POINT(:konkukLon, :konkukLat), 4326)) <= :radiusMeters
+             OR ST_Distance_Sphere(r.location, ST_SRID(POINT(:itaewonLon, :itaewonLat), 4326)) <= :radiusMeters
+             OR ST_Distance_Sphere(r.location, ST_SRID(POINT(:yongsanLon, :yongsanLat), 4326)) <= :radiusMeters
+          )
+        ORDER BY distanceKm ASC, r.bookmark_count DESC
+        LIMIT :limit
+        """, nativeQuery = true)
+    List<RestaurantDistanceProjection> findRecommandRestaurantsWithinRadiusLimit(
+            @Param("radiusMeters") int radiusMeters,
+            @Param("gangnamLat") double gangnamLat, @Param("gangnamLon") double gangnamLon,
+            @Param("hongdaeLat") double hongdaeLat, @Param("hongdaeLon") double hongdaeLon,
+            @Param("seongsuLat") double seongsuLat, @Param("seongsuLon") double seongsuLon,
+            @Param("konkukLat") double konkukLat, @Param("konkukLon") double konkukLon,
+            @Param("itaewonLat") double itaewonLat, @Param("itaewonLon") double itaewonLon,
+            @Param("yongsanLat") double yongsanLat, @Param("yongsanLon") double yongsanLon,
+            @Param("limit") int limit
+    );
+
 }
