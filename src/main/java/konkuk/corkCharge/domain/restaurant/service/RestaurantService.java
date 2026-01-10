@@ -394,19 +394,19 @@ public class RestaurantService {
         final int LIMIT = 5;
 
         // 가까운 매장 top5
-        List<HomeRestaurantCard> nearbyCard;
+        List<Long> nearbyIds;
         if (req == null || !req.hasUserLocation()) {
-            nearbyCard = List.of();
+            nearbyIds = List.of();
         } else {
-            List<Long> nearbyIds =
+            nearbyIds =
                     restaurantRepository.findNearbyRestaurantIdsWithinRadiusLimit(
                             req.lat(), req.lon(), RADIUS_METERS_NEAR_BY, LIMIT
                     );
 
-            nearbyCard = nearbyIds.stream()
-                    .map(restaurantSummaryService::getSummary)
-                    .map(homeRestaurantCardMapper::toCard)
-                    .toList();
+//            nearbyCard = nearbyIds.stream()
+//                    .map(restaurantSummaryService::getSummary)
+//                    .map(homeRestaurantCardMapper::toCard)
+//                    .toList();
         }
 
         // 추천 매장 top5
@@ -422,8 +422,16 @@ public class RestaurantService {
                         LIMIT
                 );
 
-        List<HomeRestaurantCard> recommendCard = recommendIds.stream()
-                .map(restaurantSummaryService::getSummary)
+//        List<HomeRestaurantCard> recommendCard = recommendIds.stream()
+//                .map(restaurantSummaryService::getSummary)
+//                .map(homeRestaurantCardMapper::toCard)
+//                .toList();
+
+        List<HomeRestaurantCard> nearbyCard = restaurantSummaryService.getSummariesInOrder(nearbyIds).stream()
+                .map(homeRestaurantCardMapper::toCard)
+                .toList();
+
+        List<HomeRestaurantCard> recommendCard = restaurantSummaryService.getSummariesInOrder(recommendIds).stream()
                 .map(homeRestaurantCardMapper::toCard)
                 .toList();
 
