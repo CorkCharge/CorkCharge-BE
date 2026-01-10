@@ -32,4 +32,24 @@ public interface ImageRepository extends JpaRepository<Image, Long> {
 """)
     List<String> findUrlsByCategoryAndTypeId(@Param("category") ImageCategory category,
                                              @Param("typeId") Long typeId);
+
+    // redis용 bulk 메서드 (매장 사진)
+    @Query("""
+    select i
+    from Image i
+    where i.category = konkuk.corkCharge.domain.image.domain.ImageCategory.RESTAURANT
+      and i.typeId in :restaurantIds
+      and i.type in (konkuk.corkCharge.domain.image.domain.ImageType.MAIN,
+                     konkuk.corkCharge.domain.image.domain.ImageType.MENU)
+""")
+    List<Image> findRestaurantImagesByRestaurantIds(@Param("restaurantIds") List<Long> restaurantIds);
+
+    // redis용 bulk 메서드 (콜키지 사진)
+    @Query("""
+    select i
+    from Image i
+    where i.category = konkuk.corkCharge.domain.image.domain.ImageCategory.CORKAGE
+      and i.typeId in :corkageIds
+""")
+    List<Image> findCorkageImagesByCorkageIds(@Param("corkageIds") List<Long> corkageIds);
 }

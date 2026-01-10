@@ -52,7 +52,7 @@ public class RestaurantService {
     private static final double YONGSAN_LAT = 37.529764;
     private static final double YONGSAN_LON = 126.964741;
 
-    private static final int RADIUS_METERS_RECOMMAND = 2000;
+    private static final int RADIUS_METERS_RECOMMEND = 2000;
     private static final int RADIUS_METERS_NEAR_BY = 3000;
 
     private static final Set<String> ALLOWED_CATEGORIES = Set.of(
@@ -75,6 +75,7 @@ public class RestaurantService {
     private final HotRestaurantResponseMapper hotRestaurantResponseMapper;
     private final MapRestaurantResponseMapper mapRestaurantResponseMapper;
     private final RestaurantListResponseMapper restaurantListResponseMapper;
+    private final HomeRestaurantCardMapper homeRestaurantCardMapper;
 
     private final RestaurantSummaryService restaurantSummaryService;
     private final HomeRestaurantResponseMapper homeRestaurantResponseMapper;
@@ -367,10 +368,10 @@ public class RestaurantService {
     }
 
     @Transactional(readOnly = true)
-    public List<GetHomeRestaurantResponse> getRecommandRestaurants() {
+    public List<GetHomeRestaurantResponse> getRecommendRestaurants() {
         List<RestaurantDistanceProjection> rows =
-                restaurantRepository.findRecommandRestaurantsWithinRadius(
-                        RADIUS_METERS_RECOMMAND,
+                restaurantRepository.findRecommendRestaurantsWithinRadius(
+                        RADIUS_METERS_RECOMMEND,
                         GANGNAM_LAT, GANGNAM_LON,
                         HONGDAE_LAT, HONGDAE_LON,
                         SEONGSU_LAT, SEONGSU_LON,
@@ -386,6 +387,55 @@ public class RestaurantService {
                     return homeRestaurantResponseMapper.toResponse(summary, row.getDistanceKm());
                 })
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public GetRestaurantTabResponse getHomeRestaurantTab(UserLocationRequest req) {
+        final int LIMIT = 5;
+
+        // 가까운 매장 top5
+        List<Long> nearbyIds;
+        if (req == null || !req.hasUserLocation()) {
+            nearbyIds = List.of();
+        } else {
+            nearbyIds =
+                    restaurantRepository.findNearbyRestaurantIdsWithinRadiusLimit(
+                            req.lat(), req.lon(), RADIUS_METERS_NEAR_BY, LIMIT
+                    );
+
+//            nearbyCard = nearbyIds.stream()
+//                    .map(restaurantSummaryService::getSummary)
+//                    .map(homeRestaurantCardMapper::toCard)
+//                    .toList();
+        }
+
+        // 추천 매장 top5
+        List<Long> recommendIds =
+                restaurantRepository.findRecommendRestaurantIdsWithinRadiusLimit(
+                        RADIUS_METERS_RECOMMEND,
+                        GANGNAM_LAT, GANGNAM_LON,
+                        HONGDAE_LAT, HONGDAE_LON,
+                        SEONGSU_LAT, SEONGSU_LON,
+                        KONKUK_LAT, KONKUK_LON,
+                        ITAEWON_LAT, ITAEWON_LON,
+                        YONGSAN_LAT, YONGSAN_LON,
+                        LIMIT
+                );
+
+//        List<HomeRestaurantCard> recommendCard = recommendIds.stream()
+//                .map(restaurantSummaryService::getSummary)
+//                .map(homeRestaurantCardMapper::toCard)
+//                .toList();
+
+        List<HomeRestaurantCard> nearbyCard = restaurantSummaryService.getSummariesInOrder(nearbyIds).stream()
+                .map(homeRestaurantCardMapper::toCard)
+                .toList();
+
+        List<HomeRestaurantCard> recommendCard = restaurantSummaryService.getSummariesInOrder(recommendIds).stream()
+                .map(homeRestaurantCardMapper::toCard)
+                .toList();
+
+        return new GetRestaurantTabResponse(nearbyCard, recommendCard);
     }
 
 }

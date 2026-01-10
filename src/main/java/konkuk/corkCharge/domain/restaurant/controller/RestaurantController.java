@@ -96,7 +96,14 @@ public class RestaurantController {
 
     @GetMapping("/recommand")
     public BaseResponse<List<GetHomeRestaurantResponse>> getRecommandRestaurants() {
-        return BaseResponse.ok(restaurantService.getRecommandRestaurants());
+        return BaseResponse.ok(restaurantService.getRecommendRestaurants());
+    }
+
+    @PostMapping("/home")
+    public BaseResponse<GetRestaurantTabResponse> getHomeRestaurantTab(
+            @RequestBody(required = false) UserLocationRequest request
+    ) {
+        return BaseResponse.ok(restaurantService.getHomeRestaurantTab(request));
     }
 
 }
