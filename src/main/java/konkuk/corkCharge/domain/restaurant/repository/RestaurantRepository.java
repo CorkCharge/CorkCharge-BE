@@ -98,25 +98,26 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
 
     // 사용자 위치 기준 3Km 이내에 있는 모든 매장 : 가까운 매장 리스트
     @Query(value = """
-        SELECT
-            r.restaurant_id AS restaurantId,
-            ROUND(
-                ST_Distance_Sphere(
-                    r.location,
-                    ST_SRID(POINT(:lon, :lat), 4326)
-                ) / 1000,
-                1
-            ) AS distanceKm
-        FROM restaurant r
-        WHERE r.has_corkage = 1
-          AND ST_X(r.location) != 0
-          AND ST_Y(r.location) != 0
-          AND ST_Distance_Sphere(
-                r.location,
-                ST_SRID(POINT(:lon, :lat), 4326)
-              ) <= :radiusMeters
-        ORDER BY distanceKm ASC, r.bookmark_count DESC
-        """, nativeQuery = true)
+    WITH dist AS (
+      SELECT
+        r.restaurant_id AS restaurantId,
+        r.bookmark_count AS bookmarkCount,
+        ST_Distance_Sphere(
+          r.location,
+          ST_SRID(POINT(:lon, :lat), 4326)
+        ) AS distanceMeters
+      FROM restaurant r
+      WHERE r.has_corkage = 1
+        AND ST_X(r.location) != 0
+        AND ST_Y(r.location) != 0
+    )
+    SELECT
+      restaurantId AS restaurantId,
+      ROUND(distanceMeters / 1000, 1) AS distanceKm
+    FROM dist
+    WHERE distanceMeters <= :radiusMeters
+    ORDER BY distanceMeters ASC, bookmarkCount DESC
+    """, nativeQuery = true)
     List<RestaurantDistanceProjection> findNearbyRestaurantsWithinRadius(
             @Param("lat") double lat,
             @Param("lon") double lon,
@@ -125,33 +126,30 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
 
     // 6개의 역 위치 기준 2km 이내에 있는 모든 매장 : 추천 매장 리스트
     @Query(value = """
-        SELECT
-            r.restaurant_id AS restaurantId,
-            ROUND(
-                LEAST(
-                    ST_Distance_Sphere(r.location, ST_SRID(POINT(:gangnamLon, :gangnamLat), 4326)),
-                    ST_Distance_Sphere(r.location, ST_SRID(POINT(:hongdaeLon, :hongdaeLat), 4326)),
-                    ST_Distance_Sphere(r.location, ST_SRID(POINT(:seongsuLon, :seongsuLat), 4326)),
-                    ST_Distance_Sphere(r.location, ST_SRID(POINT(:konkukLon, :konkukLat), 4326)),
-                    ST_Distance_Sphere(r.location, ST_SRID(POINT(:itaewonLon, :itaewonLat), 4326)),
-                    ST_Distance_Sphere(r.location, ST_SRID(POINT(:yongsanLon, :yongsanLat), 4326))
-                ) / 1000,
-                1
-            ) AS distanceKm
-        FROM restaurant r
-        WHERE r.has_corkage = 1
-          AND ST_X(r.location) != 0
-          AND ST_Y(r.location) != 0
-          AND (
-                ST_Distance_Sphere(r.location, ST_SRID(POINT(:gangnamLon, :gangnamLat), 4326)) <= :radiusMeters
-             OR ST_Distance_Sphere(r.location, ST_SRID(POINT(:hongdaeLon, :hongdaeLat), 4326)) <= :radiusMeters
-             OR ST_Distance_Sphere(r.location, ST_SRID(POINT(:seongsuLon, :seongsuLat), 4326)) <= :radiusMeters
-             OR ST_Distance_Sphere(r.location, ST_SRID(POINT(:konkukLon, :konkukLat), 4326)) <= :radiusMeters
-             OR ST_Distance_Sphere(r.location, ST_SRID(POINT(:itaewonLon, :itaewonLat), 4326)) <= :radiusMeters
-             OR ST_Distance_Sphere(r.location, ST_SRID(POINT(:yongsanLon, :yongsanLat), 4326)) <= :radiusMeters
-          )
-        ORDER BY distanceKm ASC, r.bookmark_count DESC
-        """, nativeQuery = true)
+    WITH dist AS (
+      SELECT
+        r.restaurant_id AS restaurantId,
+        r.bookmark_count AS bookmarkCount,
+        LEAST(
+          ST_Distance_Sphere(r.location, ST_SRID(POINT(:gangnamLon, :gangnamLat), 4326)),
+          ST_Distance_Sphere(r.location, ST_SRID(POINT(:hongdaeLon, :hongdaeLat), 4326)),
+          ST_Distance_Sphere(r.location, ST_SRID(POINT(:seongsuLon, :seongsuLat), 4326)),
+          ST_Distance_Sphere(r.location, ST_SRID(POINT(:konkukLon, :konkukLat), 4326)),
+          ST_Distance_Sphere(r.location, ST_SRID(POINT(:itaewonLon, :itaewonLat), 4326)),
+          ST_Distance_Sphere(r.location, ST_SRID(POINT(:yongsanLon, :yongsanLat), 4326))
+        ) AS minDistanceMeters
+      FROM restaurant r
+      WHERE r.has_corkage = 1
+        AND ST_X(r.location) != 0
+        AND ST_Y(r.location) != 0
+    )
+    SELECT
+      restaurantId,
+      ROUND(minDistanceMeters / 1000, 1) AS distanceKm
+    FROM dist
+    WHERE minDistanceMeters <= :radiusMeters
+    ORDER BY distanceKm ASC, bookmarkCount DESC
+""", nativeQuery = true)
     List<RestaurantDistanceProjection> findRecommendRestaurantsWithinRadius(
             @Param("radiusMeters") int radiusMeters,
             @Param("gangnamLat") double gangnamLat, @Param("gangnamLon") double gangnamLon,
@@ -164,21 +162,23 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
 
     // Home 매장 탭 top5(가까운) 매장
     @Query(value = """
-    SELECT r.restaurant_id
-    FROM restaurant r
-    WHERE r.has_corkage = 1
-      AND ST_X(r.location) != 0
-      AND ST_Y(r.location) != 0
-      AND ST_Distance_Sphere(
-            r.location,
-            ST_SRID(POINT(:lon, :lat), 4326)
-          ) <= :radiusMeters
-    ORDER BY
-      ST_Distance_Sphere(
-        r.location,
-        ST_SRID(POINT(:lon, :lat), 4326)
-      ) ASC,
-      r.bookmark_count DESC
+    WITH dist AS (
+      SELECT
+        r.restaurant_id AS restaurantId,
+        r.bookmark_count AS bookmarkCount,
+        ST_Distance_Sphere(
+          r.location,
+          ST_SRID(POINT(:lon, :lat), 4326)
+        ) AS distanceMeters
+      FROM restaurant r
+      WHERE r.has_corkage = 1
+        AND ST_X(r.location) != 0
+        AND ST_Y(r.location) != 0
+    )
+    SELECT restaurantId
+    FROM dist
+    WHERE distanceMeters <= :radiusMeters
+    ORDER BY distanceMeters ASC, bookmarkCount DESC
     LIMIT :limit
     """, nativeQuery = true)
     List<Long> findNearbyRestaurantIdsWithinRadiusLimit(
@@ -190,30 +190,29 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
 
     // Home 매장 탭 top5(추천) 매장
     @Query(value = """
-    SELECT r.restaurant_id
-    FROM restaurant r
-    WHERE r.has_corkage = 1
-      AND ST_X(r.location) != 0
-      AND ST_Y(r.location) != 0
-      AND (
-            ST_Distance_Sphere(r.location, ST_SRID(POINT(:gangnamLon, :gangnamLat), 4326)) <= :radiusMeters
-         OR ST_Distance_Sphere(r.location, ST_SRID(POINT(:hongdaeLon, :hongdaeLat), 4326)) <= :radiusMeters
-         OR ST_Distance_Sphere(r.location, ST_SRID(POINT(:seongsuLon, :seongsuLat), 4326)) <= :radiusMeters
-         OR ST_Distance_Sphere(r.location, ST_SRID(POINT(:konkukLon, :konkukLat), 4326)) <= :radiusMeters
-         OR ST_Distance_Sphere(r.location, ST_SRID(POINT(:itaewonLon, :itaewonLat), 4326)) <= :radiusMeters
-         OR ST_Distance_Sphere(r.location, ST_SRID(POINT(:yongsanLon, :yongsanLat), 4326)) <= :radiusMeters
-      )
-    ORDER BY
-      LEAST(
-        ST_Distance_Sphere(r.location, ST_SRID(POINT(:gangnamLon, :gangnamLat), 4326)),
-        ST_Distance_Sphere(r.location, ST_SRID(POINT(:hongdaeLon, :hongdaeLat), 4326)),
-        ST_Distance_Sphere(r.location, ST_SRID(POINT(:seongsuLon, :seongsuLat), 4326)),
-        ST_Distance_Sphere(r.location, ST_SRID(POINT(:konkukLon, :konkukLat), 4326)),
-        ST_Distance_Sphere(r.location, ST_SRID(POINT(:itaewonLon, :itaewonLat), 4326)),
-        ST_Distance_Sphere(r.location, ST_SRID(POINT(:yongsanLon, :yongsanLat), 4326))
-      ) ASC,
-      r.bookmark_count DESC
-    LIMIT :limit
+    WITH distance_calc AS (
+        SELECT
+            r.restaurant_id,
+            r.bookmark_count,
+            LEAST(
+                ST_Distance_Sphere(r.location, ST_SRID(POINT(:gangnamLon, :gangnamLat), 4326)),
+                ST_Distance_Sphere(r.location, ST_SRID(POINT(:hongdaeLon, :hongdaeLat), 4326)),
+                ST_Distance_Sphere(r.location, ST_SRID(POINT(:seongsuLon, :seongsuLat), 4326)),
+                ST_Distance_Sphere(r.location, ST_SRID(POINT(:konkukLon, :konkukLat), 4326)),
+                ST_Distance_Sphere(r.location, ST_SRID(POINT(:itaewonLon, :itaewonLat), 4326)),
+                ST_Distance_Sphere(r.location, ST_SRID(POINT(:yongsanLon, :yongsanLat), 4326))
+            ) AS min_distance
+        FROM restaurant r
+        WHERE r.has_corkage = 1
+          AND ST_X(r.location) != 0
+          AND ST_Y(r.location) != 0
+    )
+    SELECT
+        restaurant_id
+    FROM distance_calc
+    WHERE min_distance <= :radiusMeters
+    ORDER BY min_distance ASC, bookmark_count DESC
+    LIMIT :limit;
     """, nativeQuery = true)
     List<Long> findRecommendRestaurantIdsWithinRadiusLimit(
             @Param("radiusMeters") int radiusMeters,
