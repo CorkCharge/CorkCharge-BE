@@ -261,7 +261,7 @@ public class RestaurantSummaryService {
     /**
      * 쓰기 작업 후 Summary 캐시 제거용
      */
-    @CacheEvict(cacheNames = "restaurantSummary", key = "#restaurantId")
+    @CacheEvict(cacheNames = "restaurantSummary", key = "#p0")
     public void evictSummary(Long restaurantId) {
         // 캐시만 날리면 되므로 바디 없음
     }

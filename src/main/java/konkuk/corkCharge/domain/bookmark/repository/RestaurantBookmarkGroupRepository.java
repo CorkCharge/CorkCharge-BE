@@ -3,6 +3,7 @@ package konkuk.corkCharge.domain.bookmark.repository;
 import konkuk.corkCharge.domain.bookmark.domain.RestaurantBookmarkGroup;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
@@ -16,5 +17,5 @@ public interface RestaurantBookmarkGroupRepository extends JpaRepository<Restaur
     from RestaurantBookmarkGroup g
     where g.user.userId = :userId
     """)
-    int findMaxDisplayOrderByUserId(Long userId);
+    int findMaxDisplayOrderByUserId(@Param("userId") Long userId);
 }
