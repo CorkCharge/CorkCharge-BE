@@ -6,6 +6,7 @@ import konkuk.corkCharge.domain.restaurant.dto.request.GetFilterRequest;
 import konkuk.corkCharge.domain.restaurant.dto.request.UserLocationRequest;
 import konkuk.corkCharge.domain.restaurant.dto.response.*;
 import konkuk.corkCharge.domain.restaurant.service.RestaurantService;
+import konkuk.corkCharge.global.annotation.LoginUserId;
 import konkuk.corkCharge.global.response.BaseResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -38,11 +39,6 @@ public class RestaurantController {
         return BaseResponse.ok(restaurantService.searchRestaurants(keyword));
     }
 
-//    @GetMapping("/hot")
-//    public BaseResponse<List<GetHotRestaurantResponse>> getHotRestaurant() {
-//        return BaseResponse.ok(restaurantService.getHotRestaurants());
-//    }
-
     @GetMapping("/filter")
     public BaseResponse<List<?>> filterRestaurant(
             @ModelAttribute GetFilterRequest request
@@ -67,11 +63,6 @@ public class RestaurantController {
     ) {
         return BaseResponse.ok(restaurantService.getClusterList(request.restaurantIds()));
     }
-
-//    @GetMapping("/home")
-//    public BaseResponse<GetHomeRestaurantResponse> getHomeRestaurant() {
-//        return BaseResponse.ok(restaurantService.getHomeRestaurant());
-//    }
 
     @PostMapping("/new")
     public BaseResponse<List<GetHomeRestaurantResponse>> getNewRestaurant(
@@ -104,6 +95,17 @@ public class RestaurantController {
             @RequestBody(required = false) UserLocationRequest request
     ) {
         return BaseResponse.ok(restaurantService.getHomeRestaurantTab(request));
+    }
+
+    @GetMapping("/map/group")
+    public BaseResponse<GetGroupRestaurantPinsResponse> getGroupRestaurantPins(
+            @LoginUserId Long userId,
+            @RequestParam(name = "latMin") double latMin,
+            @RequestParam(name = "latMax") double latMax,
+            @RequestParam(name = "lonMin") double lonMin,
+            @RequestParam(name = "lonMax") double lonMax
+    ) {
+        return BaseResponse.ok(restaurantService.getGroupRestaurantPins(userId, latMin, latMax, lonMin, lonMax));
     }
 
 }
