@@ -1,9 +1,11 @@
 package konkuk.corkCharge.domain.restaurant.service;
 
+import konkuk.corkCharge.domain.bookmark.domain.BookmarkGroupVisibility;
+import konkuk.corkCharge.domain.bookmark.repository.GroupRestaurantPinProjection;
+import konkuk.corkCharge.domain.bookmark.repository.RestaurantBookmarkGroupItemRepository;
 import konkuk.corkCharge.domain.corkageStore.repository.CorkageStoreRepository;
 import konkuk.corkCharge.domain.corkageStore.domain.CorkageStore;
 import konkuk.corkCharge.domain.corkageStore.domain.MultiCorkage;
-import konkuk.corkCharge.domain.image.repository.ImageRepository;
 import konkuk.corkCharge.domain.restaurant.domain.Restaurant;
 import konkuk.corkCharge.domain.restaurant.domain.RestaurantSummary;
 import konkuk.corkCharge.domain.restaurant.dto.mapper.*;
@@ -13,6 +15,7 @@ import konkuk.corkCharge.domain.restaurant.dto.request.UserLocationRequest;
 import konkuk.corkCharge.domain.restaurant.dto.response.*;
 import konkuk.corkCharge.domain.restaurant.repository.RestaurantDistanceProjection;
 import konkuk.corkCharge.domain.restaurant.repository.RestaurantRepository;
+import konkuk.corkCharge.domain.user.repository.UserRepository;
 import konkuk.corkCharge.global.api.naverMapsApi.NaverGeocodingClient;
 import konkuk.corkCharge.global.api.naverMapsApi.dto.Address;
 import konkuk.corkCharge.global.api.naverMapsApi.dto.NaverMapsResponse;
@@ -22,10 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static konkuk.corkCharge.global.response.status.BaseExceptionResponseStatus.*;
@@ -67,8 +67,9 @@ public class RestaurantService {
 
     private final RestaurantRepository restaurantRepository;
     private final NaverGeocodingClient naverGeocodingClient;
-    private final ImageRepository imageRepository;
     private final CorkageStoreRepository corkageStoreRepository;
+    private final RestaurantBookmarkGroupItemRepository groupItemRepository;
+    private final UserRepository userRepository;
 
     private final ClusterListResponseMapper clusterListResponseMapper;
     private final RestaurantDetailResponseMapper restaurantDetailResponseMapper;
@@ -111,15 +112,6 @@ public class RestaurantService {
                 .map(GetSearchRestaurantResponse::from)
                 .toList();
     }
-
-//    @Transactional
-//    public List<GetHotRestaurantResponse> getHotRestaurants() {
-//        List<Restaurant> hotRestaurants = restaurantRepository.findByHasCorkageFalseAndBookmarkCountGreaterThanEqual(5);
-//
-//        return hotRestaurants.stream()
-//                .map(hotRestaurantResponseMapper::toResponse)
-//                .toList();
-//    }
 
     @Transactional
     public List<?> filterRestaurants(GetFilterRequest request) {
@@ -253,28 +245,6 @@ public class RestaurantService {
         };
     }
 
-//    @Transactional(readOnly = true)
-//    public GetHomeRestaurantResponse getHomeRestaurant() {
-//        Restaurant r = restaurantRepository
-//                .findFirstByHasCorkageFalseOrderByBookmarkCountDesc()
-//                .orElseThrow(() -> new CustomException(RESTAURANT_NOT_FOUND));
-//
-//        // 1순위: 레스토랑 MAIN 이미지
-//        String imageUrl = imageRepository
-//                .findFirstByCategoryAndTypeIdAndType(RESTAURANT, r.getRestaurantId(), MAIN)
-//                // 2순위(없으면): 아무 레스토랑 이미지 한 장
-//                .or(() -> imageRepository.findFirstByCategoryAndTypeIdOrderByCreatedAtAsc(RESTAURANT, r.getRestaurantId()))
-//                .map(Image::getImageUrl)
-//                .orElse(null);
-//
-//        return new GetHomeRestaurantResponse(
-//                r.getRestaurantId(),
-//                r.getName(),
-//                r.getBookmarkCount() == null ? 0 : r.getBookmarkCount(),
-//                imageUrl
-//        );
-//    }
-
     @Transactional(readOnly = true)
     public List<GetHomeRestaurantResponse> getNewRestaurants(UserLocationRequest req) {
         LocalDateTime from = LocalDateTime.now().minusDays(NEW_RESTAURANT_DAYS);
@@ -402,11 +372,6 @@ public class RestaurantService {
                     restaurantRepository.findNearbyRestaurantIdsWithinRadiusLimit(
                             req.lat(), req.lon(), RADIUS_METERS_NEAR_BY, LIMIT
                     );
-
-//            nearbyCard = nearbyIds.stream()
-//                    .map(restaurantSummaryService::getSummary)
-//                    .map(homeRestaurantCardMapper::toCard)
-//                    .toList();
         }
 
         // 추천 매장 top5
@@ -422,11 +387,6 @@ public class RestaurantService {
                         LIMIT
                 );
 
-//        List<HomeRestaurantCard> recommendCard = recommendIds.stream()
-//                .map(restaurantSummaryService::getSummary)
-//                .map(homeRestaurantCardMapper::toCard)
-//                .toList();
-
         List<HomeRestaurantCard> nearbyCard = restaurantSummaryService.getSummariesInOrder(nearbyIds).stream()
                 .map(homeRestaurantCardMapper::toCard)
                 .toList();
@@ -436,6 +396,70 @@ public class RestaurantService {
                 .toList();
 
         return new GetRestaurantTabResponse(nearbyCard, recommendCard);
+    }
+
+    @Transactional(readOnly = true)
+    public GetGroupRestaurantPinsResponse getGroupRestaurantPins(Long userId, double latMin, double latMax, double lonMin, double lonMax) {
+        userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(USER_NOT_FOUND));
+
+        String wkt = toEnvelopeWkt(lonMin, latMin, lonMax, latMax);
+
+        List<GroupRestaurantPinProjection> rows = groupItemRepository.findGroupRestaurantPinsInBounds(userId, wkt);
+
+        // 그룹Id 기준으로 map에 넣음
+        Map<Long, GroupAccumulator> map = new LinkedHashMap<>();
+
+        for (GroupRestaurantPinProjection row : rows) {
+            GroupAccumulator acc = map.computeIfAbsent(
+                    row.getGroupId(),
+                    key -> new GroupAccumulator(
+                            row.getGroupId(),
+                            row.getName(),
+                            row.getColor(),
+                            row.getVisibility()
+                    )
+            );
+
+            // 각 그룹에 핀 추가
+            acc.pins.add(new GetGroupRestaurantPinsResponse.Pin(
+                    row.getRestaurantId(),
+                    row.getLatitude(),
+                    row.getLongitude()
+            ));
+
+            acc.restaurantIds.add(row.getRestaurantId());
+        }
+
+        List<GetGroupRestaurantPinsResponse.GroupPins> groups = map.values().stream()
+                .map(acc -> new GetGroupRestaurantPinsResponse.GroupPins(
+                        acc.groupId,
+                        acc.name,
+                        acc.color,
+                        acc.visibility,
+                        acc.restaurantIds.size(),
+                        acc.pins
+                ))
+                .toList();
+
+        return new GetGroupRestaurantPinsResponse(groups.size(), groups);
+    }
+
+    private static class GroupAccumulator {
+        final Long groupId;
+        final String name;
+        final String color;
+        final BookmarkGroupVisibility visibility;
+
+        final List<GetGroupRestaurantPinsResponse.Pin> pins = new ArrayList<>();
+        final Set<Long> restaurantIds = (Set<Long>) new HashSet<Long>();
+
+        GroupAccumulator(Long groupId, String name, String color, BookmarkGroupVisibility visibility) {
+            this.groupId = groupId;
+            this.name = name;
+            this.color = color;
+            this.visibility = visibility;
+        }
     }
 
 }
