@@ -452,7 +452,7 @@ public class RestaurantService {
         final BookmarkGroupVisibility visibility;
 
         final List<GetGroupRestaurantPinsResponse.Pin> pins = new ArrayList<>();
-        final Set<Long> restaurantIds = (Set<Long>) new HashSet<Long>();
+        final Set<Long> restaurantIds = new HashSet<>();
 
         GroupAccumulator(Long groupId, String name, String color, BookmarkGroupVisibility visibility) {
             this.groupId = groupId;
