@@ -1,10 +1,11 @@
 package konkuk.corkCharge.domain.bookmark.dto.request;
 
 import konkuk.corkCharge.domain.bookmark.domain.BookmarkTargetType;
-import lombok.Getter;
+
+import java.util.List;
 
 public record PostBookmarkRequest(
+        BookmarkTargetType targetType,
         Long targetId,
-        BookmarkTargetType targetType
-) {
-}
+        List<Long> groupIds // RESTAURANT 전용
+) {}

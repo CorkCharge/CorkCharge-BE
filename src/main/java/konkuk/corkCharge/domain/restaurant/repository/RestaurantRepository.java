@@ -44,10 +44,10 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
         """)
     List<Restaurant> findRestaurantsWithoutValidCoordinates();
 
-    // lat/lon 없을 때(그냥 2주 이내 최신순 전체) : 신규 매장 리스트
+    // lat/lon 없을 때(그냥 2주 이내 최신순 전체)
     List<Restaurant> findByCreatedAtGreaterThanEqualOrderByCreatedAtDesc(LocalDateTime from);
 
-    // lat/lon 있을 때: DB에서 distance(km) 계산해서 함께 반환 : 신규 매장 리스트
+    // lat/lon 있을 때: DB에서 distance(km) 계산해서 함께 반환
     @Query(value = """
         SELECT
             r.restaurant_id AS restaurantId,

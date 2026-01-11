@@ -1,11 +1,16 @@
 package konkuk.corkCharge.domain.bookmark.service;
 
 import konkuk.corkCharge.domain.bookmark.domain.Bookmark;
+import konkuk.corkCharge.domain.bookmark.domain.RestaurantBookmarkGroup;
+import konkuk.corkCharge.domain.bookmark.domain.RestaurantBookmarkGroupItem;
 import konkuk.corkCharge.domain.bookmark.dto.request.DeleteBookmarkRequest;
 import konkuk.corkCharge.domain.bookmark.dto.request.PostBookmarkRequest;
+import konkuk.corkCharge.domain.bookmark.dto.request.PutRestaurantBookmarkGroupsRequest;
 import konkuk.corkCharge.domain.bookmark.dto.response.GetSavedReviewResponse;
 import konkuk.corkCharge.domain.bookmark.dto.response.GetSavedTipResponse;
 import konkuk.corkCharge.domain.bookmark.repository.BookmarkRepository;
+import konkuk.corkCharge.domain.bookmark.repository.RestaurantBookmarkGroupItemRepository;
+import konkuk.corkCharge.domain.bookmark.repository.RestaurantBookmarkGroupRepository;
 import konkuk.corkCharge.domain.corkageStore.domain.CorkageStore;
 import konkuk.corkCharge.domain.corkageStore.repository.CorkageStoreRepository;
 import konkuk.corkCharge.domain.image.domain.Image;
@@ -42,73 +47,118 @@ public class BookmarkService {
     private final ImageRepository imageRepository;
     private final CorkageStoreRepository corkageStoreRepository;
     private final RestaurantSummaryService restaurantSummaryService;
+    private final RestaurantBookmarkGroupRepository restaurantBookmarkGroupRepository;
+    private final RestaurantBookmarkGroupItemRepository restaurantBookmarkGroupItemRepository;
 
     @Transactional
-    public void createBookmark(Long userId, PostBookmarkRequest request){
+    public void createBookmark(Long userId, PostBookmarkRequest request) {
+
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(USER_NOT_FOUND));
 
-        switch(request.targetType()) {
-            case RESTAURANT -> {
-                Restaurant restaurant = restaurantRepository.findById(request.targetId())
-                        .orElseThrow(() -> new CustomException(RESTAURANT_NOT_FOUND));
+        if (request.targetType() == RESTAURANT) {
+            if (request.groupIds() == null || request.groupIds().isEmpty()) {
+                throw new CustomException(BAD_REQUEST);
+            }
+
+            restaurantRepository.findById(request.targetId())
+                    .orElseThrow(() -> new CustomException(RESTAURANT_NOT_FOUND));
+        }
+
+        if (request.targetType() == REVIEW) {
+            reviewRepository.findById(request.targetId())
+                    .orElseThrow(() -> new CustomException(REVIEW_NOT_FOUND));
+        }
+
+        if (request.targetType() == TIP) {
+            if (!tipRepository.existsById(request.targetId())) {
+                throw new CustomException(TIP_NOT_FOUND);
+            }
+        }
+
+        Bookmark bookmark = bookmarkRepository
+                .findByUser_UserIdAndTargetTypeAndTargetId(
+                        userId,
+                        request.targetType(),
+                        request.targetId()
+                )
+                .orElse(null);
+
+        if (bookmark != null && request.targetType() == RESTAURANT) {
+            throw new CustomException(BOOKMARK_ALREADY_EXISTS);
+        }
+
+        if (bookmark == null) {
+            bookmark = bookmarkRepository.save(
+                    Bookmark.builder()
+                            .user(user)
+                            .targetType(request.targetType())
+                            .targetId(request.targetId())
+                            .build()
+            );
+
+            if (request.targetType() == RESTAURANT) {
+                Restaurant restaurant = restaurantRepository
+                        .findById(request.targetId())
+                        .orElseThrow();
 
                 restaurant.setBookmarkCount(restaurant.getBookmarkCount() + 1);
                 restaurantRepository.save(restaurant);
-
-                // 캐시 무효화
                 restaurantSummaryService.evictSummary(request.targetId());
             }
-            case REVIEW -> {
+
+            if (request.targetType() == REVIEW) {
                 Review review = reviewRepository.findById(request.targetId())
-                        .orElseThrow(() -> new CustomException(REVIEW_NOT_FOUND));
+                        .orElseThrow();
 
                 review.setBookmarkCount(review.getBookmarkCount() + 1);
                 reviewRepository.save(review);
             }
-            case TIP -> {
+        }
 
-                if (!tipRepository.existsById(request.targetId())) {
-                    throw new CustomException(TIP_NOT_FOUND);
+        if (request.targetType() == RESTAURANT) {
+            List<RestaurantBookmarkGroup> groups =
+                    restaurantBookmarkGroupRepository.findAllByIdIn(request.groupIds());
+
+            for (RestaurantBookmarkGroup group : groups) {
+                boolean exists =
+                        restaurantBookmarkGroupItemRepository
+                                .existsByBookmark_IdAndGroup_Id(
+                                        bookmark.getId(),
+                                        group.getId()
+                                );
+
+                if (!exists) {
+                    restaurantBookmarkGroupItemRepository.save(
+                            RestaurantBookmarkGroupItem.builder()
+                                    .bookmark(bookmark)
+                                    .group(group)
+                                    .build()
+                    );
                 }
             }
         }
-
-        Bookmark bookmark = Bookmark.builder()
-                .user(user)
-                .targetId(request.targetId())
-                .targetType(request.targetType())
-                .build();
-
-        bookmarkRepository.save(bookmark);
-
-
     }
 
     @Transactional
-    public void deleteBookmark(Long userId, DeleteBookmarkRequest request){
+    public void deleteBookmark(Long userId, DeleteBookmarkRequest request) {
 
         User user = userRepository.findById(userId)
-                .orElseThrow(()-> new CustomException(USER_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(USER_NOT_FOUND));
 
         Bookmark bookmark = bookmarkRepository
                 .findByUser_UserIdAndTargetTypeAndTargetId(
                         userId, request.targetType(), request.targetId())
                 .orElseThrow(() -> new CustomException(BOOKMARK_NOT_FOUND));
 
+        // restaurant는 이 함수에서 편집 불가
+        if (bookmark.getTargetType() == RESTAURANT) {
+            throw new CustomException(BAD_REQUEST);
+        }
 
         bookmarkRepository.delete(bookmark);
-        switch(bookmark.getTargetType()) {
-            case RESTAURANT -> {
-                Restaurant restaurant = restaurantRepository.findById(bookmark.getTargetId())
-                        .orElseThrow(() -> new CustomException(RESTAURANT_NOT_FOUND));
 
-                restaurant.setBookmarkCount(restaurant.getBookmarkCount() - 1);
-                restaurantRepository.save(restaurant);
-
-                // 캐시 무효화
-                restaurantSummaryService.evictSummary(request.targetId());
-            }
+        switch (bookmark.getTargetType()) {
             case REVIEW -> {
                 Review review = reviewRepository.findById(bookmark.getTargetId())
                         .orElseThrow(() -> new CustomException(REVIEW_NOT_FOUND));
@@ -121,6 +171,94 @@ public class BookmarkService {
                     throw new CustomException(TIP_NOT_FOUND);
                 }
             }
+        }
+    }
+
+    @Transactional
+    public void updateRestaurantBookmarkGroups(
+            Long userId,
+            PutRestaurantBookmarkGroupsRequest request
+    ) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(USER_NOT_FOUND));
+
+        Restaurant restaurant = restaurantRepository.findById(request.restaurantId())
+                .orElseThrow(() -> new CustomException(RESTAURANT_NOT_FOUND));
+
+        Bookmark bookmark = bookmarkRepository
+                .findByUser_UserIdAndTargetTypeAndTargetId(
+                        userId,
+                        RESTAURANT,
+                        restaurant.getRestaurantId()
+                )
+                .orElse(null);
+
+        List<Long> groupIds =
+                request.groupIds() == null ? List.of() : request.groupIds();
+
+        // 모든 그룹에서 삭제
+        if (groupIds.isEmpty()) {
+            if (bookmark != null) {
+                restaurantBookmarkGroupItemRepository.deleteAllByBookmark(bookmark);
+                bookmarkRepository.delete(bookmark);
+
+                restaurant.setBookmarkCount(restaurant.getBookmarkCount() - 1);
+                restaurantRepository.save(restaurant);
+                restaurantSummaryService.evictSummary(restaurant.getRestaurantId());
+            }
+            return;
+        }
+
+        if (bookmark == null) {
+            throw new CustomException(BOOKMARK_NOT_FOUND);
+        }
+
+        List<RestaurantBookmarkGroup> groups =
+                restaurantBookmarkGroupRepository.findAllByIdIn(groupIds);
+
+        if (groups.size() != groupIds.size()) {
+            throw new CustomException(GROUP_NOT_FOUND);
+        }
+
+        // 그룹 소유자 검증
+        boolean invalidOwner = groups.stream()
+                .anyMatch(group -> !group.getUser().getUserId().equals(userId));
+
+        if (invalidOwner) {
+            throw new CustomException(GROUP_FORBIDDEN);
+        }
+
+        // 기존 그룹 매핑 조회
+        List<RestaurantBookmarkGroupItem> existingItems =
+                restaurantBookmarkGroupItemRepository.findAllByBookmark(bookmark);
+
+        List<Long> existingGroupIds = existingItems.stream()
+                .map(item -> item.getGroup().getId())
+                .toList();
+
+        // 제거 대상
+        List<RestaurantBookmarkGroupItem> toRemove = existingItems.stream()
+                .filter(item -> !groupIds.contains(item.getGroup().getId()))
+                .toList();
+
+        restaurantBookmarkGroupItemRepository.deleteAll(toRemove);
+
+        // 추가 대상
+        List<Long> toAdd = groupIds.stream()
+                .filter(id -> !existingGroupIds.contains(id))
+                .toList();
+
+        List<RestaurantBookmarkGroup> groupsToAdd = groups.stream()
+                .filter(group -> toAdd.contains(group.getId()))
+                .toList();
+
+        for (RestaurantBookmarkGroup group : groupsToAdd) {
+            restaurantBookmarkGroupItemRepository.save(
+                    RestaurantBookmarkGroupItem.builder()
+                            .bookmark(bookmark)
+                            .group(group)
+                            .build()
+            );
         }
     }
 

@@ -60,6 +60,11 @@ public enum BaseExceptionResponseStatus implements ResponseStatus {
      * 120000 : Bookmark
      */
     BOOKMARK_NOT_FOUND(120000, "해당 북마크를 찾을 수 없습니다."),
+    GROUP_NOT_FOUND(120001, "해당 북마크 그룹을 찾을 수 없습니다."),
+    GROUP_FORBIDDEN(120002, "해당 북마크 그룹에 대한 권한이 없습니다."),
+    BOOKMARK_ALREADY_EXISTS(120003, "이미 저장된 매장입니다."),
+    GROUP_NAME_SAME_AS_BEFORE(120004, "기존 그룹명과 동일합니다."),
+    GROUP_NAME_ALREADY_EXISTS(120005, "이미 존재하는 그룹명입니다."),
 
     /**
      * 130000 : Suggestion
