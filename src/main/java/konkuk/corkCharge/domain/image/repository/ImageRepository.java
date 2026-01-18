@@ -61,4 +61,15 @@ public interface ImageRepository extends JpaRepository<Image, Long> {
      order by i.createdAt asc
 """)
     List<Image> findReviewImagesByReviewIds(@Param("reviewIds") List<Long> reviewIds);
+
+    @Query("""
+        select i
+          from Image i
+         where i.category = konkuk.corkCharge.domain.image.domain.ImageCategory.RESTAURANT
+           and i.type = konkuk.corkCharge.domain.image.domain.ImageType.MAIN
+           and i.typeId in :restaurantIds
+         order by i.createdAt asc
+    """)
+    List<Image> findRestaurantMainImagesByRestaurantIds(@Param("restaurantIds") List<Long> restaurantIds);
+
 }
