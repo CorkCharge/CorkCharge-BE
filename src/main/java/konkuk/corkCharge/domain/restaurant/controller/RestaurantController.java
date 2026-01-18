@@ -58,10 +58,10 @@ public class RestaurantController {
     }
 
     @PostMapping("/cluster/list")
-    public BaseResponse<List<GetClusterListResponse>> getClusterRestaurantList(
+    public BaseResponse<GetClusterListResponse> getClusterRestaurantList(
             @RequestBody GetClusterListRequest request
     ) {
-        return BaseResponse.ok(restaurantService.getClusterList(request.restaurantIds()));
+        return BaseResponse.ok(restaurantService.getClusterList(request));
     }
 
     @PostMapping("/new")
