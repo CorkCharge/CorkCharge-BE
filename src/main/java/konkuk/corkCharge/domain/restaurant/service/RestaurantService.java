@@ -6,12 +6,12 @@ import konkuk.corkCharge.domain.bookmark.repository.RestaurantBookmarkGroupItemR
 import konkuk.corkCharge.domain.corkageStore.repository.CorkageStoreRepository;
 import konkuk.corkCharge.domain.corkageStore.domain.CorkageStore;
 import konkuk.corkCharge.domain.corkageStore.domain.MultiCorkage;
+import konkuk.corkCharge.domain.image.repository.ImageRepository;
 import konkuk.corkCharge.domain.restaurant.domain.Restaurant;
+import konkuk.corkCharge.domain.image.domain.Image;
 import konkuk.corkCharge.domain.restaurant.domain.RestaurantSummary;
 import konkuk.corkCharge.domain.restaurant.dto.mapper.*;
-import konkuk.corkCharge.domain.restaurant.dto.request.GetCategoryRestaurantRequest;
-import konkuk.corkCharge.domain.restaurant.dto.request.GetFilterRequest;
-import konkuk.corkCharge.domain.restaurant.dto.request.UserLocationRequest;
+import konkuk.corkCharge.domain.restaurant.dto.request.*;
 import konkuk.corkCharge.domain.restaurant.dto.response.*;
 import konkuk.corkCharge.domain.restaurant.repository.RestaurantDistanceProjection;
 import konkuk.corkCharge.domain.restaurant.repository.RestaurantRepository;
@@ -26,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static konkuk.corkCharge.global.response.status.BaseExceptionResponseStatus.*;
@@ -70,6 +71,7 @@ public class RestaurantService {
     private final CorkageStoreRepository corkageStoreRepository;
     private final RestaurantBookmarkGroupItemRepository groupItemRepository;
     private final UserRepository userRepository;
+    private final ImageRepository imageRepository;
 
     private final ClusterListResponseMapper clusterListResponseMapper;
     private final RestaurantDetailResponseMapper restaurantDetailResponseMapper;
@@ -214,24 +216,79 @@ public class RestaurantService {
     }
 
     @Transactional(readOnly = true)
-    public List<GetClusterListResponse> getClusterList(List<Long> restaurantIds) {
-        List<Restaurant> restaurants = restaurantRepository.findAllById(restaurantIds);
+    public GetClusterListResponse getClusterList(GetClusterListRequest req) {
 
-        return restaurants.stream()
-                .sorted(Comparator.comparingInt(this::getComparableCorkagePrice))
-                .map(clusterListResponseMapper::toClusterListResponse)
+        if (req.restaurantIds() == null || req.restaurantIds().isEmpty()) {
+            return new GetClusterListResponse(0, List.of());
+        }
+
+        ClusterListSort sort = (req.sort() == null) ? ClusterListSort.PRICE_ASC : req.sort();
+
+        List<Restaurant> restaurants = restaurantRepository.findAllById(req.restaurantIds());
+
+        List<CorkageStore> corkageStores = corkageStoreRepository.findAllByRestaurantIdIn(req.restaurantIds());
+
+        Map<Long, CorkageStore> corkageMap = corkageStores.stream()
+                .collect(Collectors.toMap(
+                        cs -> cs.getRestaurant().getRestaurantId(),
+                        Function.identity(),
+                        (a, b) -> a
+                ));
+
+        Map<Long, String[]> imageMap = imageRepository
+                .findRestaurantMainImagesByRestaurantIds(req.restaurantIds())
+                .stream()
+                .collect(Collectors.groupingBy(
+                        Image::getTypeId,
+                        LinkedHashMap::new,
+                        Collectors.mapping(Image::getImageUrl, Collectors.toList())
+                ))
+                .entrySet()
+                .stream()
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        e -> e.getValue().toArray(new String[0])
+                ));
+
+        // 정렬 방법
+        Comparator<Restaurant> comparator = switch (sort) {
+            case PRICE_ASC -> Comparator
+                    .comparingInt((Restaurant r) -> getComparableCorkagePrice(corkageMap.get(r.getRestaurantId())))
+                    .thenComparing(Restaurant::getRestaurantId, Comparator.reverseOrder());
+
+            case REVIEW_COUNT_DESC -> Comparator
+                    .comparingInt((Restaurant r) -> r.getReviewCount()).reversed()
+                    .thenComparing(Restaurant::getRestaurantId, Comparator.reverseOrder());
+
+            case RATING_DESC -> Comparator
+                    .comparingDouble((Restaurant r) -> safeDouble(r.getRating())).reversed()
+                    .thenComparing(Comparator.comparingInt((Restaurant r) -> r.getReviewCount()).reversed())
+                    .thenComparing(Restaurant::getRestaurantId, Comparator.reverseOrder());
+        };
+
+        List<GetClusterListResponse.Item> items = restaurants.stream()
+                .sorted(comparator)
+                .map(r -> {
+                    CorkageStore cs = corkageMap.get(r.getRestaurantId());
+
+                    if (cs == null || cs.getCorkageType() == null) {
+                        throw new CustomException(BAD_REQUEST);
+                    }
+
+                    return clusterListResponseMapper.toItem(
+                            r,
+                            cs,
+                            imageMap.getOrDefault(r.getRestaurantId(), new String[0])
+                    );
+                })
                 .toList();
+
+        return new GetClusterListResponse(items.size(), items);
     }
 
-    private int getComparableCorkagePrice(Restaurant r) {
-        CorkageStore cs = corkageStoreRepository
-                .findByRestaurant_RestaurantId(r.getRestaurantId())
-                .orElse(null);
-
-        // 콜키지 정보가 없으면 가장 큰 값으로 취급해서 “비싼 곳”처럼 뒤로 밀기
-        if (cs == null || cs.getCorkageType() == null) {
-            return Integer.MAX_VALUE;
-        }
+    // 가격 숫자화
+    private int getComparableCorkagePrice(CorkageStore cs) {
+        if (cs == null || cs.getCorkageType() == null) return Integer.MAX_VALUE;
 
         return switch (cs.getCorkageType()) {
             case FREE -> 0;
@@ -239,10 +296,12 @@ public class RestaurantService {
                     .mapToInt(MultiCorkage::getPrice)
                     .min()
                     .orElse(Integer.MAX_VALUE);
-            default -> cs.getCorkagePrice() != null
-                    ? cs.getCorkagePrice()
-                    : Integer.MAX_VALUE;
+            default -> (cs.getCorkagePrice() != null) ? cs.getCorkagePrice() : Integer.MAX_VALUE;
         };
+    }
+
+    private double safeDouble(Double v) {
+        return v == null ? 0.0 : v;
     }
 
     @Transactional(readOnly = true)
