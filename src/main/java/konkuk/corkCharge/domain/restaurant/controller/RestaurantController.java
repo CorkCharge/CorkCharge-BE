@@ -86,7 +86,6 @@ public class RestaurantController {
             @LoginUserId(required = false) Long userId,
             @RequestBody UserLocationRequest request
     ) {
-        System.out.println("호출됨");
         return BaseResponse.ok(restaurantService.getNearByRestaurants(userId, request));
     }
 
