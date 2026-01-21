@@ -44,26 +44,38 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
         """)
     List<Restaurant> findRestaurantsWithoutValidCoordinates();
 
-    // lat/lon 없을 때(그냥 2주 이내 최신순 전체)
-    List<Restaurant> findByCreatedAtGreaterThanEqualOrderByCreatedAtDesc(LocalDateTime from);
+    // lat/lon 없을 때(그냥 2주 이내 최신순 콜키지 매장)
+    @Query("""
+        select r
+          from CorkageStore cs
+          join cs.restaurant r
+         where cs.createdAt >= :from
+           and r.hasCorkage = true
+         order by cs.createdAt desc, r.restaurantId desc
+    """)
+    List<Restaurant> findNewCorkageRestaurantsByCorkageCreatedAt(
+            @Param("from") LocalDateTime from
+    );
 
     // lat/lon 있을 때: DB에서 distance(km) 계산해서 함께 반환
     @Query(value = """
-        SELECT
-            r.restaurant_id AS restaurantId,
-            ROUND(
-                ST_Distance_Sphere(
-                    r.location,
-                    ST_SRID(POINT(:lon, :lat), 4326)
-                ) / 1000,
-                1
-            ) AS distanceKm
-        FROM restaurant r
-        WHERE r.created_at >= :from
-          AND r.has_corkage = 1
-          AND ST_X(r.location) != 0 AND ST_Y(r.location) != 0
-        ORDER BY r.created_at DESC
-        """, nativeQuery = true)
+    SELECT
+        r.restaurant_id AS restaurantId,
+        ROUND(
+            ST_Distance_Sphere(
+                r.location,
+                ST_SRID(POINT(:lon, :lat), 4326)
+            ) / 1000,
+            1
+        ) AS distanceKm
+    FROM restaurant r
+      JOIN corkage_store cs
+        ON cs.restaurant_id = r.restaurant_id
+    WHERE cs.created_at >= :from
+      AND r.has_corkage = 1
+      AND ST_X(r.location) != 0 AND ST_Y(r.location) != 0
+    ORDER BY cs.created_at DESC, r.restaurant_id DESC
+    """, nativeQuery = true)
     List<RestaurantDistanceProjection> findNewRestaurantsWithDistance(
             @Param("from") LocalDateTime from,
             @Param("lat") double lat,
