@@ -14,6 +14,7 @@ public record GetClusterListResponse(
             String openingHours,
             String corkagePrice,
             List<String> corkageOptions,
-            String[] imageUrls
+            String[] imageUrls,
+            boolean scrap
     ) {}
 }

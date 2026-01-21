@@ -12,6 +12,7 @@ public record GetCorkageReviewResponse(
         int rating,
         LocalDateTime createdAt,
         List<String> imageUrls,
-        int bookmarkCount
+        int bookmarkCount,
+        boolean scrap
 ) {
 }
