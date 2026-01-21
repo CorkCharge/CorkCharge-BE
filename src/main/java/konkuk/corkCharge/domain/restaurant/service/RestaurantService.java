@@ -1,6 +1,9 @@
 package konkuk.corkCharge.domain.restaurant.service;
 
+import konkuk.corkCharge.domain.bookmark.domain.Bookmark;
 import konkuk.corkCharge.domain.bookmark.domain.BookmarkGroupVisibility;
+import konkuk.corkCharge.domain.bookmark.domain.BookmarkTargetType;
+import konkuk.corkCharge.domain.bookmark.repository.BookmarkRepository;
 import konkuk.corkCharge.domain.bookmark.repository.GroupRestaurantPinProjection;
 import konkuk.corkCharge.domain.bookmark.repository.RestaurantBookmarkGroupItemRepository;
 import konkuk.corkCharge.domain.corkageStore.repository.CorkageStoreRepository;
@@ -29,6 +32,7 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static konkuk.corkCharge.domain.bookmark.domain.BookmarkTargetType.RESTAURANT;
 import static konkuk.corkCharge.global.response.status.BaseExceptionResponseStatus.*;
 
 @Service
@@ -82,6 +86,7 @@ public class RestaurantService {
 
     private final RestaurantSummaryService restaurantSummaryService;
     private final HomeRestaurantResponseMapper homeRestaurantResponseMapper;
+    private final BookmarkRepository bookmarkRepository;
 
     @Transactional(readOnly = true)
     public List<GetRestaurantListResponse> getCorkageRestaurants() {
@@ -216,7 +221,7 @@ public class RestaurantService {
     }
 
     @Transactional(readOnly = true)
-    public GetClusterListResponse getClusterList(GetClusterListRequest req) {
+    public GetClusterListResponse getClusterList(Long userId, GetClusterListRequest req) {
 
         if (req.restaurantIds() == null || req.restaurantIds().isEmpty()) {
             return new GetClusterListResponse(0, List.of());
@@ -235,8 +240,7 @@ public class RestaurantService {
                         (a, b) -> a
                 ));
 
-        Map<Long, String[]> imageMap = imageRepository
-                .findRestaurantMainImagesByRestaurantIds(req.restaurantIds())
+        Map<Long, String[]> imageMap = imageRepository.findRestaurantMainImagesByRestaurantIds(req.restaurantIds())
                 .stream()
                 .collect(Collectors.groupingBy(
                         Image::getTypeId,
@@ -249,6 +253,9 @@ public class RestaurantService {
                         Map.Entry::getKey,
                         e -> e.getValue().toArray(new String[0])
                 ));
+
+        // scrap 로직
+        Set<Long> scrappedRestaurantIds = getScrappedRestaurantIds(userId, req.restaurantIds());
 
         // 정렬 방법
         Comparator<Restaurant> comparator = switch (sort) {
@@ -274,11 +281,13 @@ public class RestaurantService {
                     if (cs == null || cs.getCorkageType() == null) {
                         throw new CustomException(BAD_REQUEST);
                     }
+                    boolean scrap = (userId != null) && scrappedRestaurantIds.contains(r.getRestaurantId());
 
                     return clusterListResponseMapper.toItem(
                             r,
                             cs,
-                            imageMap.getOrDefault(r.getRestaurantId(), new String[0])
+                            imageMap.getOrDefault(r.getRestaurantId(), new String[0]),
+                            scrap
                     );
                 })
                 .toList();
@@ -305,7 +314,7 @@ public class RestaurantService {
     }
 
     @Transactional(readOnly = true)
-    public List<GetHomeRestaurantResponse> getNewRestaurants(UserLocationRequest req) {
+    public List<GetHomeRestaurantResponse> getNewRestaurants(Long userId, UserLocationRequest req) {
         LocalDateTime from = LocalDateTime.now().minusDays(NEW_RESTAURANT_DAYS);
 
         // 사용자 좌표가 있는 경우
@@ -319,31 +328,48 @@ public class RestaurantService {
                             RestaurantDistanceProjection::getDistanceKm
                     ));
 
+            List<Long> restaurantIds = rows.stream()
+                    .map(RestaurantDistanceProjection::getRestaurantId)
+                    .toList();
+
+            Set<Long> scrappedRestaurantIds = getScrappedRestaurantIds(userId, restaurantIds);
+
             return rows.stream()
                     .map(row -> {
                         Long id = row.getRestaurantId();
                         RestaurantSummary summary = restaurantSummaryService.getSummary(id);
 
-                        return homeRestaurantResponseMapper.toResponse(summary, distanceMap.get(id));
+                        boolean scrap = (userId != null) && scrappedRestaurantIds.contains(id);
+
+                        return homeRestaurantResponseMapper.toResponse(summary, distanceMap.get(id), scrap);
                     })
                     .toList();
         }
 
         // 사용자 좌표가 없는 경우
-        List<Restaurant> restaurants = restaurantRepository.findByCreatedAtGreaterThanEqualOrderByCreatedAtDesc(from);
+        List<Restaurant> rows = restaurantRepository.findNewCorkageRestaurantsByCorkageCreatedAt(from);
 
-        return restaurants.stream()
+        List<Long> restaurantIds = rows.stream()
+                .map(Restaurant::getRestaurantId)
+                .toList();
+
+        Set<Long> scrappedRestaurantIds = getScrappedRestaurantIds(userId, restaurantIds);
+
+        return rows.stream()
                 .map(r -> {
                     Long id = r.getRestaurantId();
                     RestaurantSummary summary = restaurantSummaryService.getSummary(id);
 
-                    return homeRestaurantResponseMapper.toResponse(summary, null);
+                    boolean scrap = (userId != null) && scrappedRestaurantIds.contains(id);
+
+                    return homeRestaurantResponseMapper.toResponse(summary, null, scrap);
                 })
                 .toList();
     }
 
+
     @Transactional(readOnly = true)
-    public List<GetHomeRestaurantResponse> getCategoryRestaurants(GetCategoryRestaurantRequest req) {
+    public List<GetHomeRestaurantResponse> getCategoryRestaurants(Long userId, GetCategoryRestaurantRequest req) {
         if (!ALLOWED_CATEGORIES.contains(req.category())) {
             throw new CustomException(CATEGORY_NOT_FOUND);
         }
@@ -356,30 +382,49 @@ public class RestaurantService {
                             req.lon()
                     );
 
+            List<Long> restaurantIds = rows.stream()
+                    .map(RestaurantDistanceProjection::getRestaurantId)
+                    .toList();
+
+            Set<Long> scrappedRestaurantIds = getScrappedRestaurantIds(userId, restaurantIds);
+
             return rows.stream()
                     .map(row -> {
                         Long id = row.getRestaurantId();
                         RestaurantSummary summary = restaurantSummaryService.getSummary(id);
-                        return homeRestaurantResponseMapper.toResponse(summary, row.getDistanceKm());
+
+                        boolean scrap = userId != null && scrappedRestaurantIds.contains(id);
+
+                        return homeRestaurantResponseMapper.toResponse(summary, row.getDistanceKm(), scrap);
                     })
                     .toList();
         }
 
         // 좌표 없는 경우
-        List<Restaurant> restaurants =
+        List<Restaurant> rows =
                 restaurantRepository.findByHasCorkageTrueAndRawCategoryContainingOrderByBookmarkCountDesc(req.category());
 
-        return restaurants.stream()
+        List<Long> restaurantsIds = rows.stream()
+                .map(Restaurant::getRestaurantId)
+                .toList();
+
+        Set<Long> scrappedRestaurantIds = getScrappedRestaurantIds(userId, restaurantsIds);
+
+        return rows.stream()
                 .map(r -> {
                     Long id = r.getRestaurantId();
                     RestaurantSummary summary = restaurantSummaryService.getSummary(id);
-                    return homeRestaurantResponseMapper.toResponse(summary, null);
+
+                    boolean scrap = userId != null && scrappedRestaurantIds.contains(id);
+
+                    return homeRestaurantResponseMapper.toResponse(summary, null, scrap);
                 })
                 .toList();
     }
 
+
     @Transactional(readOnly = true)
-    public List<GetHomeRestaurantResponse> getNearByRestaurants(UserLocationRequest req) {
+    public List<GetHomeRestaurantResponse> getNearByRestaurants(Long userId, UserLocationRequest req) {
         if (req == null || !req.hasUserLocation()) {
             throw new CustomException(LOCATION_REQUIRED);
         }
@@ -387,17 +432,26 @@ public class RestaurantService {
         List<RestaurantDistanceProjection> rows =
                 restaurantRepository.findNearbyRestaurantsWithinRadius(req.lat(), req.lon(), RADIUS_METERS_NEAR_BY);
 
+        List<Long> restaurantIds = rows.stream()
+                .map(RestaurantDistanceProjection::getRestaurantId)
+                .toList();
+
+        Set<Long> scrappedRestaurantIds = getScrappedRestaurantIds(userId, restaurantIds);
+
         return rows.stream()
                 .map(row -> {
                     Long id = row.getRestaurantId();
                     RestaurantSummary summary = restaurantSummaryService.getSummary(id);
-                    return homeRestaurantResponseMapper.toResponse(summary, row.getDistanceKm());
+
+                    boolean scrap = userId != null && scrappedRestaurantIds.contains(id);
+
+                    return homeRestaurantResponseMapper.toResponse(summary, row.getDistanceKm(), scrap);
                 })
                 .toList();
     }
 
     @Transactional(readOnly = true)
-    public List<GetHomeRestaurantResponse> getRecommendRestaurants() {
+    public List<GetHomeRestaurantResponse> getRecommendRestaurants(Long userId) {
         List<RestaurantDistanceProjection> rows =
                 restaurantRepository.findRecommendRestaurantsWithinRadius(
                         RADIUS_METERS_RECOMMEND,
@@ -409,13 +463,30 @@ public class RestaurantService {
                         YONGSAN_LAT, YONGSAN_LON
                 );
 
+        List<Long> restaurantIds = rows.stream()
+                .map(RestaurantDistanceProjection::getRestaurantId)
+                .toList();
+
+        Set<Long> scrappedRestaurantIds = getScrappedRestaurantIds(userId, restaurantIds);
+
         return rows.stream()
                 .map(row -> {
                     Long id = row.getRestaurantId();
                     RestaurantSummary summary = restaurantSummaryService.getSummary(id);
-                    return homeRestaurantResponseMapper.toResponse(summary, row.getDistanceKm());
+
+                    boolean scrap = scrappedRestaurantIds.contains(id);
+
+                    return homeRestaurantResponseMapper.toResponse(summary, row.getDistanceKm(), scrap);
                 })
                 .toList();
+    }
+
+    private Set<Long> getScrappedRestaurantIds(Long userId, List<Long> restaurantIds) {
+        Set<Long> scrappedRestaurantIds = (userId == null) ? Collections.emptySet() : bookmarkRepository
+                .findAllByUserIdAndTargetTypeAndTargetIdIn(userId, RESTAURANT, restaurantIds).stream()
+                .map(Bookmark::getTargetId)
+                .collect(Collectors.toSet());
+        return scrappedRestaurantIds;
     }
 
     @Transactional(readOnly = true)

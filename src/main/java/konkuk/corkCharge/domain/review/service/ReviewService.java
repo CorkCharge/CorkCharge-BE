@@ -1,5 +1,8 @@
 package konkuk.corkCharge.domain.review.service;
 
+import konkuk.corkCharge.domain.bookmark.domain.Bookmark;
+import konkuk.corkCharge.domain.bookmark.domain.BookmarkTargetType;
+import konkuk.corkCharge.domain.bookmark.repository.BookmarkRepository;
 import konkuk.corkCharge.domain.image.domain.Image;
 import konkuk.corkCharge.domain.image.repository.ImageRepository;
 import konkuk.corkCharge.domain.image.service.S3ImageService;
@@ -12,6 +15,7 @@ import konkuk.corkCharge.domain.review.dto.request.CorkageReviewSort;
 import konkuk.corkCharge.domain.review.dto.request.PatchUpdateReviewRequest;
 import konkuk.corkCharge.domain.review.dto.request.PostReviewCreateRequest;
 import konkuk.corkCharge.domain.review.dto.response.GetCorkageReviewResponse;
+import konkuk.corkCharge.domain.review.dto.response.GetHomeCorkageReviewResponse;
 import konkuk.corkCharge.domain.review.dto.response.GetRestaurantReviewResponse;
 import konkuk.corkCharge.domain.review.repository.CorkageReviewProjection;
 import konkuk.corkCharge.domain.review.repository.ReviewRepository;
@@ -23,8 +27,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static konkuk.corkCharge.domain.image.domain.ImageCategory.REVIEW;
@@ -42,6 +48,7 @@ public class ReviewService {
     private final RestaurantSummaryService restaurantSummaryService;
 
     private final GetRestaurantReviewResponseMapper getRestaurantReviewResponseMapper;
+    private final BookmarkRepository bookmarkRepository;
 
     @Transactional
     public void createReview(Long userId, Long restaurantId,
@@ -95,7 +102,7 @@ public class ReviewService {
     }
 
     @Transactional(readOnly = true)
-    public List<GetCorkageReviewResponse> getCorkageReviews(CorkageReviewSort sort) {
+    public List<GetCorkageReviewResponse> getCorkageReviews(Long userId, CorkageReviewSort sort) {
 
         List<CorkageReviewProjection> rows = switch (sort) {
             case LATEST -> reviewRepository.findAllCorkageReviewsOrderByLatest();
@@ -116,18 +123,25 @@ public class ReviewService {
                                 Collectors.mapping(Image::getImageUrl, Collectors.toList())
                         ));
 
+        Set<Long> scrappedReviewIds = getScrappedReviewIds(userId, reviewIds);
+
         return rows.stream()
-                .map(row -> new GetCorkageReviewResponse(
-                        row.getReviewId(),
-                        row.getRestaurantId(),
-                        row.getRestaurantName(),
-                        row.getWriter(),
-                        row.getContent(),
-                        row.getRating() == null ? 0 : row.getRating(),
-                        row.getCreatedAt(),
-                        imageMap.getOrDefault(row.getReviewId(), List.of()),
-                        row.getBookmarkCount() == null ? 0 : row.getBookmarkCount()
-                ))
+                .map(row -> {
+                    boolean scrap = userId != null && scrappedReviewIds.contains(row.getReviewId());
+
+                    return new GetCorkageReviewResponse(
+                            row.getReviewId(),
+                            row.getRestaurantId(),
+                            row.getRestaurantName(),
+                            row.getWriter(),
+                            row.getContent(),
+                            row.getRating() == null ? 0 : row.getRating(),
+                            row.getCreatedAt(),
+                            imageMap.getOrDefault(row.getReviewId(), List.of()),
+                            row.getBookmarkCount() == null ? 0 : row.getBookmarkCount(),
+                            scrap
+                    );
+                })
                 .toList();
     }
 
@@ -192,7 +206,7 @@ public class ReviewService {
     }
 
     @Transactional(readOnly = true)
-    public List<GetRestaurantReviewResponse> getRestaurantReviews(Long restaurantId) {
+    public List<GetRestaurantReviewResponse> getRestaurantReviews(Long userId, Long restaurantId) {
 
         List<Review> reviews =
                 reviewRepository.findByRestaurant_RestaurantIdOrderByCreatedAtDesc(restaurantId);
@@ -214,16 +228,31 @@ public class ReviewService {
                                 Collectors.mapping(Image::getImageUrl, Collectors.toList())
                         ));
 
+        Set<Long> scrappedReviewIds = getScrappedReviewIds(userId, reviewIds);
+
         return reviews.stream()
-                .map(review -> getRestaurantReviewResponseMapper.toResponse(
-                        review,
-                        imageMap.getOrDefault(review.getReviewId(), List.of())
-                ))
+                .map(review -> {
+                    boolean scrap =  userId != null && scrappedReviewIds.contains(review.getReviewId());
+
+                    return getRestaurantReviewResponseMapper.toResponse(
+                            review,
+                            imageMap.getOrDefault(review.getReviewId(), List.of()),
+                            scrap
+                            );
+                })
                 .toList();
     }
 
+    private Set<Long> getScrappedReviewIds(Long userId, List<Long> reviewIds) {
+        Set<Long> scrappedReviewIds = (userId == null) ? Collections.emptySet() : bookmarkRepository
+                .findAllByUserIdAndTargetTypeAndTargetIdIn(userId, BookmarkTargetType.REVIEW, reviewIds).stream()
+                .map(Bookmark::getTargetId)
+                .collect(Collectors.toSet());
+        return scrappedReviewIds;
+    }
+
     @Transactional(readOnly = true)
-    public List<GetCorkageReviewResponse> getHomeCorkageReviews() {
+    public List<GetHomeCorkageReviewResponse> getHomeCorkageReviews() {
         final int LIMIT = 5;
 
         List<CorkageReviewProjection> rows =
@@ -244,7 +273,7 @@ public class ReviewService {
                         ));
 
         return rows.stream()
-                .map(row -> new GetCorkageReviewResponse(
+                .map(row -> new GetHomeCorkageReviewResponse(
                         row.getReviewId(),
                         row.getRestaurantId(),
                         row.getRestaurantName(),
@@ -252,8 +281,7 @@ public class ReviewService {
                         row.getContent(),
                         row.getRating() == null ? 0 : row.getRating(),
                         row.getCreatedAt(),
-                        imageMap.getOrDefault(row.getReviewId(), List.of()),
-                        row.getBookmarkCount() == null ? 0 : row.getBookmarkCount()
+                        imageMap.getOrDefault(row.getReviewId(), List.of())
                 ))
                 .toList();
     }
