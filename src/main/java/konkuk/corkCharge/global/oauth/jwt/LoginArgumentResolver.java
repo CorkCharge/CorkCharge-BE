@@ -2,7 +2,9 @@ package konkuk.corkCharge.global.oauth.jwt;
 
 import konkuk.corkCharge.global.annotation.LoginUserId;
 import konkuk.corkCharge.global.exception.CustomException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.MethodParameter;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -13,6 +15,7 @@ import org.springframework.web.method.support.ModelAndViewContainer;
 
 import static konkuk.corkCharge.global.response.status.BaseExceptionResponseStatus.*;
 
+@Slf4j
 @Component
 public class LoginArgumentResolver implements HandlerMethodArgumentResolver {
 
@@ -28,9 +31,14 @@ public class LoginArgumentResolver implements HandlerMethodArgumentResolver {
                                   NativeWebRequest webRequest,
                                   WebDataBinderFactory binderFactory) {
 
+        LoginUserId anno = parameter.getParameterAnnotation(LoginUserId.class);
+        boolean required = anno.required();
+
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
-        if (auth == null || !auth.isAuthenticated()) {
+        if (auth == null || !auth.isAuthenticated() || auth instanceof AnonymousAuthenticationToken) {
+            if (!required)
+                return null;
             throw new CustomException(AUTH_REQUIRED);
         }
         if (!(auth instanceof JwtTokenAuthentication jwtAuth)) {

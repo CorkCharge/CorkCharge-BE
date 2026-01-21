@@ -12,6 +12,7 @@ public record GetHomeRestaurantResponse(
         List<String> corkageOptions,
         Double distance,          // km기준, lat/lon 없으면 null
         String mainImageUrls,
-        String openingHours
+        String openingHours,
+        boolean scrap
 ) {
 }

@@ -11,7 +11,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class GetRestaurantReviewResponseMapper {
 
-    public GetRestaurantReviewResponse toResponse(Review review, List<String> imageUrls) {
+    public GetRestaurantReviewResponse toResponse(Review review, List<String> imageUrls, boolean scrap) {
         return new GetRestaurantReviewResponse(
                 review.getReviewId(),
                 review.getUser().getName(),
@@ -19,7 +19,8 @@ public class GetRestaurantReviewResponseMapper {
                 review.getRating(),
                 review.getCreatedAt(),
                 imageUrls,
-                review.getBookmarkCount() == null ? 0 : review.getBookmarkCount()
+                review.getBookmarkCount() == null ? 0 : review.getBookmarkCount(),
+                scrap
         );
     }
 }

@@ -59,35 +59,41 @@ public class RestaurantController {
 
     @PostMapping("/cluster/list")
     public BaseResponse<GetClusterListResponse> getClusterRestaurantList(
+            @LoginUserId(required = false) Long userId,
             @RequestBody GetClusterListRequest request
     ) {
-        return BaseResponse.ok(restaurantService.getClusterList(request));
+        return BaseResponse.ok(restaurantService.getClusterList(userId, request));
     }
 
     @PostMapping("/new")
     public BaseResponse<List<GetHomeRestaurantResponse>> getNewRestaurant(
+            @LoginUserId(required = false) Long userId,
             @RequestBody UserLocationRequest request
-            ) {
-        return BaseResponse.ok(restaurantService.getNewRestaurants(request));
+    ) {
+        return BaseResponse.ok(restaurantService.getNewRestaurants(userId, request));
     }
 
     @PostMapping("/category")
     public BaseResponse<List<GetHomeRestaurantResponse>> getCategoryRestaurants(
+            @LoginUserId(required = false) Long userId,
             @RequestBody GetCategoryRestaurantRequest request
-            ) {
-        return BaseResponse.ok(restaurantService.getCategoryRestaurants(request));
+    ) {
+        return BaseResponse.ok(restaurantService.getCategoryRestaurants(userId, request));
     }
 
     @PostMapping("/nearby")
     public BaseResponse<List<GetHomeRestaurantResponse>> getNearbyRestaurants(
+            @LoginUserId(required = false) Long userId,
             @RequestBody UserLocationRequest request
     ) {
-        return BaseResponse.ok(restaurantService.getNearByRestaurants(request));
+        return BaseResponse.ok(restaurantService.getNearByRestaurants(userId, request));
     }
 
     @GetMapping("/recommand")
-    public BaseResponse<List<GetHomeRestaurantResponse>> getRecommandRestaurants() {
-        return BaseResponse.ok(restaurantService.getRecommendRestaurants());
+    public BaseResponse<List<GetHomeRestaurantResponse>> getRecommandRestaurants(
+            @LoginUserId(required = false) Long userId
+    ) {
+        return BaseResponse.ok(restaurantService.getRecommendRestaurants(userId));
     }
 
     @PostMapping("/home")

@@ -15,7 +15,8 @@ public class HomeRestaurantResponseMapper {
 
     public GetHomeRestaurantResponse toResponse(
             RestaurantSummary summary,
-            Double distanceKm
+            Double distanceKm,
+            boolean scrap
     ) {
         List<String> corkageOptions = decodeOptions(summary.getOptionBits(), summary.getOptionEtcContent());
 
@@ -29,7 +30,8 @@ public class HomeRestaurantResponseMapper {
                 corkageOptions,
                 distanceKm,
                 summary.getMainImageUrl(),
-                summary.getOpeningHours()
+                summary.getOpeningHours(),
+                scrap
         );
     }
 

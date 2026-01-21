@@ -19,7 +19,8 @@ public class ClusterListResponseMapper {
     public GetClusterListResponse.Item toItem(
             Restaurant restaurant,
             CorkageStore corkageStore,
-            String[] imageUrls
+            String[] imageUrls,
+            boolean scrap
     ) {
         String corkagePrice = formatCorkagePrice(corkageStore);
         List<String> corkageOptions = decodeOptions(corkageStore.getOptionBits(), corkageStore.getEtcContent());
@@ -32,7 +33,8 @@ public class ClusterListResponseMapper {
                 restaurant.getOpeningHours(),
                 corkagePrice,
                 corkageOptions,
-                imageUrls == null ? new String[0] : imageUrls
+                imageUrls == null ? new String[0] : imageUrls,
+                scrap
         );
     }
 
