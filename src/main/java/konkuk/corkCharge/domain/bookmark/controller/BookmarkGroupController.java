@@ -62,8 +62,8 @@ public class BookmarkGroupController {
     @GetMapping("/{groupId}")
     public BaseResponse<GetBookmarkGroupDetailResponse> getGroupDetail(
             @LoginUserId Long userId,
-            @PathVariable Long groupId,
-            @RequestParam(required = false, defaultValue = "LATEST")
+            @PathVariable(name = "groupId") Long groupId,
+            @RequestParam(required = false, defaultValue = "LATEST", name = "sort")
             BookmarkGroupSort sort
     ) {
         return BaseResponse.ok(
