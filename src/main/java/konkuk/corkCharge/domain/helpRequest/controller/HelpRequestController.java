@@ -1,5 +1,6 @@
 package konkuk.corkCharge.domain.helpRequest.controller;
 
+import konkuk.corkCharge.domain.helpRequest.dto.request.PostHelpRequestDetailRequest;
 import konkuk.corkCharge.domain.helpRequest.service.HelpRequestService;
 import konkuk.corkCharge.global.annotation.LoginUserId;
 import konkuk.corkCharge.global.response.BaseResponse;
@@ -18,6 +19,15 @@ public class HelpRequestController {
             @PathVariable Long restaurantId
     ) {
         helpRequestService.createHelpRequest(userId, restaurantId);
+        return BaseResponse.ok(null);
+    }
+
+    @PostMapping("/detail")
+    public BaseResponse<Void> submitHelpRequestDetail(
+            @LoginUserId Long userId,
+            @RequestBody PostHelpRequestDetailRequest request
+    ) {
+        helpRequestService.submitDetail(userId, request);
         return BaseResponse.ok(null);
     }
 }

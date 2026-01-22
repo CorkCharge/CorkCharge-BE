@@ -91,7 +91,8 @@ public enum BaseExceptionResponseStatus implements ResponseStatus {
     /**
      * 160000 : helprequest
      */
-    ALREADY_COMPLETED_HELP_REQUEST(160000, "이미 완료한 요청입니다.")
+    ALREADY_COMPLETED_HELP_REQUEST(160000, "이미 완료한 요청입니다."),
+    HELP_REQUEST_NOT_FOUND(160001, "기존 요청을 찾을 수 없습니다.")
     ;
 
     private final boolean success = false;

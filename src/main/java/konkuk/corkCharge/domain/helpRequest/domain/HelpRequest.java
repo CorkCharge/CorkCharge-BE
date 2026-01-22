@@ -48,4 +48,18 @@ public class HelpRequest extends BaseEntity {
     // 추가 요청사항
     @Column(name = "content", columnDefinition = "TEXT")
     private String content;
+
+    public void updateDetail(
+            CorkageType corkageType,
+            Integer preferredPrice,
+            OptionType firstPriority,
+            OptionType secondPriority,
+            String content
+    ) {
+        this.corkageType = corkageType;
+        this.preferredPrice = preferredPrice;
+        this.firstPriority = firstPriority;
+        this.secondPriority = secondPriority;
+        this.content = content;
+    }
 }
