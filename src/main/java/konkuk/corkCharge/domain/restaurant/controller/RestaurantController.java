@@ -109,9 +109,10 @@ public class RestaurantController {
             @RequestParam(name = "latMin") double latMin,
             @RequestParam(name = "latMax") double latMax,
             @RequestParam(name = "lonMin") double lonMin,
-            @RequestParam(name = "lonMax") double lonMax
+            @RequestParam(name = "lonMax") double lonMax,
+            @RequestParam(name = "color", required = false) String color
     ) {
-        return BaseResponse.ok(restaurantService.getGroupRestaurantPins(userId, latMin, latMax, lonMin, lonMax));
+        return BaseResponse.ok(restaurantService.getGroupRestaurantPins(userId, latMin, latMax, lonMin, lonMax, color));
     }
 
 }
