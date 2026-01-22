@@ -86,7 +86,12 @@ public enum BaseExceptionResponseStatus implements ResponseStatus {
      */
     NAVER_TOKEN_ERROR(150000, "네이버 토큰 응답 오류입니다."),
     NAVER_TOKEN_REQUEST_FAILED(150001, "네이버 토큰 요청에 실패했습니다."),
-    NAVER_USER_INFO_REQUEST_FAILED(150002, "네이버 사용자 정보 요청에 실패했습니다.")
+    NAVER_USER_INFO_REQUEST_FAILED(150002, "네이버 사용자 정보 요청에 실패했습니다."),
+
+    /**
+     * 160000 : helprequest
+     */
+    ALREADY_COMPLETED_HELP_REQUEST(160000, "이미 완료한 요청입니다.")
     ;
 
     private final boolean success = false;

@@ -11,6 +11,7 @@ public enum OptionType {
     ONE_BOTTLE_FREE("한 병 무료"),
     TWO_BOTTLE_FREE("두 병 무료"),
     WINE_GLASS_PROVIDED("와인잔 제공"),
+    DECANTING("디캔팅"),
     ETC("여러 기타");
 
     private final String label;
