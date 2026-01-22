@@ -1,5 +1,6 @@
 package konkuk.corkCharge.domain.helpRequest.controller;
 
+import jakarta.validation.Valid;
 import konkuk.corkCharge.domain.helpRequest.dto.request.PostHelpRequestDetailRequest;
 import konkuk.corkCharge.domain.helpRequest.service.HelpRequestService;
 import konkuk.corkCharge.global.annotation.LoginUserId;
@@ -25,7 +26,7 @@ public class HelpRequestController {
     @PostMapping("/detail")
     public BaseResponse<Void> submitHelpRequestDetail(
             @LoginUserId Long userId,
-            @RequestBody PostHelpRequestDetailRequest request
+            @Valid @RequestBody PostHelpRequestDetailRequest request
     ) {
         helpRequestService.submitDetail(userId, request);
         return BaseResponse.ok(null);

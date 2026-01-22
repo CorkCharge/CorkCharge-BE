@@ -61,7 +61,7 @@ public class HelpRequestService {
                 request.preferredPrice(),
                 request.firstPriority(),
                 request.secondPriority(),
-                request.etc()
+                request.content()
         );
     }
 }
