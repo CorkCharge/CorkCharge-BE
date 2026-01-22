@@ -1,6 +1,7 @@
 package konkuk.corkCharge.domain.bookmark.repository;
 
 import konkuk.corkCharge.domain.bookmark.domain.BookmarkGroupVisibility;
+import konkuk.corkCharge.domain.corkageStore.domain.CorkageType;
 
 public interface GroupRestaurantPinProjection {
     Long getGroupId();
@@ -18,4 +19,12 @@ public interface GroupRestaurantPinProjection {
     Double getLatitude();
 
     Double getLongitude();
+
+    // corkage price 관련
+    CorkageType getCorkageType();
+
+    Integer getCorkagePrice();
+
+    Integer getMinMultiPrice();
+
 }

@@ -2,10 +2,10 @@ package konkuk.corkCharge.domain.restaurant.service;
 
 import konkuk.corkCharge.domain.bookmark.domain.Bookmark;
 import konkuk.corkCharge.domain.bookmark.domain.BookmarkGroupVisibility;
-import konkuk.corkCharge.domain.bookmark.domain.BookmarkTargetType;
 import konkuk.corkCharge.domain.bookmark.repository.BookmarkRepository;
 import konkuk.corkCharge.domain.bookmark.repository.GroupRestaurantPinProjection;
 import konkuk.corkCharge.domain.bookmark.repository.RestaurantBookmarkGroupItemRepository;
+import konkuk.corkCharge.domain.corkageStore.domain.CorkageType;
 import konkuk.corkCharge.domain.corkageStore.repository.CorkageStoreRepository;
 import konkuk.corkCharge.domain.corkageStore.domain.CorkageStore;
 import konkuk.corkCharge.domain.corkageStore.domain.MultiCorkage;
@@ -529,13 +529,15 @@ public class RestaurantService {
     }
 
     @Transactional(readOnly = true)
-    public GetGroupRestaurantPinsResponse getGroupRestaurantPins(Long userId, double latMin, double latMax, double lonMin, double lonMax) {
+    public GetGroupRestaurantPinsResponse getGroupRestaurantPins(
+            Long userId, double latMin, double latMax, double lonMin, double lonMax, String color
+    ) {
         userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(USER_NOT_FOUND));
 
         String wkt = toEnvelopeWkt(lonMin, latMin, lonMax, latMax);
 
-        List<GroupRestaurantPinProjection> rows = groupItemRepository.findGroupRestaurantPinsInBounds(userId, wkt);
+        List<GroupRestaurantPinProjection> rows = groupItemRepository.findGroupRestaurantPinsInBoundsByColor(userId, wkt, color);
 
         // 그룹Id 기준으로 map에 넣음
         Map<Long, GroupAccumulator> map = new LinkedHashMap<>();
@@ -551,11 +553,14 @@ public class RestaurantService {
                     )
             );
 
+            String corkagePrice = formatCorkagePrice(row.getCorkageType(), row.getCorkagePrice(), row.getMinMultiPrice());
+
             // 각 그룹에 핀 추가
             acc.pins.add(new GetGroupRestaurantPinsResponse.Pin(
                     row.getRestaurantId(),
                     row.getLatitude(),
-                    row.getLongitude()
+                    row.getLongitude(),
+                    corkagePrice
             ));
 
             acc.restaurantIds.add(row.getRestaurantId());
@@ -573,6 +578,16 @@ public class RestaurantService {
                 .toList();
 
         return new GetGroupRestaurantPinsResponse(groups.size(), groups);
+    }
+
+    private String formatCorkagePrice(CorkageType corkageType, Integer corkagePrice, Integer minMultiPrice) {
+        return switch (corkageType) {
+            case FREE -> "콜키지 프리";
+            case MULTIPLE -> "최저 " + minMultiPrice + "원";
+            case PER_BOTTLE -> "병당 " + corkagePrice + "원";
+            case PER_PERSON -> "인당 " + corkagePrice + "원";
+            case PER_TABLE -> "테이블당 " + corkagePrice + "원";
+        };
     }
 
     private static class GroupAccumulator {
