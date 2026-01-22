@@ -55,6 +55,9 @@ public class Restaurant extends BaseEntity {
     @Column(name = "review_count")
     private Integer reviewCount = 0;
 
+    @Column(name = "helpRequestCount")
+    private Integer helpRequestCount = 0;
+
     @Column(name = "has_corkage")
     private boolean hasCorkage;
 

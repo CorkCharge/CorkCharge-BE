@@ -1,7 +1,6 @@
 package konkuk.corkCharge.domain.helpRequest.service;
 
 import konkuk.corkCharge.domain.helpRequest.domain.HelpRequest;
-import konkuk.corkCharge.domain.helpRequest.dto.request.PostCorkageRequest;
 import konkuk.corkCharge.domain.helpRequest.repository.HelpRequestRepository;
 import konkuk.corkCharge.domain.restaurant.domain.Restaurant;
 import konkuk.corkCharge.domain.restaurant.repository.RestaurantRepository;
@@ -12,8 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import static konkuk.corkCharge.global.response.status.BaseExceptionResponseStatus.RESTAURANT_NOT_FOUND;
-import static konkuk.corkCharge.global.response.status.BaseExceptionResponseStatus.USER_NOT_FOUND;
+import static konkuk.corkCharge.global.response.status.BaseExceptionResponseStatus.*;
 
 @Service
 @RequiredArgsConstructor
@@ -24,17 +22,21 @@ public class HelpRequestService {
     private final RestaurantRepository restaurantRepository;
 
     @Transactional
-    public void createHelpRequest(Long userId, PostCorkageRequest request){
+    public void createHelpRequest(Long userId, Long restaurantId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(USER_NOT_FOUND));
 
-        Restaurant restaurant = restaurantRepository.findById(request.restaurantId())
+        Restaurant restaurant = restaurantRepository.findById(restaurantId)
                 .orElseThrow(() -> new CustomException(RESTAURANT_NOT_FOUND));
+
+        // 이미 요청한 적 있는지 검사
+        if (helpRequestRepository.existsByUserAndRestaurant(user, restaurant)) {
+            throw new CustomException(ALREADY_COMPLETED_HELP_REQUEST);
+        }
 
         HelpRequest helpRequest = HelpRequest.builder()
                 .user(user)
                 .restaurant(restaurant)
-                .content(request.content())
                 .build();
 
         helpRequestRepository.save(helpRequest);

@@ -29,24 +29,23 @@ public class HelpRequest extends BaseEntity {
     @JoinColumn(name = "restaurant_id", nullable = false)
     private Restaurant restaurant;
 
-//    @Enumerated(EnumType.STRING)
-//    @Column(name = "corkage_type", nullable = false, length = 30)
-//    private CorkageType corkageType;
-//
-//    @Column(name = "preferred_price", nullable = false)
-//    private Integer preferredPrice;
-//    // Todo 추가 기능 개발 시에 해당 레스토랑에 대한 평균 선호 비용 필드도 추가할 것
-//
-//    // 기타 서비스 우선순위 (1순위, 2순위)
-//    @Enumerated(EnumType.STRING)
-//    @Column(name = "first_priority", length = 30)
-//    private OptionType firstPriority;
-//
-//    @Enumerated(EnumType.STRING)
-//    @Column(name = "second_priority", length = 30)
-//    private OptionType secondPriority;
-//
-//    // 추가 요청사항
+    @Enumerated(EnumType.STRING)
+    @Column(name = "corkage_type", length = 30)
+    private CorkageType corkageType;
+
+    @Column(name = "preferred_price", nullable = true)
+    private Integer preferredPrice;
+
+    // 기타 서비스 우선순위 (1순위, 2순위)
+    @Enumerated(EnumType.STRING)
+    @Column(name = "first_priority", length = 30)
+    private OptionType firstPriority;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "second_priority", length = 30)
+    private OptionType secondPriority;
+
+    // 추가 요청사항
     @Column(name = "content", columnDefinition = "TEXT")
     private String content;
 }
