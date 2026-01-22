@@ -20,6 +20,7 @@ public record GetGroupRestaurantPinsResponse(
     public record Pin(
        Long restaurantId,
        Double lat,
-       Double lon
+       Double lon,
+       String corkagePrice
     ) {}
 }
