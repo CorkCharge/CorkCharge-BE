@@ -1,5 +1,7 @@
 package konkuk.corkCharge.domain.user.service;
 
+import konkuk.corkCharge.domain.helpRequest.domain.HelpRequest;
+import konkuk.corkCharge.domain.helpRequest.repository.HelpRequestRepository;
 import konkuk.corkCharge.domain.image.domain.Image;
 import konkuk.corkCharge.domain.image.domain.ImageCategory;
 import konkuk.corkCharge.domain.image.domain.ImageType;
@@ -11,9 +13,7 @@ import konkuk.corkCharge.domain.review.dto.response.GetMyPageReviewResponse;
 import konkuk.corkCharge.domain.review.repository.ReviewRepository;
 import konkuk.corkCharge.domain.user.domain.Role;
 import konkuk.corkCharge.domain.user.domain.User;
-import konkuk.corkCharge.domain.user.dto.response.GetMyPageResponse;
-import konkuk.corkCharge.domain.user.dto.response.GetReviewResponse;
-import konkuk.corkCharge.domain.user.dto.response.GetUserProfileResponse;
+import konkuk.corkCharge.domain.user.dto.response.*;
 import konkuk.corkCharge.domain.user.repository.UserRepository;
 import konkuk.corkCharge.global.exception.CustomException;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
 
 import static konkuk.corkCharge.domain.image.domain.ImageCategory.*;
 import static konkuk.corkCharge.domain.image.domain.ImageType.MAIN;
-import static konkuk.corkCharge.global.response.status.BaseExceptionResponseStatus.USER_NOT_FOUND;
+import static konkuk.corkCharge.global.response.status.BaseExceptionResponseStatus.*;
 
 @Service
 @RequiredArgsConstructor
@@ -36,6 +36,7 @@ public class UserService {
     private final ImageRepository imageRepository;
     private final S3ImageService s3ImageService;
     private final ReviewRepository reviewRepository;
+    private final HelpRequestRepository helpRequestRepository;
 
     @Transactional
     public GetUserProfileResponse getUserProfile(Long userId){
@@ -156,5 +157,51 @@ public class UserService {
                             .build();
                     imageRepository.save(newImage);
                 });
+    }
+
+    @Transactional(readOnly = true)
+    public GetMyHelpRequestsResponse getMyHelpRequests(Long userId) {
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(USER_NOT_FOUND));
+
+        List<GetMyHelpRequestsResponse.HelpRequestSummary> summaries =
+                helpRequestRepository.findAllByUserOrderByCreatedAtDesc(user)
+                        .stream()
+                        .map(helpRequest -> new GetMyHelpRequestsResponse.HelpRequestSummary(
+                                helpRequest.getHelpId(),
+                                helpRequest.getRestaurant().getName(),
+                                helpRequest.getCreatedAt().toLocalDate()
+                        ))
+                        .toList();
+
+        return new GetMyHelpRequestsResponse(summaries);
+    }
+
+    @Transactional(readOnly = true)
+    public GetMyHelpRequestDetailResponse getMyHelpRequestDetail(
+            Long userId,
+            Long helpRequestId
+    ) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(USER_NOT_FOUND));
+
+        HelpRequest helpRequest = helpRequestRepository.findById(helpRequestId)
+                .orElseThrow(() -> new CustomException(HELP_REQUEST_NOT_FOUND));
+
+        if (!helpRequest.getUser().getUserId().equals(user.getUserId())) {
+            throw new CustomException(HELP_REQUEST_FORBIDDEN);
+        }
+
+        return new GetMyHelpRequestDetailResponse(
+                helpRequest.getHelpId(),
+                helpRequest.getRestaurant().getName(),
+                helpRequest.getCorkageType(),
+                helpRequest.getPreferredPrice(),
+                helpRequest.getFirstPriority(),
+                helpRequest.getSecondPriority(),
+                helpRequest.getContent(),
+                helpRequest.getCreatedAt().toLocalDate()
+        );
     }
 }

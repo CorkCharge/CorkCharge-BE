@@ -2,9 +2,7 @@ package konkuk.corkCharge.domain.user.controller;
 
 import konkuk.corkCharge.domain.user.domain.Role;
 import konkuk.corkCharge.domain.user.dto.request.PostRoleRequest;
-import konkuk.corkCharge.domain.user.dto.response.GetMyPageResponse;
-import konkuk.corkCharge.domain.user.dto.response.GetReviewResponse;
-import konkuk.corkCharge.domain.user.dto.response.GetUserProfileResponse;
+import konkuk.corkCharge.domain.user.dto.response.*;
 import konkuk.corkCharge.domain.user.service.UserService;
 import konkuk.corkCharge.global.annotation.LoginUserId;
 import konkuk.corkCharge.global.response.BaseResponse;
@@ -75,4 +73,24 @@ public class UserController {
         userService.updateRegistration(userId, image);
         return BaseResponse.ok(null);
     }
+
+    @GetMapping("/helprequests")
+    public BaseResponse<GetMyHelpRequestsResponse> getMyHelpRequests(
+            @LoginUserId Long userId
+    ) {
+        return BaseResponse.ok(
+                userService.getMyHelpRequests(userId)
+        );
+    }
+
+    @GetMapping("/helprequests/{helprequestId}")
+    public BaseResponse<GetMyHelpRequestDetailResponse> getMyHelpRequestDetail(
+            @LoginUserId Long userId,
+            @PathVariable Long helprequestId
+    ) {
+        return BaseResponse.ok(
+                userService.getMyHelpRequestDetail(userId, helprequestId)
+        );
+    }
+
 }
