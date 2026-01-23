@@ -15,28 +15,11 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
 
     List<Restaurant> findByHasCorkageTrue();
 
-    List<Restaurant> findByNameContaining(String keyword);
-
     List<Restaurant> findByBookmarkCountGreaterThanEqual(int count);
-
-    List<Restaurant> findByAddressContaining(String address);
 
     Optional<Restaurant> findFirstByHasCorkageFalseOrderByBookmarkCountDesc();
 
     List<Restaurant> findByHasCorkageFalseAndBookmarkCountGreaterThanEqual(int count);
-
-    // 공간 인덱스 활용 범위 검색
-    @Query(value = """
-        SELECT *
-        FROM restaurant r
-        WHERE r.has_corkage = 1
-          AND ST_Within(
-                r.location,
-                ST_GeomFromText(:wktPolygon, 4326)
-              )
-          AND ST_X(r.location) != 0 AND ST_Y(r.location) != 0
-        """, nativeQuery = true)
-    List<Restaurant> findCorkageRestaurantsInBounds(@Param("wktPolygon") String wktPolygon);
 
     @Query("""
         SELECT r FROM Restaurant r
@@ -235,6 +218,86 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
             @Param("itaewonLat") double itaewonLat, @Param("itaewonLon") double itaewonLon,
             @Param("yongsanLat") double yongsanLat, @Param("yongsanLon") double yongsanLon,
             @Param("limit") int limit
+    );
+
+    // 콜키지맵 조회(필터링: 검색어 + 지역 + 콜키지)
+    @Query(value = """
+    SELECT
+        r.restaurant_id AS restaurantId,
+        r.name AS restaurantName,
+        r.latitude AS latitude,
+        r.longitude AS longitude,
+    
+        cs.corkage_type AS corkageType,
+        cs.corkage_price AS corkagePrice,
+        mm.minPrice AS minMultiPrice
+    
+    FROM restaurant r
+    JOIN corkage_store cs
+      ON cs.restaurant_id = r.restaurant_id
+    
+    LEFT JOIN (
+        SELECT mc.corkage_store_id, MIN(mc.price) AS minPrice
+        FROM multi_corkage mc
+        GROUP BY mc.corkage_store_id
+    ) mm
+      ON mm.corkage_store_id = cs.corkage_store_id
+    
+    WHERE r.has_corkage = 1
+      AND ST_Within(r.location, ST_GeomFromText(:wktPolygon, 4326))
+      AND ST_X(r.location) != 0
+      AND ST_Y(r.location) != 0
+    
+      -- 검색어
+      AND (:keyword IS NULL OR :keyword = '' OR r.name LIKE CONCAT('%', :keyword, '%'))
+    
+      -- 지역(시/도, 시/군/구)
+      AND (r.address LIKE CONCAT('%', :sido, '%'))
+      AND (:sigungu IS NULL OR :sigungu = '' OR r.address LIKE CONCAT('%', :sigungu, '%'))
+      -- 동 리스트(여러 개 OR) => REGEXP로 처리
+      AND (:dongRegex IS NULL OR :dongRegex = '' OR r.address REGEXP :dongRegex)
+    
+      -- 평점 필터
+      AND (:minScore IS NULL OR r.rating >= :minScore)
+      AND (:maxScore IS NULL OR r.rating <= :maxScore)
+    
+      -- 콜키지 타입 필터
+      AND (:useTypeFilter = 0 OR cs.corkage_type IN (:corkageTypes))
+    
+      -- 옵션 비트마스크(0이면 필터 없음)
+      AND (:optionMask = 0 OR (cs.option_bits & :optionMask) != 0)
+    
+      -- 타입별 가격 필터
+      AND (
+            cs.corkage_type IN ('FREE', 'MULTIPLE')
+            OR (cs.corkage_type = 'PER_BOTTLE' AND cs.corkage_price BETWEEN :minBottlePrice AND :maxBottlePrice)
+            OR (cs.corkage_type = 'PER_PERSON' AND cs.corkage_price BETWEEN :minPersonPrice AND :maxPersonPrice)
+            OR (cs.corkage_type = 'PER_TABLE'  AND cs.corkage_price BETWEEN :minTablePrice  AND :maxTablePrice)
+      )
+    
+    ORDER BY r.restaurant_id DESC
+    """, nativeQuery = true)
+    List<MapPinProjection> findMapPins(
+            @Param("wktPolygon") String wktPolygon,
+            @Param("keyword") String keyword,
+            @Param("sido") String sido,
+            @Param("sigungu") String sigungu,
+            @Param("dongRegex") String dongRegex,
+
+            @Param("minScore") Double minScore,
+            @Param("maxScore") Double maxScore,
+
+            @Param("useTypeFilter") int useTypeFilter,
+            @Param("corkageTypes") List<String> corkageTypes,
+
+            @Param("optionMask") int optionMask,
+
+            @Param("minBottlePrice") int minBottlePrice,
+            @Param("maxBottlePrice") int maxBottlePrice,
+            @Param("minPersonPrice") int minPersonPrice,
+            @Param("maxPersonPrice") int maxPersonPrice,
+            @Param("minTablePrice") int minTablePrice,
+            @Param("maxTablePrice") int maxTablePrice
     );
 
 }
