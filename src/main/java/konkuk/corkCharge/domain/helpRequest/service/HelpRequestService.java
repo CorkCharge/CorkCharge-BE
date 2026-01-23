@@ -18,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Comparator;
 import java.util.List;
 
 import static konkuk.corkCharge.global.response.status.BaseExceptionResponseStatus.*;
@@ -82,13 +83,30 @@ public class HelpRequestService {
         List<String> dong = request != null ? request.dong() : null;
         String keyword = request != null ? request.keyword() : null;
 
-        List<GetHelpRequestRestaurantsResponse.RestaurantInfoSummary> restaurants =
+        // 1. dong 제외하고 DB 조회
+        List<Restaurant> restaurantEntities =
                 restaurantRepository.findHelpRequestTargetRestaurants(
-                                sido,
-                                sigungu,
-                                dong,
-                                keyword
-                        ).stream()
+                        sido,
+                        sigungu,
+                        keyword
+                );
+
+        // 2. dong 필터링 (Service 레벨)
+        if (dong != null && !dong.isEmpty()) {
+            restaurantEntities = restaurantEntities.stream()
+                    .filter(r ->
+                            dong.stream().anyMatch(d -> r.getAddress().contains(d))
+                    )
+                    .toList();
+        }
+
+        restaurantEntities = restaurantEntities.stream()
+                .sorted(Comparator.comparing(Restaurant::getHelpRequestCount).reversed())
+                .toList();
+
+        // 3. DTO 매핑
+        List<GetHelpRequestRestaurantsResponse.RestaurantInfoSummary> restaurants =
+                restaurantEntities.stream()
                         .map(restaurant -> {
 
                             String mainImageUrl = imageRepository
