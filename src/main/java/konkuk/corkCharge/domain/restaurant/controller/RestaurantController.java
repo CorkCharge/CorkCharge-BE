@@ -1,9 +1,6 @@
 package konkuk.corkCharge.domain.restaurant.controller;
 
-import konkuk.corkCharge.domain.restaurant.dto.request.GetCategoryRestaurantRequest;
-import konkuk.corkCharge.domain.restaurant.dto.request.GetClusterListRequest;
-import konkuk.corkCharge.domain.restaurant.dto.request.GetFilterRequest;
-import konkuk.corkCharge.domain.restaurant.dto.request.UserLocationRequest;
+import konkuk.corkCharge.domain.restaurant.dto.request.*;
 import konkuk.corkCharge.domain.restaurant.dto.response.*;
 import konkuk.corkCharge.domain.restaurant.service.RestaurantService;
 import konkuk.corkCharge.global.annotation.LoginUserId;
@@ -32,29 +29,11 @@ public class RestaurantController {
         return BaseResponse.ok(restaurantService.getRestaurantDetail(restaurantId));
     }
 
-    @GetMapping("/search")
-    public BaseResponse<List<GetSearchRestaurantResponse>> searchRestaurant(
-            @RequestParam(name = "keyword") String keyword
-    ) {
-        return BaseResponse.ok(restaurantService.searchRestaurants(keyword));
-    }
-
-    @GetMapping("/filter")
-    public BaseResponse<List<?>> filterRestaurant(
-            @ModelAttribute GetFilterRequest request
-    ) {
-        return BaseResponse.ok(restaurantService.filterRestaurants(request));
-    }
-
-    @GetMapping("/map")
-    public BaseResponse<List<?>> getMapCluster(
-            @RequestParam(name = "level") String level,
-            @RequestParam(name = "latMin") double latMin,
-            @RequestParam(name = "latMax") double latMax,
-            @RequestParam(name = "lonMin") double lonMin,
-            @RequestParam(name = "lonMax") double lonMax
-    ) {
-        return BaseResponse.ok(restaurantService.GetMapCluster(level, latMin, latMax, lonMin, lonMax));
+    @PostMapping("/map")
+    public BaseResponse<List<GetMapRestaurantPinResponse>> getMapCluster(
+            @RequestBody GetMapRestaurantPinsRequest request
+            ) {
+        return BaseResponse.ok(restaurantService.GetMapCluster(request));
     }
 
     @PostMapping("/cluster/list")
