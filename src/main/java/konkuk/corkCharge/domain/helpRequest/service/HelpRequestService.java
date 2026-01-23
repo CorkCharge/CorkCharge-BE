@@ -1,6 +1,7 @@
 package konkuk.corkCharge.domain.helpRequest.service;
 
 import konkuk.corkCharge.domain.helpRequest.domain.HelpRequest;
+import konkuk.corkCharge.domain.helpRequest.dto.request.PostHelpRequestDetailRequest;
 import konkuk.corkCharge.domain.helpRequest.repository.HelpRequestRepository;
 import konkuk.corkCharge.domain.restaurant.domain.Restaurant;
 import konkuk.corkCharge.domain.restaurant.repository.RestaurantRepository;
@@ -40,5 +41,27 @@ public class HelpRequestService {
                 .build();
 
         helpRequestRepository.save(helpRequest);
+    }
+
+    @Transactional
+    public void submitDetail(Long userId, PostHelpRequestDetailRequest request) {
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(USER_NOT_FOUND));
+
+        Restaurant restaurant = restaurantRepository.findById(request.restaurantId())
+                .orElseThrow(() -> new CustomException(RESTAURANT_NOT_FOUND));
+
+        HelpRequest helpRequest = helpRequestRepository
+                .findByUserAndRestaurant(user, restaurant)
+                .orElseThrow(() -> new CustomException(HELP_REQUEST_NOT_FOUND));
+
+        helpRequest.updateDetail(
+                request.corkageType(),
+                request.preferredPrice(),
+                request.firstPriority(),
+                request.secondPriority(),
+                request.content()
+        );
     }
 }
