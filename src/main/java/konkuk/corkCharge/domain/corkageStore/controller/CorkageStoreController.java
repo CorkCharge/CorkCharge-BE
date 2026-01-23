@@ -1,12 +1,10 @@
 package konkuk.corkCharge.domain.corkageStore.controller;
 
-import konkuk.corkCharge.domain.corkageStore.dto.request.GetCorkageFilterRequest;
 import konkuk.corkCharge.domain.corkageStore.dto.request.PostAddCorkageRequest;
 import konkuk.corkCharge.domain.corkageStore.dto.request.PostAdminCorkageRequest;
 import konkuk.corkCharge.domain.corkageStore.dto.response.GetCorkageVerificationResponse;
 import konkuk.corkCharge.domain.corkageStore.dto.response.PostAdminCorkageResponse;
 import konkuk.corkCharge.domain.corkageStore.service.CorkageStoreService;
-import konkuk.corkCharge.domain.restaurant.dto.response.GetSearchRestaurantResponse;
 import konkuk.corkCharge.global.annotation.LoginUserId;
 import konkuk.corkCharge.global.response.BaseResponse;
 import lombok.RequiredArgsConstructor;
@@ -28,13 +26,6 @@ public class CorkageStoreController {
     ) {
         corkageStoreService.createCorkage(userId, request);
         return BaseResponse.ok(null);
-    }
-
-    @PostMapping("/filter")
-    public BaseResponse<List<GetSearchRestaurantResponse>> filterCorkageStores(
-            @RequestBody GetCorkageFilterRequest request
-    ) {
-        return BaseResponse.ok(corkageStoreService.filterCorkageStores(request));
     }
 
     @GetMapping("/verify")
