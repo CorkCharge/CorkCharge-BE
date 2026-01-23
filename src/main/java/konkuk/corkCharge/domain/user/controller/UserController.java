@@ -2,6 +2,7 @@ package konkuk.corkCharge.domain.user.controller;
 
 import konkuk.corkCharge.domain.user.domain.Role;
 import konkuk.corkCharge.domain.user.dto.request.PostRoleRequest;
+import konkuk.corkCharge.domain.user.dto.response.GetMyHelpRequestsResponse;
 import konkuk.corkCharge.domain.user.dto.response.GetMyPageResponse;
 import konkuk.corkCharge.domain.user.dto.response.GetReviewResponse;
 import konkuk.corkCharge.domain.user.dto.response.GetUserProfileResponse;
@@ -76,5 +77,13 @@ public class UserController {
         return BaseResponse.ok(null);
     }
 
+    @GetMapping("/helprequests")
+    public BaseResponse<GetMyHelpRequestsResponse> getMyHelpRequests(
+            @LoginUserId Long userId
+    ) {
+        return BaseResponse.ok(
+                userService.getMyHelpRequests(userId)
+        );
+    }
 
 }
