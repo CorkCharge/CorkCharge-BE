@@ -159,6 +159,7 @@ public class UserService {
                 });
     }
 
+    @Transactional(readOnly = true)
     public GetMyHelpRequestsResponse getMyHelpRequests(Long userId) {
 
         User user = userRepository.findById(userId)
@@ -177,6 +178,7 @@ public class UserService {
         return new GetMyHelpRequestsResponse(summaries);
     }
 
+    @Transactional(readOnly = true)
     public GetMyHelpRequestDetailResponse getMyHelpRequestDetail(
             Long userId,
             Long helpRequestId
