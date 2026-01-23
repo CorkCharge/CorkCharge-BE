@@ -6,6 +6,7 @@ import konkuk.corkCharge.domain.bookmark.repository.BookmarkRepository;
 import konkuk.corkCharge.domain.bookmark.repository.GroupRestaurantPinProjection;
 import konkuk.corkCharge.domain.bookmark.repository.RestaurantBookmarkGroupItemRepository;
 import konkuk.corkCharge.domain.corkageStore.domain.CorkageType;
+import konkuk.corkCharge.domain.corkageStore.domain.OptionType;
 import konkuk.corkCharge.domain.corkageStore.repository.CorkageStoreRepository;
 import konkuk.corkCharge.domain.corkageStore.domain.CorkageStore;
 import konkuk.corkCharge.domain.corkageStore.domain.MultiCorkage;
@@ -16,6 +17,7 @@ import konkuk.corkCharge.domain.restaurant.domain.RestaurantSummary;
 import konkuk.corkCharge.domain.restaurant.dto.mapper.*;
 import konkuk.corkCharge.domain.restaurant.dto.request.*;
 import konkuk.corkCharge.domain.restaurant.dto.response.*;
+import konkuk.corkCharge.domain.restaurant.repository.MapPinProjection;
 import konkuk.corkCharge.domain.restaurant.repository.RestaurantDistanceProjection;
 import konkuk.corkCharge.domain.restaurant.repository.RestaurantRepository;
 import konkuk.corkCharge.domain.user.repository.UserRepository;
@@ -79,8 +81,6 @@ public class RestaurantService {
 
     private final ClusterListResponseMapper clusterListResponseMapper;
     private final RestaurantDetailResponseMapper restaurantDetailResponseMapper;
-    private final HotRestaurantResponseMapper hotRestaurantResponseMapper;
-    private final MapRestaurantResponseMapper mapRestaurantResponseMapper;
     private final RestaurantListResponseMapper restaurantListResponseMapper;
     private final HomeRestaurantCardMapper homeRestaurantCardMapper;
 
@@ -102,6 +102,7 @@ public class RestaurantService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public GetRestaurantDetailResponse getRestaurantDetail(Long restaurantId) {
         restaurantRepository.findById(restaurantId)
                 .orElseThrow(() -> new CustomException(RESTAURANT_NOT_FOUND));
@@ -112,84 +113,64 @@ public class RestaurantService {
     }
 
     @Transactional
-    public List<GetSearchRestaurantResponse> searchRestaurants(String keyword) {
-        List<Restaurant> matchedRestaurants = restaurantRepository.findByNameContaining(keyword);
-
-        return matchedRestaurants.stream()
-                .map(GetSearchRestaurantResponse::from)
-                .toList();
-    }
-
-    @Transactional
-    public List<?> filterRestaurants(GetFilterRequest request) {
-        List<Restaurant> matchedRestaurants = filterByAddress(request.sido(), request.sigungu(), request.dongList());
-
-        return switch (request.type()) {
-            case "hot" -> matchedRestaurants.stream()
-                    .filter(r -> r.getBookmarkCount() >= 5)
-                    .map(r -> restaurantSummaryService.getSummary(r.getRestaurantId()))
-                    .map(hotRestaurantResponseMapper::toResponse)
-                    .toList();
-
-            case "map" -> matchedRestaurants.stream()
-                    .filter(Restaurant::isHasCorkage)
-                    .map(r -> restaurantSummaryService.getSummary(r.getRestaurantId()))
-                    .map(s -> new GetSearchRestaurantResponse(
-                            s.getRestaurantId(),
-                            s.getName(),
-                            s.getAddress()
-                    ))
-                    .toList();
-
-            default -> throw new CustomException(NOT_EXIT_TYPE);
-        };
-
-    }
-
-    private List<Restaurant> filterByAddress(String sido, String sigungu, List<String> dongList) {
-        if (sido == null || sido.isBlank()) {
-            throw new CustomException(SIDO_REQUIRED);
-        }
-
-        List<Restaurant> matchedRestaurants = restaurantRepository.findByAddressContaining(sido);
-
-        if (sigungu != null && !sigungu.isBlank()) {
-            matchedRestaurants = matchedRestaurants.stream()
-                    .filter(r -> r.getAddress().contains(sigungu))
-                    .toList();
-        }
-
-        if (dongList != null && !dongList.isEmpty()) {
-            matchedRestaurants = matchedRestaurants.stream()
-                    .filter(r -> dongList.stream().anyMatch(d -> r.getAddress().contains(d)))
-                    .toList();
-        }
-
-        return matchedRestaurants;
-    }
-
-    @Transactional
-    public List<?> GetMapCluster(String level, double latMin, double latMax, double lonMin, double lonMax) {
+    public List<GetMapRestaurantPinResponse> GetMapCluster(GetMapRestaurantPinsRequest req) {
         updateMissingLocations();
-        // DB에서 바로 공간 인덱스 기반으로 범위 내 매장 검색
-        String wkt = toEnvelopeWkt(lonMin, latMin, lonMax, latMax);
-        List<Restaurant> filtered = restaurantRepository.findCorkageRestaurantsInBounds(wkt);
 
-        if (filtered.isEmpty()) {
-            throw new CustomException(CORKAGE_RESTAURANT_NOT_FOUND);
+        // DB에서 바로 공간 인덱스 기반으로 범위 내 매장 검색
+        String wkt = toEnvelopeWkt(req.lonMin(), req.latMin(), req.lonMax(), req.latMax());
+
+        // dongList
+        String dongRegex = null;
+        if (req.dongList() != null && !req.dongList().isEmpty()) {
+            dongRegex = String.join("|", req.dongList());
         }
 
-        return switch (level) {
-            case "restaurant" -> filtered.stream()
-                    .map(mapRestaurantResponseMapper::toResponse)
-                    .toList();
+        // corkage option
+        int optionMask = 0;
+        if (req.optionTypes() != null && !req.optionTypes().isEmpty()) {
+            for (String opt : req.optionTypes()) {
+                OptionType type = OptionType.valueOf(opt);
+                optionMask |= (1 << type.ordinal());
+            }
+        }
 
-            case "dong", "sigungu", "sido" -> filtered.stream()
-                    .map(GetMapClusterResponse::from)
-                    .toList();
+        // corkage type
+        int useTypeFilter = (req.corkageTypes() != null && !req.corkageTypes().isEmpty()) ? 1 : 0;
+        List<String> corkageTypes = (useTypeFilter == 1) ? req.corkageTypes() : List.of("FREE","MULTIPLE","PER_BOTTLE","PER_PERSON","PER_TABLE");
 
-            default -> throw new CustomException(BAD_REQUEST);
-        };
+        // corkage price
+        int minBottle = (req.minBottlePrice() == null) ? 0 : req.minBottlePrice();
+        int maxBottle = (req.maxBottlePrice() == null) ? Integer.MAX_VALUE : req.maxBottlePrice();
+        int minPerson = (req.minPersonPrice() == null) ? 0 : req.minPersonPrice();
+        int maxPerson = (req.maxPersonPrice() == null) ? Integer.MAX_VALUE : req.maxPersonPrice();
+        int minTable  = (req.minTablePrice()  == null) ? 0 : req.minTablePrice();
+        int maxTable  = (req.maxTablePrice()  == null) ? Integer.MAX_VALUE : req.maxTablePrice();
+
+        List<MapPinProjection> rows = restaurantRepository.findMapPins(
+                wkt,
+                req.keyword(),
+                req.sido(),
+                req.sigungu(),
+                dongRegex,
+                req.minScore(),
+                req.maxScore(),
+                useTypeFilter,
+                corkageTypes,
+                optionMask,
+                minBottle, maxBottle,
+                minPerson, maxPerson,
+                minTable, maxTable
+        );
+
+        return rows.stream()
+                .map(row -> new GetMapRestaurantPinResponse(
+                        row.getRestaurantId(),
+                        row.getRestaurantName(),
+                        formatCorkagePrice(row.getCorkageType(), row.getCorkagePrice(), row.getMinMultiPrice()),
+                        row.getLatitude(),
+                        row.getLatitude()
+                ))
+                .toList();
     }
 
     private String toEnvelopeWkt(double lonMin, double latMin, double lonMax, double latMax) {
