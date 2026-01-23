@@ -110,4 +110,11 @@ public class Restaurant extends BaseEntity {
         this.bookmarkCount = bookmarkCount;
     }
 
+    public void increaseHelpRequestCount() {
+        if (this.helpRequestCount == 0) {
+            this.helpRequestCount = 1;
+        } else {
+            this.helpRequestCount++;
+        }
+    }
 }

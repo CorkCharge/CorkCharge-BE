@@ -50,6 +50,8 @@ public class HelpRequestService {
                 .restaurant(restaurant)
                 .build();
 
+        restaurant.increaseHelpRequestCount();
+
         helpRequestRepository.save(helpRequest);
     }
 
