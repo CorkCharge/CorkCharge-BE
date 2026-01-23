@@ -75,4 +75,6 @@ public class UserController {
         userService.updateRegistration(userId, image);
         return BaseResponse.ok(null);
     }
+
+
 }
