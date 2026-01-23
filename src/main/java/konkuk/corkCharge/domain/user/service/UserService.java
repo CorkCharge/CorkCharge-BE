@@ -1,5 +1,6 @@
 package konkuk.corkCharge.domain.user.service;
 
+import konkuk.corkCharge.domain.helpRequest.repository.HelpRequestRepository;
 import konkuk.corkCharge.domain.image.domain.Image;
 import konkuk.corkCharge.domain.image.domain.ImageCategory;
 import konkuk.corkCharge.domain.image.domain.ImageType;
@@ -11,6 +12,7 @@ import konkuk.corkCharge.domain.review.dto.response.GetMyPageReviewResponse;
 import konkuk.corkCharge.domain.review.repository.ReviewRepository;
 import konkuk.corkCharge.domain.user.domain.Role;
 import konkuk.corkCharge.domain.user.domain.User;
+import konkuk.corkCharge.domain.user.dto.response.GetMyHelpRequestsResponse;
 import konkuk.corkCharge.domain.user.dto.response.GetMyPageResponse;
 import konkuk.corkCharge.domain.user.dto.response.GetReviewResponse;
 import konkuk.corkCharge.domain.user.dto.response.GetUserProfileResponse;
@@ -36,6 +38,7 @@ public class UserService {
     private final ImageRepository imageRepository;
     private final S3ImageService s3ImageService;
     private final ReviewRepository reviewRepository;
+    private final HelpRequestRepository helpRequestRepository;
 
     @Transactional
     public GetUserProfileResponse getUserProfile(Long userId){
@@ -156,5 +159,23 @@ public class UserService {
                             .build();
                     imageRepository.save(newImage);
                 });
+    }
+
+    public GetMyHelpRequestsResponse getMyHelpRequests(Long userId) {
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(USER_NOT_FOUND));
+
+        List<GetMyHelpRequestsResponse.HelpRequestSummary> summaries =
+                helpRequestRepository.findAllByUserOrderByCreatedAtDesc(user)
+                        .stream()
+                        .map(helpRequest -> new GetMyHelpRequestsResponse.HelpRequestSummary(
+                                helpRequest.getHelpId(),
+                                helpRequest.getRestaurant().getName(),
+                                helpRequest.getCreatedAt().toLocalDate()
+                        ))
+                        .toList();
+
+        return new GetMyHelpRequestsResponse(summaries);
     }
 }
