@@ -40,7 +40,6 @@ public class SecurityConfig {
                                 "/restaurants/hot",
                                 "/restaurants/search",
                                 "/restaurants/filter",
-                                "/restaurants/map",
                                 "/reviews/corkageReview",
                                 "/reviews/{restaurantId}",
                                 "/reviews/home",
@@ -55,7 +54,8 @@ public class SecurityConfig {
                                 "/restaurants/new",
                                 "/restaurants/category",
                                 "/restaurants/nearby",
-                                "/restaurants/home")
+                                "/restaurants/home",
+                                "/restaurants/map")
                         .permitAll()
 
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
