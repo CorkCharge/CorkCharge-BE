@@ -85,7 +85,7 @@ public class HelpRequestService {
         List<String> dong = request != null ? request.dong() : null;
         String keyword = request != null ? request.keyword() : null;
 
-        // 1. dong 제외하고 DB 조회
+        // dong 제외하고 DB 조회
         List<Restaurant> restaurantEntities =
                 restaurantRepository.findHelpRequestTargetRestaurants(
                         sido,
@@ -93,20 +93,23 @@ public class HelpRequestService {
                         keyword
                 );
 
-        // 2. dong 필터링 (Service 레벨)
+        // dong 필터링 (괄호 기준)
         if (dong != null && !dong.isEmpty()) {
             restaurantEntities = restaurantEntities.stream()
                     .filter(r ->
-                            dong.stream().anyMatch(d -> r.getAddress().contains(d))
+                            dong.stream().anyMatch(d ->
+                                    r.getAddress().contains("(" + d + ")")
+                            )
                     )
                     .toList();
         }
 
+        // 요청 수 기준 재정렬
         restaurantEntities = restaurantEntities.stream()
                 .sorted(Comparator.comparing(Restaurant::getHelpRequestCount).reversed())
                 .toList();
 
-        // 3. DTO 매핑
+        // DTO 매핑
         List<GetHelpRequestRestaurantsResponse.RestaurantInfoSummary> restaurants =
                 restaurantEntities.stream()
                         .map(restaurant -> {
