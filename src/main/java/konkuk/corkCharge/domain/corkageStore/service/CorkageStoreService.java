@@ -12,7 +12,6 @@ import konkuk.corkCharge.domain.image.domain.Image;
 import konkuk.corkCharge.domain.image.domain.ImageCategory;
 import konkuk.corkCharge.domain.image.domain.ImageType;
 import konkuk.corkCharge.domain.image.repository.ImageRepository;
-import konkuk.corkCharge.domain.ownerRestaurant.domain.OwnerRestaurant;
 import konkuk.corkCharge.domain.ownerRestaurant.repository.OwnerRestaurantRepository;
 import konkuk.corkCharge.domain.restaurant.domain.Restaurant;
 import konkuk.corkCharge.domain.restaurant.domain.RestaurantSummary;
@@ -28,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+import static konkuk.corkCharge.domain.corkageStore.domain.OptionType.ETC;
 import static konkuk.corkCharge.global.response.status.BaseExceptionResponseStatus.*;
 
 @Service
@@ -43,61 +43,126 @@ public class CorkageStoreService {
     private final RestaurantSummaryService restaurantSummaryService;
 
     @Transactional
-    public void createCorkage(Long userId, PostAddCorkageRequest request) {
+    public void createOrUpdateCorkage(Long userId, PostAddCorkageRequest request) {
+        if (request == null || request.restaurantId() == null) {
+            throw new CustomException(BAD_REQUEST);
+        }
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(USER_NOT_FOUND));
 
-        if (user.getRole() == Role.USER) {
+        if (user.getRole() != Role.OWNER) {
             throw new CustomException(PERMISSION_DENIED);
         }
 
         Restaurant restaurant = restaurantRepository.findById(request.restaurantId())
                 .orElseThrow(() -> new CustomException(RESTAURANT_NOT_FOUND));
 
-        if (restaurant.isHasCorkage()) {
-            throw new CustomException(ALREADY_REGISTERED_CORKAGE);
+        boolean isMyRestaurant = ownerRestaurantRepository.existsByRestaurant(restaurant);
+        if (!isMyRestaurant) {
+            throw new CustomException(PERMISSION_DENIED);
         }
 
-        CorkageType corkageType = CorkageType.valueOf(request.corkageType());
+        // 콜키지 타입
+        CorkageType newType = CorkageType.valueOf(request.corkageType());
 
-        CorkageStore corkageStore = CorkageStore.builder()
-                .restaurant(restaurant)
-                .corkageType(corkageType)
-                .corkagePrice(request.corkagePrice())
-                .build();
+        // 콜키지 옵션
+        List<OptionType> optionTypes = (request.optionTypes() == null) ? List.of() : request.optionTypes().stream()
+                .map(opt -> OptionType.valueOf(opt))
+                .toList();
 
-        corkageStoreRepository.save(corkageStore);
+        CorkageStore corkageStore =
+                corkageStoreRepository.findByRestaurant_RestaurantId(request.restaurantId())
+                        .orElse(null);
 
-        if (corkageType == CorkageType.MULTIPLE && request.multiCorkages() != null) {
-            for (MultiCorkageRequest multiCorkage : request.multiCorkages()) {
-                MultiCorkage entity = MultiCorkage.builder()
-                        .liquorType(multiCorkage.liquorType())
-                        .price(multiCorkage.price())
-                        .corkageStore(corkageStore)
-                        .build();
+        boolean isNew = false;
 
-                multiCorkageRepository.save(entity);
+        if (corkageStore == null) {
+            // 콜키지 매장이 아닌 경우
+            corkageStore = CorkageStore.builder()
+                    .restaurant(restaurant)
+                    .corkageType(newType)
+                    .corkagePrice(normalizePrice(newType, request.corkagePrice()))
+                    .build();
 
-                corkageStore.getMultiPrices().add(entity);
-            }
+            corkageStoreRepository.save(corkageStore);
+            isNew = true;
         }
 
-        if (request.optionTypes() != null) {
-            List<OptionType> bitTypes = request.optionTypes().stream()
-                    .map(OptionType::valueOf)
-                    .toList();
-
-            // optionBits 저장
-            corkageStore.addOptionBits(bitTypes);
-
-            // ETC 텍스트 저장 (옵션에 ETC 포함될 때만)
-            if (bitTypes.contains(OptionType.ETC)) {
-                corkageStore.updateEtcContent(request.etcContent());
-            }
+        if (!isNew) {
+            applyTypeAndPrice(corkageStore, newType, request);
         }
 
-        restaurant.setHasCorkage(true);
+        applyMultiCorkages(corkageStore, newType, request.multiCorkages());
+
+        applyOptions(corkageStore, optionTypes, request.etcContent());
+        corkageStoreRepository.saveAndFlush(corkageStore);
+
+        if (!restaurant.isHasCorkage()) {
+            restaurant.setHasCorkage(true);
+        }
+
+        restaurantSummaryService.evictSummary(request.restaurantId());
+    }
+
+    private Integer normalizePrice(CorkageType type, Integer corkagePrice) {
+        if (type == CorkageType.FREE || type == CorkageType.MULTIPLE)
+            return 0;
+
+        return (corkagePrice == null) ? 0 : corkagePrice;
+    }
+
+    private void applyTypeAndPrice(CorkageStore corkageStore, CorkageType newType, PostAddCorkageRequest request) {
+        corkageStore.updateCorkageType(newType);
+
+        Integer price = normalizePrice(newType, request.corkagePrice());
+        corkageStore.updateCorkagePrice(price);
+    }
+
+    private void applyMultiCorkages(CorkageStore corkageStore, CorkageType newType, List<MultiCorkageRequest> multiReqs) {
+
+        Long corkageStoreId = corkageStore.getCorkageStoreId();
+        if (corkageStoreId == null) {
+            throw new CustomException(BAD_REQUEST);
+        }
+
+        if (newType != CorkageType.MULTIPLE) {
+            multiCorkageRepository.deleteAllByCorkageStoreId(corkageStoreId);
+            return;
+        }
+
+        multiCorkageRepository.deleteAllByCorkageStoreId(corkageStoreId);
+
+        for (MultiCorkageRequest r : multiReqs) {
+            String liquorType = r.liquorType();
+
+            int price = r.price();
+
+            MultiCorkage entity = MultiCorkage.builder()
+                    .liquorType(liquorType)
+                    .price(price)
+                    .corkageStore(corkageStore)
+                    .build();
+
+            multiCorkageRepository.save(entity);
+        }
+    }
+
+    private void applyOptions(CorkageStore corkageStore, List<OptionType> optionTypes, String etcContent) {
+        corkageStore.resetOptionBits();
+
+        if (optionTypes == null || optionTypes.isEmpty()) {
+            corkageStore.clearEtcContent();
+            return;
+        }
+
+        corkageStore.addOptionBits(optionTypes);
+
+        if (optionTypes.contains(ETC)) {
+            corkageStore.updateEtcContent(etcContent);
+        } else {
+            corkageStore.clearEtcContent();
+        }
     }
 
     @Transactional(readOnly = true)
