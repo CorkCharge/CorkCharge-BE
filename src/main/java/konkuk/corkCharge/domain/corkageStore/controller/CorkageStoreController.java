@@ -20,11 +20,11 @@ public class CorkageStoreController {
     private final CorkageStoreService corkageStoreService;
 
     @PostMapping
-    public BaseResponse<Void> createCorkage(
+    public BaseResponse<Void> createOrUpdateCorkage(
             @LoginUserId Long userId,
             @RequestBody PostAddCorkageRequest request
     ) {
-        corkageStoreService.createCorkage(userId, request);
+        corkageStoreService.createOrUpdateCorkage(userId, request);
         return BaseResponse.ok(null);
     }
 
