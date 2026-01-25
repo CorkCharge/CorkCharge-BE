@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.util.List;
 
 @Getter
 @Builder
@@ -23,10 +24,15 @@ public class RestaurantSummary implements Serializable {
     private String representMenu;
     private String openingHours;
 
-    // 이미지
+    // 이미지(대표 1장)
     private String mainImageUrl;
     private String menuImageUrl;
-    private String pairingImageUrl; // corkage pairing 대표 이미지
+    private String pairingImageUrl;
+
+    // 이미지(여러장)
+    private List<String> mainImages;
+    private List<String> menuImages;
+    private List<String> pairingImages;
 
     // 리뷰
     private Integer reviewCount;

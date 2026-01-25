@@ -274,7 +274,7 @@ public class BookmarkService {
                     Restaurant restaurant = restaurantRepository
                             .findById(bookmark.getTargetId())
                             .orElseThrow(() -> new CustomException(RESTAURANT_NOT_FOUND));
-                    List<Image> images = imageRepository.findByCategoryAndTypeId(
+                    List<Image> images = imageRepository.findAllByCategoryAndTypeId(
                             ImageCategory.RESTAURANT,
                             restaurant.getRestaurantId()
                     );

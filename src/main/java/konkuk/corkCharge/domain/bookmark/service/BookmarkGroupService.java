@@ -266,7 +266,7 @@ public class BookmarkGroupService {
                 restaurants.stream()
                         .map(restaurant -> {
                             List<String> imageUrls =
-                                    imageRepository.findByCategoryAndTypeId(
+                                    imageRepository.findAllByCategoryAndTypeId(
                                                     ImageCategory.RESTAURANT,
                                                     restaurant.getRestaurantId()
                                             ).stream()
