@@ -14,12 +14,19 @@ import java.util.Optional;
 @Repository
 public interface ImageRepository extends JpaRepository<Image, Long> {
 
-    List<Image> findByCategoryAndTypeId(ImageCategory category, Long typeId);
+    // 이미지 여러장 단건 조회용
+    List<Image> findAllByCategoryAndTypeId(ImageCategory category, Long typeId);
 
+    // 이미지 여러장 단건 조회용 (매장 MAIN/MENU)
+    List<Image> findAllByCategoryAndTypeIdAndType(ImageCategory category, Long typeId, ImageType type);
+
+    // 이미지 한장 단건 조회용 (최신순)
     Optional<Image> findFirstByCategoryAndTypeIdOrderByCreatedAtAsc(ImageCategory category, Long typeId);
 
+    // 이미지 한장 단건 조회용 (매장 MAIN/MENU)
     Optional<Image> findFirstByCategoryAndTypeIdAndType(ImageCategory category, Long typeId, ImageType type);
 
+    // 이미지 한장 단건 조회용
     Optional<Image> findFirstByCategoryAndTypeId(ImageCategory category, Long typeId);
 
     void deleteByCategoryAndTypeId(ImageCategory category, Long typeId);

@@ -30,16 +30,7 @@ public class User extends BaseEntity {
     @Column(name = "role")
     private Role role;
 
-//    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-//    private List<Review> reviews = new ArrayList<>();
-//
-//    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-//    private List<HelpRequest> helpRequests = new ArrayList<>();
-//
-//    @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE, orphanRemoval = true)
-//    private List<OwnerRestaurant> ownerRestaurants = new ArrayList<>();
-//
-//    public void addReview(Review review) {
-//        reviews.add(review);
-//    }
+    @Column(name = "nickname", length = 30)
+    private String nickname;
+
 }
