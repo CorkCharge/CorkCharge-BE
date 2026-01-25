@@ -4,6 +4,6 @@ public record GetCorkageVerificationResponse(
         Long restaurantId,
         String restaurantName,
         String address,
-        String thumbnailUrl
+        String mainImageUrl
 ) {
 }

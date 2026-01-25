@@ -29,11 +29,6 @@ public class RestaurantSummaryService {
     private final CorkageStoreRepository corkageStoreRepository;
     private final ImageRepository imageRepository;
 
-
-    /**
-     * 레스토랑 요약 정보를 Redis에 캐싱.
-     * cacheNames = "restaurantSummary"
-     */
     @Transactional(readOnly = true)
     @Cacheable(cacheNames = "restaurantSummary", key = "#p0")
     public RestaurantSummary getSummary(Long restaurantId) {
@@ -41,101 +36,93 @@ public class RestaurantSummaryService {
         Restaurant restaurant = restaurantRepository.findById(restaurantId)
                 .orElseThrow(() -> new CustomException(RESTAURANT_NOT_FOUND));
 
-        // 1. 이미지 (메인/메뉴)
-        String mainImageUrl = imageRepository
-                .findFirstByCategoryAndTypeIdAndType(ImageCategory.RESTAURANT, restaurantId, ImageType.MAIN)
-                .map(Image::getImageUrl)
-                .orElse(null);
+        // RESTAURANT images
+        List<Image> mainImageEntities = imageRepository
+                .findAllByCategoryAndTypeIdAndType(ImageCategory.RESTAURANT, restaurantId, ImageType.MAIN)
+                .stream()
+                .sorted(Comparator.comparing(Image::getCreatedAt))
+                .toList();
 
-        String menuImageUrl = imageRepository
-                .findFirstByCategoryAndTypeIdAndType(ImageCategory.RESTAURANT, restaurantId, ImageType.MENU)
-                .map(Image::getImageUrl)
-                .orElse(null);
+        List<Image> menuImageEntities = imageRepository
+                .findAllByCategoryAndTypeIdAndType(ImageCategory.RESTAURANT, restaurantId, ImageType.MENU)
+                .stream()
+                .sorted(Comparator.comparing(Image::getCreatedAt))
+                .toList();
 
-        // 2. 콜키지 정보
+        List<String> mainImages = mainImageEntities.stream().map(Image::getImageUrl).toList();
+        List<String> menuImages = menuImageEntities.stream().map(Image::getImageUrl).toList();
+
+        String mainImage = firstOrNull(mainImages);
+        String menuImage = firstOrNull(menuImages);
+
         CorkageStore corkage = corkageStoreRepository
                 .findByRestaurant_RestaurantId(restaurantId)
                 .orElse(null);
+
+        List<String> pairingImages = List.of();
+        String pairingImage = null;
 
         String corkagePrice = null;
         Integer optionBits = null;
         String optionEtcContent = null;
         String pairingAlcohol = null;
         String pairingDescription = null;
-        String pairingImageUrl = null;
         CorkageType corkageType = null;
 
         if (corkage != null) {
+            List<Image> pairingImageEntities = imageRepository
+                    .findAllByCategoryAndTypeId(ImageCategory.CORKAGE, corkage.getCorkageStoreId())
+                    .stream()
+                    .sorted(Comparator.comparing(Image::getCreatedAt))
+                    .toList();
 
-            // pairing 이미지
-            pairingImageUrl = imageRepository
-                    .findFirstByCategoryAndTypeId(ImageCategory.CORKAGE, corkage.getCorkageStoreId())
-                    .map(Image::getImageUrl)
-                    .orElse(null);
+            pairingImages = pairingImageEntities.stream().map(Image::getImageUrl).toList();
+            pairingImage = firstOrNull(pairingImages);
 
             corkageType = corkage.getCorkageType();
+            corkagePrice = buildCorkagePrice(corkage);
 
-            // 콜키지 가격 문자열 생성
-            if (corkageType == CorkageType.MULTIPLE) {
-                corkagePrice = corkage.getMultiPrices().stream()
-                        .map(mp -> mp.getLiquorType() + " 병당: " + mp.getPrice() + "원")
-                        .collect(Collectors.joining(", "));
-            } else if (corkageType == CorkageType.FREE) {
-                corkagePrice = "콜키지 프리";
-            } else {
-                corkagePrice = switch (corkageType) {
-                    case PER_BOTTLE -> "병당 " + corkage.getCorkagePrice() + "원";
-                    case PER_PERSON -> "인당 " + corkage.getCorkagePrice() + "원";
-                    case PER_TABLE -> "테이블당 " + corkage.getCorkagePrice() + "원";
-                    default -> null;
-                };
-            }
-
-            // 옵션 비트 / ETC 내용
             optionBits = corkage.getOptionBits();
-            optionEtcContent = corkage.getEtcContent();    // ETC 텍스트 (있다면)
+            optionEtcContent = corkage.getEtcContent();
 
-            // ---- 페어링 ----
             pairingAlcohol = corkage.getPairing();
             pairingDescription = corkage.getDescription();
         }
 
-        // Summary 생성
         return RestaurantSummary.builder()
                 .restaurantId(restaurantId)
                 .name(restaurant.getName())
 
-                // 기본 정보
                 .address(restaurant.getAddress())
                 .phone(restaurant.getPhone())
                 .representMenu(restaurant.getRepresentMenu())
                 .openingHours(restaurant.getOpeningHours())
 
-                // 이미지
-                .mainImageUrl(mainImageUrl)
-                .menuImageUrl(menuImageUrl)
-                .pairingImageUrl(pairingImageUrl)
+                // 이미지 (리스트)
+                .mainImages(mainImages)
+                .menuImages(menuImages)
+                .pairingImages(pairingImages)
 
-                // 리뷰 / 북마크
+                // 이미지 (1장)
+                .mainImageUrl(mainImage)
+                .menuImageUrl(menuImage)
+                .pairingImageUrl(pairingImage)
+
                 .reviewCount(restaurant.getReviewCount())
                 .avgRating(restaurant.getRating())
                 .bookmarkCount(restaurant.getBookmarkCount())
 
-                // 콜키지
                 .hasCorkage(restaurant.isHasCorkage())
                 .corkageType(corkageType)
                 .corkagePrice(corkagePrice)
                 .optionBits(optionBits)
                 .optionEtcContent(optionEtcContent)
 
-                // 페어링
                 .pairingAlcohol(pairingAlcohol)
                 .pairingDescription(pairingDescription)
 
-                // 위치
                 .latitude(restaurant.getLatitude())
                 .longitude(restaurant.getLongitude())
-
                 .build();
     }
 
@@ -153,43 +140,79 @@ public class RestaurantSummaryService {
         Map<Long, CorkageStore> corkageMap = corkageStores.stream()
                 .collect(Collectors.toMap(cs -> cs.getRestaurant().getRestaurantId(), cs -> cs));
 
-        // 3) RESTAURANT 이미지
+        // 3) RESTAURANT 이미지 bulk
         List<Image> restaurantImages = imageRepository.findRestaurantImagesByRestaurantIds(restaurantIds);
 
-        Map<Long, String> mainImageMap = new HashMap<>();
-        Map<Long, String> menuImageMap = new HashMap<>();
-        for (Image img : restaurantImages) {
-            if (img.getType() == ImageType.MAIN) mainImageMap.putIfAbsent(img.getTypeId(), img.getImageUrl());
-            if (img.getType() == ImageType.MENU) menuImageMap.putIfAbsent(img.getTypeId(), img.getImageUrl());
-        }
+        List<Image> sortedRestaurantImages = restaurantImages.stream()
+                .sorted(Comparator.comparing(Image::getCreatedAt))
+                .toList();
 
-        // 4) CORKAGE 이미지
+        Map<Long, List<String>> mainImagesMap = sortedRestaurantImages.stream()
+                .filter(img -> img.getType() == ImageType.MAIN)
+                .collect(Collectors.groupingBy(
+                        Image::getTypeId,
+                        LinkedHashMap::new,
+                        Collectors.mapping(Image::getImageUrl, Collectors.toList())
+                ));
+
+        Map<Long, List<String>> menuImagesMap = sortedRestaurantImages.stream()
+                .filter(img -> img.getType() == ImageType.MENU)
+                .collect(Collectors.groupingBy(
+                        Image::getTypeId,
+                        LinkedHashMap::new,
+                        Collectors.mapping(Image::getImageUrl, Collectors.toList())
+                ));
+
+        // 4) CORKAGE 이미지 bulk
         List<Long> corkageIds = corkageStores.stream()
                 .map(CorkageStore::getCorkageStoreId)
                 .toList();
 
-        Map<Long, String> corkageImageMap = new HashMap<>();
+        Map<Long, List<String>> pairingImagesMap = new HashMap<>();
         if (!corkageIds.isEmpty()) {
             List<Image> corkageImages = imageRepository.findCorkageImagesByCorkageIds(corkageIds);
-            for (Image img : corkageImages) {
-                // typeId = corkageStoreId
-                corkageImageMap.putIfAbsent(img.getTypeId(), img.getImageUrl());
-            }
+
+            List<Image> sortedCorkageImages = corkageImages.stream()
+                    .sorted(Comparator.comparing(Image::getCreatedAt))
+                    .toList();
+
+            pairingImagesMap = sortedCorkageImages.stream()
+                    .collect(Collectors.groupingBy(
+                            Image::getTypeId, // corkage_store_id
+                            LinkedHashMap::new,
+                            Collectors.mapping(Image::getImageUrl, Collectors.toList())
+                    ));
         }
 
         // 5) 순서 유지
         List<RestaurantSummary> result = new ArrayList<>(restaurantIds.size());
-        for (Long id : restaurantIds) {
-            Restaurant restaurant = restaurantMap.get(id);
+
+        for (Long restaurantId : restaurantIds) {
+            Restaurant restaurant = restaurantMap.get(restaurantId);
             if (restaurant == null) continue;
 
-            CorkageStore corkage = corkageMap.get(id);
+            CorkageStore corkage = corkageMap.get(restaurantId);
 
-            String main = mainImageMap.get(id);
-            String menu = menuImageMap.get(id);
-            String pairing = (corkage == null) ? null : corkageImageMap.get(corkage.getCorkageStoreId());
+            List<String> mainImages = mainImagesMap.getOrDefault(restaurantId, List.of());
+            List<String> menuImages = menuImagesMap.getOrDefault(restaurantId, List.of());
 
-            result.add(buildSummary(restaurant, corkage, main, menu, pairing));
+            String mainImage = firstOrNull(mainImages);
+            String menuImage = firstOrNull(menuImages);
+
+            List<String> pairingImages = List.of();
+            String pairingImage = null;
+
+            if (corkage != null) {
+                pairingImages = pairingImagesMap.getOrDefault(corkage.getCorkageStoreId(), List.of());
+                pairingImage = firstOrNull(pairingImages);
+            }
+
+            result.add(buildSummary(
+                    restaurant,
+                    corkage,
+                    mainImages, menuImages, pairingImages,
+                    mainImage, menuImage, pairingImage
+            ));
         }
 
         return result;
@@ -198,9 +221,12 @@ public class RestaurantSummaryService {
     private RestaurantSummary buildSummary(
             Restaurant restaurant,
             CorkageStore corkage,
-            String mainImageUrl,
-            String menuImageUrl,
-            String pairingImageUrl
+            List<String> mainImages,
+            List<String> menuImages,
+            List<String> pairingImages,
+            String mainImage,
+            String menuImage,
+            String pairingImage
     ) {
         String corkagePrice = null;
         Integer optionBits = null;
@@ -211,24 +237,11 @@ public class RestaurantSummaryService {
 
         if (corkage != null) {
             corkageType = corkage.getCorkageType();
-
-            if (corkageType == CorkageType.MULTIPLE) {
-                corkagePrice = corkage.getMultiPrices().stream()
-                        .map(mp -> mp.getLiquorType() + " 병당: " + mp.getPrice() + "원")
-                        .collect(Collectors.joining(", "));
-            } else if (corkageType == CorkageType.FREE) {
-                corkagePrice = "콜키지 프리";
-            } else {
-                corkagePrice = switch (corkageType) {
-                    case PER_BOTTLE -> "병당 " + corkage.getCorkagePrice() + "원";
-                    case PER_PERSON -> "인당 " + corkage.getCorkagePrice() + "원";
-                    case PER_TABLE -> "테이블당 " + corkage.getCorkagePrice() + "원";
-                    default -> null;
-                };
-            }
+            corkagePrice = buildCorkagePrice(corkage);
 
             optionBits = corkage.getOptionBits();
             optionEtcContent = corkage.getEtcContent();
+
             pairingAlcohol = corkage.getPairing();
             pairingDescription = corkage.getDescription();
         }
@@ -240,22 +253,59 @@ public class RestaurantSummaryService {
                 .phone(restaurant.getPhone())
                 .representMenu(restaurant.getRepresentMenu())
                 .openingHours(restaurant.getOpeningHours())
-                .mainImageUrl(mainImageUrl)
-                .menuImageUrl(menuImageUrl)
-                .pairingImageUrl(pairingImageUrl)
+
+                // 리스트
+                .mainImages(mainImages == null ? List.of() : mainImages)
+                .menuImages(menuImages == null ? List.of() : menuImages)
+                .pairingImages(pairingImages == null ? List.of() : pairingImages)
+
+                // 대표 1장
+                .mainImageUrl(mainImage)
+                .menuImageUrl(menuImage)
+                .pairingImageUrl(pairingImage)
+
                 .reviewCount(restaurant.getReviewCount())
                 .avgRating(restaurant.getRating())
                 .bookmarkCount(restaurant.getBookmarkCount())
+
                 .hasCorkage(restaurant.isHasCorkage())
                 .corkageType(corkageType)
                 .corkagePrice(corkagePrice)
                 .optionBits(optionBits)
                 .optionEtcContent(optionEtcContent)
+
                 .pairingAlcohol(pairingAlcohol)
                 .pairingDescription(pairingDescription)
+
                 .latitude(restaurant.getLatitude())
                 .longitude(restaurant.getLongitude())
                 .build();
+    }
+
+    private String buildCorkagePrice(CorkageStore corkage) {
+        if (corkage == null || corkage.getCorkageType() == null) return null;
+
+        CorkageType type = corkage.getCorkageType();
+
+        if (type == CorkageType.MULTIPLE) {
+            return corkage.getMultiPrices().stream()
+                    .map(mp -> mp.getLiquorType() + " 병당: " + mp.getPrice() + "원")
+                    .collect(Collectors.joining(", "));
+        }
+
+        if (type == CorkageType.FREE) return "콜키지 프리";
+
+        Integer price = corkage.getCorkagePrice();
+        return switch (type) {
+            case PER_BOTTLE -> "병당 " + price + "원";
+            case PER_PERSON -> "인당 " + price + "원";
+            case PER_TABLE  -> "테이블당 " + price + "원";
+            default -> null;
+        };
+    }
+
+    private String firstOrNull(List<String> list) {
+        return (list == null || list.isEmpty()) ? null : list.get(0);
     }
 
     /**

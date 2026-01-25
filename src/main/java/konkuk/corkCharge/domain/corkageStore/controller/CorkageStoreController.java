@@ -20,18 +20,18 @@ public class CorkageStoreController {
     private final CorkageStoreService corkageStoreService;
 
     @PostMapping
-    public BaseResponse<Void> createCorkage(
+    public BaseResponse<Void> createOrUpdateCorkage(
             @LoginUserId Long userId,
             @RequestBody PostAddCorkageRequest request
     ) {
-        corkageStoreService.createCorkage(userId, request);
+        corkageStoreService.createOrUpdateCorkage(userId, request);
         return BaseResponse.ok(null);
     }
 
     @GetMapping("/verify")
     public BaseResponse<List<GetCorkageVerificationResponse>> requestCorkage(
             @LoginUserId Long userId
-    ){
+    ) {
         return BaseResponse.ok(corkageStoreService.requestCorkage(userId));
     }
 

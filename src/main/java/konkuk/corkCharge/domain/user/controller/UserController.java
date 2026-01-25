@@ -1,6 +1,5 @@
 package konkuk.corkCharge.domain.user.controller;
 
-import konkuk.corkCharge.domain.user.domain.Role;
 import konkuk.corkCharge.domain.user.dto.request.PostRoleRequest;
 import konkuk.corkCharge.domain.user.dto.response.*;
 import konkuk.corkCharge.domain.user.service.UserService;
@@ -58,17 +57,18 @@ public class UserController {
     }
 
     @PutMapping("/role")
-    public BaseResponse<Role> updateUserRole(
+    public BaseResponse<Void> updateUserRole(
             @LoginUserId Long userId,
             @RequestBody PostRoleRequest request
     ){
-        return BaseResponse.ok(userService.updateUserRole(userId, request.role()));
+        userService.updateRoleAndNickname(userId, request.role(), request.nickname());
+        return BaseResponse.ok(null);
     }
 
     @PutMapping("/registration")
     public BaseResponse<Void> updateRegistration(
             @LoginUserId Long userId,
-            @RequestPart(required = false) MultipartFile image
+            @RequestPart MultipartFile image
     ){
         userService.updateRegistration(userId, image);
         return BaseResponse.ok(null);
@@ -78,9 +78,7 @@ public class UserController {
     public BaseResponse<GetMyHelpRequestsResponse> getMyHelpRequests(
             @LoginUserId Long userId
     ) {
-        return BaseResponse.ok(
-                userService.getMyHelpRequests(userId)
-        );
+        return BaseResponse.ok(userService.getMyHelpRequests(userId));
     }
 
     @GetMapping("/helprequests/{helprequestId}")
@@ -88,9 +86,7 @@ public class UserController {
             @LoginUserId Long userId,
             @PathVariable Long helprequestId
     ) {
-        return BaseResponse.ok(
-                userService.getMyHelpRequestDetail(userId, helprequestId)
-        );
+        return BaseResponse.ok(userService.getMyHelpRequestDetail(userId, helprequestId));
     }
 
 }

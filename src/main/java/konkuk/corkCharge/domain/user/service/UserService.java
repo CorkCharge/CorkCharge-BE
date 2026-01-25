@@ -3,8 +3,6 @@ package konkuk.corkCharge.domain.user.service;
 import konkuk.corkCharge.domain.helpRequest.domain.HelpRequest;
 import konkuk.corkCharge.domain.helpRequest.repository.HelpRequestRepository;
 import konkuk.corkCharge.domain.image.domain.Image;
-import konkuk.corkCharge.domain.image.domain.ImageCategory;
-import konkuk.corkCharge.domain.image.domain.ImageType;
 import konkuk.corkCharge.domain.image.repository.ImageRepository;
 import konkuk.corkCharge.domain.image.service.S3ImageService;
 import konkuk.corkCharge.domain.restaurant.domain.Restaurant;
@@ -25,7 +23,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static konkuk.corkCharge.domain.image.domain.ImageCategory.*;
-import static konkuk.corkCharge.domain.image.domain.ImageType.MAIN;
 import static konkuk.corkCharge.global.response.status.BaseExceptionResponseStatus.*;
 
 @Service
@@ -120,21 +117,33 @@ public class UserService {
     }
 
     @Transactional
-    public Role updateUserRole(Long userId, Role role){
+    public void updateRoleAndNickname(Long userId, Role role, String nickname){
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(USER_NOT_FOUND));
 
+        if (role == null) {
+            throw new CustomException(ROLE_REQUIRED);
+        }
+
+        if (nickname == null || nickname.isBlank()) {
+            throw new CustomException(NICKNAME_REQUIRED);
+        }
+
+        if (userRepository.existsByNickname(nickname.trim())) {
+            throw new CustomException(DUPLICATE_NICKNAME);
+        }
+
         user.setRole(role);
-        return role;
+        user.setNickname(nickname.trim());
     }
 
     @Transactional
     public void updateRegistration(Long userId, MultipartFile registrationImage) {
-        User user = userRepository.findById(userId)
+        userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(USER_NOT_FOUND));
 
         if (registrationImage == null || registrationImage.isEmpty()) {
-            return;
+            throw new CustomException(IMAGE_REQUIRED);
         }
 
         String imageUrl = s3ImageService

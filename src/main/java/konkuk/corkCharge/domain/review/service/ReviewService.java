@@ -164,7 +164,7 @@ public class ReviewService {
         review.updateRating(request.rating());
 
         if (images != null && !images.isEmpty()) {
-            imageRepository.findByCategoryAndTypeId(REVIEW, reviewId)
+            imageRepository.findAllByCategoryAndTypeId(REVIEW, reviewId)
                     .forEach(img -> s3ImageService.deleteImage(img.getImageUrl()));
             imageRepository.deleteByCategoryAndTypeId(REVIEW, reviewId);
 
@@ -196,7 +196,7 @@ public class ReviewService {
         }
 
         // 이미지 삭제
-        imageRepository.findByCategoryAndTypeId(REVIEW, reviewId)
+        imageRepository.findAllByCategoryAndTypeId(REVIEW, reviewId)
                 .forEach(img -> s3ImageService.deleteImage(img.getImageUrl()));
         imageRepository.deleteByCategoryAndTypeId(REVIEW, reviewId);
 

@@ -12,10 +12,11 @@ import konkuk.corkCharge.domain.image.domain.Image;
 import konkuk.corkCharge.domain.image.domain.ImageCategory;
 import konkuk.corkCharge.domain.image.domain.ImageType;
 import konkuk.corkCharge.domain.image.repository.ImageRepository;
-import konkuk.corkCharge.domain.ownerRestaurant.domain.OwnerRestaurant;
 import konkuk.corkCharge.domain.ownerRestaurant.repository.OwnerRestaurantRepository;
 import konkuk.corkCharge.domain.restaurant.domain.Restaurant;
+import konkuk.corkCharge.domain.restaurant.domain.RestaurantSummary;
 import konkuk.corkCharge.domain.restaurant.repository.RestaurantRepository;
+import konkuk.corkCharge.domain.restaurant.service.RestaurantSummaryService;
 import konkuk.corkCharge.domain.user.domain.Role;
 import konkuk.corkCharge.domain.user.domain.User;
 import konkuk.corkCharge.domain.user.repository.UserRepository;
@@ -26,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+import static konkuk.corkCharge.domain.corkageStore.domain.OptionType.ETC;
 import static konkuk.corkCharge.global.response.status.BaseExceptionResponseStatus.*;
 
 @Service
@@ -38,63 +40,130 @@ public class CorkageStoreService {
     private final UserRepository userRepository;
     private final OwnerRestaurantRepository ownerRestaurantRepository;
     private final ImageRepository imageRepository;
+    private final RestaurantSummaryService restaurantSummaryService;
 
     @Transactional
-    public void createCorkage(Long userId, PostAddCorkageRequest request) {
+    public void createOrUpdateCorkage(Long userId, PostAddCorkageRequest req) {
+        if (req == null || req.restaurantId() == null) {
+            throw new CustomException(BAD_REQUEST);
+        }
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(USER_NOT_FOUND));
 
-        if (user.getRole() == Role.USER) {
+        boolean isMyRestaurant = ownerRestaurantRepository.existsByUser_UserIdAndRestaurant_RestaurantId(userId, req.restaurantId());
+        if (!isMyRestaurant) {
             throw new CustomException(PERMISSION_DENIED);
         }
 
-        Restaurant restaurant = restaurantRepository.findById(request.restaurantId())
+        if (user.getRole() != Role.OWNER) {
+            throw new CustomException(PERMISSION_DENIED);
+        }
+
+        Restaurant restaurant = restaurantRepository.findById(req.restaurantId())
                 .orElseThrow(() -> new CustomException(RESTAURANT_NOT_FOUND));
 
-        if (restaurant.isHasCorkage()) {
-            throw new CustomException(ALREADY_REGISTERED_CORKAGE);
+
+        // 콜키지 타입
+        CorkageType newType = CorkageType.valueOf(req.corkageType());
+
+        // 콜키지 옵션
+        List<OptionType> optionTypes = (req.optionTypes() == null) ? List.of() : req.optionTypes().stream()
+                .map(opt -> OptionType.valueOf(opt))
+                .toList();
+
+        CorkageStore corkageStore =
+                corkageStoreRepository.findByRestaurant_RestaurantId(req.restaurantId())
+                        .orElse(null);
+
+        boolean isNew = false;
+
+        if (corkageStore == null) {
+            // 콜키지 매장이 아닌 경우
+            corkageStore = CorkageStore.builder()
+                    .restaurant(restaurant)
+                    .corkageType(newType)
+                    .corkagePrice(normalizePrice(newType, req.corkagePrice()))
+                    .build();
+
+            corkageStoreRepository.save(corkageStore);
+            isNew = true;
         }
 
-        CorkageType corkageType = CorkageType.valueOf(request.corkageType());
-
-        CorkageStore corkageStore = CorkageStore.builder()
-                .restaurant(restaurant)
-                .corkageType(corkageType)
-                .corkagePrice(request.corkagePrice())
-                .build();
-
-        corkageStoreRepository.save(corkageStore);
-
-        if (corkageType == CorkageType.MULTIPLE && request.multiCorkages() != null) {
-            for (MultiCorkageRequest multiCorkage : request.multiCorkages()) {
-                MultiCorkage entity = MultiCorkage.builder()
-                        .liquorType(multiCorkage.liquorType())
-                        .price(multiCorkage.price())
-                        .corkageStore(corkageStore)
-                        .build();
-
-                multiCorkageRepository.save(entity);
-
-                corkageStore.getMultiPrices().add(entity);
-            }
+        if (!isNew) {
+            applyTypeAndPrice(corkageStore, newType, req);
         }
 
-        if (request.optionTypes() != null) {
-            List<OptionType> bitTypes = request.optionTypes().stream()
-                    .map(OptionType::valueOf)
-                    .toList();
+        applyMultiCorkages(corkageStore, newType, req.multiCorkages());
 
-            // optionBits 저장
-            corkageStore.addOptionBits(bitTypes);
+        applyOptions(corkageStore, optionTypes, req.etcContent());
+        corkageStoreRepository.saveAndFlush(corkageStore);
 
-            // ETC 텍스트 저장 (옵션에 ETC 포함될 때만)
-            if (bitTypes.contains(OptionType.ETC)) {
-                corkageStore.updateEtcContent(request.etcContent());
-            }
+        if (!restaurant.isHasCorkage()) {
+            restaurant.setHasCorkage(true);
         }
 
-        restaurant.setHasCorkage(true);
+        restaurantSummaryService.evictSummary(req.restaurantId());
+    }
+
+    private Integer normalizePrice(CorkageType type, Integer corkagePrice) {
+        if (type == CorkageType.FREE || type == CorkageType.MULTIPLE)
+            return 0;
+
+        return (corkagePrice == null) ? 0 : corkagePrice;
+    }
+
+    private void applyTypeAndPrice(CorkageStore corkageStore, CorkageType newType, PostAddCorkageRequest request) {
+        corkageStore.updateCorkageType(newType);
+
+        Integer price = normalizePrice(newType, request.corkagePrice());
+        corkageStore.updateCorkagePrice(price);
+    }
+
+    private void applyMultiCorkages(CorkageStore corkageStore, CorkageType newType, List<MultiCorkageRequest> multiReqs) {
+
+        Long corkageStoreId = corkageStore.getCorkageStoreId();
+        if (corkageStoreId == null) {
+            throw new CustomException(BAD_REQUEST);
+        }
+
+        if (newType != CorkageType.MULTIPLE) {
+            multiCorkageRepository.deleteAllByCorkageStoreId(corkageStoreId);
+            return;
+        }
+
+        multiCorkageRepository.deleteAllByCorkageStoreId(corkageStoreId);
+
+        for (MultiCorkageRequest r : multiReqs) {
+            String liquorType = r.liquorType();
+
+            int price = r.price();
+
+            MultiCorkage entity = MultiCorkage.builder()
+                    .liquorType(liquorType)
+                    .price(price)
+                    .corkageStore(corkageStore)
+                    .build();
+
+            multiCorkageRepository.save(entity);
+        }
+    }
+
+    private void applyOptions(CorkageStore corkageStore, List<OptionType> optionTypes, String etcContent) {
+        corkageStore.resetOptionBits();
+
+        if (optionTypes == null || optionTypes.isEmpty()) {
+            corkageStore.clearEtcContent();
+            return;
+        }
+
+        corkageStore.addOptionBits(optionTypes);
+
+        if (optionTypes.contains(ETC)) {
+            corkageStore.updateEtcContent(etcContent);
+        } else {
+            corkageStore.clearEtcContent();
+        }
     }
 
     @Transactional(readOnly = true)
@@ -102,31 +171,21 @@ public class CorkageStoreService {
         userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(USER_NOT_FOUND));
 
-        List<OwnerRestaurant> mappings = ownerRestaurantRepository.findAllByUser_UserIdAndRestaurant_HasCorkageFalse(userId);
+        List<Long> restaurantIds = ownerRestaurantRepository.findRestaurantIdsByUserId(userId);
 
-        if(mappings.isEmpty()){
-            throw new CustomException(PERMISSION_DENIED);
+        if (restaurantIds.isEmpty()) {
+            return List.of();
         }
 
-        return mappings.stream()
-                .map(OwnerRestaurant::getRestaurant)
-                .map(restaurant -> {
-                    String thumbnailUrl = imageRepository
-                            .findFirstByCategoryAndTypeIdAndType(
-                                    ImageCategory.RESTAURANT,
-                                    restaurant.getRestaurantId(),
-                                    ImageType.MAIN
-                            )
-                            .map(Image::getImageUrl)
-                            .orElse(null);
+        List<RestaurantSummary> summaries = restaurantSummaryService.getSummariesInOrder(restaurantIds);
 
-                    return new GetCorkageVerificationResponse(
-                            restaurant.getRestaurantId(),
-                            restaurant.getName(),
-                            restaurant.getAddress(),
-                            thumbnailUrl
-                    );
-                })
+        return summaries.stream()
+                .map(summary -> new GetCorkageVerificationResponse(
+                        summary.getRestaurantId(),
+                        summary.getName(),
+                        summary.getAddress(),
+                        summary.getMainImageUrl()
+                ))
                 .toList();
     }
 
