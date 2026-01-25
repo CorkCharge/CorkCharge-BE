@@ -15,7 +15,9 @@ import konkuk.corkCharge.domain.image.repository.ImageRepository;
 import konkuk.corkCharge.domain.ownerRestaurant.domain.OwnerRestaurant;
 import konkuk.corkCharge.domain.ownerRestaurant.repository.OwnerRestaurantRepository;
 import konkuk.corkCharge.domain.restaurant.domain.Restaurant;
+import konkuk.corkCharge.domain.restaurant.domain.RestaurantSummary;
 import konkuk.corkCharge.domain.restaurant.repository.RestaurantRepository;
+import konkuk.corkCharge.domain.restaurant.service.RestaurantSummaryService;
 import konkuk.corkCharge.domain.user.domain.Role;
 import konkuk.corkCharge.domain.user.domain.User;
 import konkuk.corkCharge.domain.user.repository.UserRepository;
@@ -38,6 +40,7 @@ public class CorkageStoreService {
     private final UserRepository userRepository;
     private final OwnerRestaurantRepository ownerRestaurantRepository;
     private final ImageRepository imageRepository;
+    private final RestaurantSummaryService restaurantSummaryService;
 
     @Transactional
     public void createCorkage(Long userId, PostAddCorkageRequest request) {
@@ -102,31 +105,21 @@ public class CorkageStoreService {
         userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(USER_NOT_FOUND));
 
-        List<OwnerRestaurant> mappings = ownerRestaurantRepository.findAllByUser_UserIdAndRestaurant_HasCorkageFalse(userId);
+        List<Long> restaurantIds = ownerRestaurantRepository.findRestaurantIdsByUserId(userId);
 
-        if(mappings.isEmpty()){
-            throw new CustomException(PERMISSION_DENIED);
+        if (restaurantIds.isEmpty()) {
+            return List.of();
         }
 
-        return mappings.stream()
-                .map(OwnerRestaurant::getRestaurant)
-                .map(restaurant -> {
-                    String thumbnailUrl = imageRepository
-                            .findFirstByCategoryAndTypeIdAndType(
-                                    ImageCategory.RESTAURANT,
-                                    restaurant.getRestaurantId(),
-                                    ImageType.MAIN
-                            )
-                            .map(Image::getImageUrl)
-                            .orElse(null);
+        List<RestaurantSummary> summaries = restaurantSummaryService.getSummariesInOrder(restaurantIds);
 
-                    return new GetCorkageVerificationResponse(
-                            restaurant.getRestaurantId(),
-                            restaurant.getName(),
-                            restaurant.getAddress(),
-                            thumbnailUrl
-                    );
-                })
+        return summaries.stream()
+                .map(summary -> new GetCorkageVerificationResponse(
+                        summary.getRestaurantId(),
+                        summary.getName(),
+                        summary.getAddress(),
+                        summary.getMainImageUrl()
+                ))
                 .toList();
     }
 

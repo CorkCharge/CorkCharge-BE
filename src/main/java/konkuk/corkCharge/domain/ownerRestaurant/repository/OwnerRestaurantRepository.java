@@ -13,7 +13,6 @@ import java.util.Optional;
 @Repository
 public interface OwnerRestaurantRepository extends JpaRepository<OwnerRestaurant, Long> {
     boolean existsByRestaurant(Restaurant restaurant);
-    List<OwnerRestaurant> findAllByUser_UserIdAndRestaurant_HasCorkageFalse(Long userId);
 
     @Query("""
         select orr.restaurant.restaurantId

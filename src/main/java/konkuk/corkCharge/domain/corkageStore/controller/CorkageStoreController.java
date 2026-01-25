@@ -31,7 +31,7 @@ public class CorkageStoreController {
     @GetMapping("/verify")
     public BaseResponse<List<GetCorkageVerificationResponse>> requestCorkage(
             @LoginUserId Long userId
-    ){
+    ) {
         return BaseResponse.ok(corkageStoreService.requestCorkage(userId));
     }
 
