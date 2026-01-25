@@ -64,4 +64,21 @@ public class CorkageStore extends BaseEntity {
         this.corkageType = corkageType;
         this.corkagePrice = corkagePrice;
     }
+
+    public void updateCorkageType(CorkageType corkageType) {
+        this.corkageType = corkageType;
+    }
+
+    public void updateCorkagePrice(Integer corkagePrice) {
+        this.corkagePrice = corkagePrice;
+    }
+
+    public void resetOptionBits() {
+        this.optionBits = 0;
+    }
+
+    public void clearEtcContent() {
+        this.etcContent = null;
+    }
+
 }
