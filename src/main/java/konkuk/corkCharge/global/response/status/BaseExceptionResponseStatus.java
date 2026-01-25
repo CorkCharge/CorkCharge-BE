@@ -32,6 +32,11 @@ public enum BaseExceptionResponseStatus implements ResponseStatus {
      */
     USER_NOT_FOUND(70000, "해당 사용자를 찾을 수 없습니다."),
     PERMISSION_DENIED(70001, "ADMIN 혹은 OWNER 권한이 필요합니다."),
+    ROLE_REQUIRED(70002, "사용자 권한 입력은 필수입니다."),
+    NICKNAME_REQUIRED(70003, "닉네임 입력은 필수입니다."),
+    DUPLICATE_NICKNAME(70004, "이미 사용중인 닉네임입니다."),
+    IMAGE_REQUIRED(70005, "사업자등록증 사진 첨부는 필수입니다."),
+    ACCESS_DENIED(70006, "접속 권한이 제한되었습니다."),
 
     /**
      * 80000 : Image
