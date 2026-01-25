@@ -21,4 +21,7 @@ public interface OwnerRestaurantRepository extends JpaRepository<OwnerRestaurant
          order by orr.createdAt desc, orr.id desc
     """)
     List<Long> findRestaurantIdsByUserId(@Param("userId") Long userId);
+
+    boolean existsByUser_UserIdAndRestaurant_RestaurantId(Long userId, Long restaurantId);
+
 }

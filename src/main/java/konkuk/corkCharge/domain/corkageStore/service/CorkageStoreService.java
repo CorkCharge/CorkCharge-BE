@@ -43,36 +43,37 @@ public class CorkageStoreService {
     private final RestaurantSummaryService restaurantSummaryService;
 
     @Transactional
-    public void createOrUpdateCorkage(Long userId, PostAddCorkageRequest request) {
-        if (request == null || request.restaurantId() == null) {
+    public void createOrUpdateCorkage(Long userId, PostAddCorkageRequest req) {
+        if (req == null || req.restaurantId() == null) {
             throw new CustomException(BAD_REQUEST);
         }
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(USER_NOT_FOUND));
 
-        if (user.getRole() != Role.OWNER) {
-            throw new CustomException(PERMISSION_DENIED);
-        }
-
-        Restaurant restaurant = restaurantRepository.findById(request.restaurantId())
-                .orElseThrow(() -> new CustomException(RESTAURANT_NOT_FOUND));
-
-        boolean isMyRestaurant = ownerRestaurantRepository.existsByRestaurant(restaurant);
+        boolean isMyRestaurant = ownerRestaurantRepository.existsByUser_UserIdAndRestaurant_RestaurantId(userId, req.restaurantId());
         if (!isMyRestaurant) {
             throw new CustomException(PERMISSION_DENIED);
         }
 
+        if (user.getRole() != Role.OWNER) {
+            throw new CustomException(PERMISSION_DENIED);
+        }
+
+        Restaurant restaurant = restaurantRepository.findById(req.restaurantId())
+                .orElseThrow(() -> new CustomException(RESTAURANT_NOT_FOUND));
+
+
         // 콜키지 타입
-        CorkageType newType = CorkageType.valueOf(request.corkageType());
+        CorkageType newType = CorkageType.valueOf(req.corkageType());
 
         // 콜키지 옵션
-        List<OptionType> optionTypes = (request.optionTypes() == null) ? List.of() : request.optionTypes().stream()
+        List<OptionType> optionTypes = (req.optionTypes() == null) ? List.of() : req.optionTypes().stream()
                 .map(opt -> OptionType.valueOf(opt))
                 .toList();
 
         CorkageStore corkageStore =
-                corkageStoreRepository.findByRestaurant_RestaurantId(request.restaurantId())
+                corkageStoreRepository.findByRestaurant_RestaurantId(req.restaurantId())
                         .orElse(null);
 
         boolean isNew = false;
@@ -82,7 +83,7 @@ public class CorkageStoreService {
             corkageStore = CorkageStore.builder()
                     .restaurant(restaurant)
                     .corkageType(newType)
-                    .corkagePrice(normalizePrice(newType, request.corkagePrice()))
+                    .corkagePrice(normalizePrice(newType, req.corkagePrice()))
                     .build();
 
             corkageStoreRepository.save(corkageStore);
@@ -90,19 +91,19 @@ public class CorkageStoreService {
         }
 
         if (!isNew) {
-            applyTypeAndPrice(corkageStore, newType, request);
+            applyTypeAndPrice(corkageStore, newType, req);
         }
 
-        applyMultiCorkages(corkageStore, newType, request.multiCorkages());
+        applyMultiCorkages(corkageStore, newType, req.multiCorkages());
 
-        applyOptions(corkageStore, optionTypes, request.etcContent());
+        applyOptions(corkageStore, optionTypes, req.etcContent());
         corkageStoreRepository.saveAndFlush(corkageStore);
 
         if (!restaurant.isHasCorkage()) {
             restaurant.setHasCorkage(true);
         }
 
-        restaurantSummaryService.evictSummary(request.restaurantId());
+        restaurantSummaryService.evictSummary(req.restaurantId());
     }
 
     private Integer normalizePrice(CorkageType type, Integer corkagePrice) {
