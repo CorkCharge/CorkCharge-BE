@@ -358,4 +358,19 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
             @Param("maxTablePrice") int maxTablePrice
     );
 
+    // 해주세요 탭 목록 조회용 쿼리
+    @Query("""
+    SELECT r
+    FROM Restaurant r
+    WHERE r.hasCorkage = false
+      AND (:sido IS NULL OR r.address LIKE CONCAT('%', :sido, '%'))
+      AND (:sigungu IS NULL OR r.address LIKE CONCAT('%', :sigungu, '%'))
+      AND (:keyword IS NULL OR r.name LIKE CONCAT('%', :keyword, '%'))
+    ORDER BY r.helpRequestCount DESC
+""")
+    List<Restaurant> findHelpRequestTargetRestaurants(
+            @Param("sido") String sido,
+            @Param("sigungu") String sigungu,
+            @Param("keyword") String keyword
+    );
 }

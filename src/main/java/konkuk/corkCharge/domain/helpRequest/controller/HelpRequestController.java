@@ -1,7 +1,9 @@
 package konkuk.corkCharge.domain.helpRequest.controller;
 
 import jakarta.validation.Valid;
+import konkuk.corkCharge.domain.helpRequest.dto.request.GetHelpRequestRestaurantsRequest;
 import konkuk.corkCharge.domain.helpRequest.dto.request.PostHelpRequestDetailRequest;
+import konkuk.corkCharge.domain.helpRequest.dto.response.GetHelpRequestRestaurantsResponse;
 import konkuk.corkCharge.domain.helpRequest.service.HelpRequestService;
 import konkuk.corkCharge.global.annotation.LoginUserId;
 import konkuk.corkCharge.global.response.BaseResponse;
@@ -30,5 +32,14 @@ public class HelpRequestController {
     ) {
         helpRequestService.submitDetail(userId, request);
         return BaseResponse.ok(null);
+    }
+
+    @GetMapping("/restaurants")
+    public BaseResponse<GetHelpRequestRestaurantsResponse> getHelpRequestRestaurants(
+            @RequestBody(required = false) GetHelpRequestRestaurantsRequest request
+    ) {
+        return BaseResponse.ok(
+                helpRequestService.getHelpRequestRestaurants(request)
+        );
     }
 }
