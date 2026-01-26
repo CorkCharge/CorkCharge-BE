@@ -123,7 +123,6 @@ public class RestaurantService {
         }
 
         String keyword = req.keyword().trim();
-        System.out.println(keyword);
         ClusterListSort sort = (req.sort() == null) ? ClusterListSort.PRICE_ASC : req.sort();
 
         List<Long> restaurantIds = restaurantRepository.findIdsByNameOrAddressContains(keyword);
