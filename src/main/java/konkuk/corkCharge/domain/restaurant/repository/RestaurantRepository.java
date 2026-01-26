@@ -22,6 +22,14 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
     List<Restaurant> findByHasCorkageFalseAndBookmarkCountGreaterThanEqual(int count);
 
     @Query("""
+    select r.restaurantId
+      from Restaurant r
+     where lower(r.name) like lower(concat('%', :keyword, '%'))
+        or lower(r.address) like lower(concat('%', :keyword, '%'))
+""")
+    List<Long> findIdsByNameOrAddressContains(@Param("keyword") String keyword);
+
+    @Query("""
         SELECT r FROM Restaurant r
         WHERE (r.latitude IS NULL OR r.longitude IS NULL OR r.latitude = 0 OR r.longitude = 0)
         """)
