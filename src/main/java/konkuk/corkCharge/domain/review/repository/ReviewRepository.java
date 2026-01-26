@@ -25,45 +25,45 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 
     List<Review> findAllByRestaurant_RestaurantId(Long restaurantId);
 
-    // 최신순 (콜키지리뷰)
-    @Query("""
-        select
-            rv.reviewId as reviewId,
-            r.restaurantId as restaurantId,
-            r.name as restaurantName,
-            u.name as writer,
-            rv.content as content,
-            rv.rating as rating,
-            rv.createdAt as createdAt,
-            coalesce(rv.bookmarkCount, 0) as bookmarkCount
-        from Review rv
-          join rv.restaurant r
-          join rv.user u
-        where r.hasCorkage = true
-        order by rv.createdAt desc, rv.reviewId desc
-    """)
-    List<CorkageReviewProjection> findAllCorkageReviewsOrderByLatest();
-
-    // 저장수순 (콜키지리뷰)
-    @Query("""
-        select
-            rv.reviewId as reviewId,
-            r.restaurantId as restaurantId,
-            r.name as restaurantName,
-            u.name as writer,
-            rv.content as content,
-            rv.rating as rating,
-            rv.createdAt as createdAt,
-            coalesce(rv.bookmarkCount, 0) as bookmarkCount
-        from Review rv
-          join rv.restaurant r
-          join rv.user u
-        where r.hasCorkage = true
-        order by coalesce(rv.bookmarkCount, 0) desc,
-                 rv.createdAt desc,
-                 rv.reviewId desc
-    """)
-    List<CorkageReviewProjection> findAllCorkageReviewsOrderByBookmark();
+    // 콜키지 리뷰 필터링
+    @Query(value = """
+        SELECT
+            rv.review_id AS reviewId,
+            r.restaurant_id AS restaurantId,
+            r.name AS restaurantName,
+            r.address AS restaurantAddress,
+            u.name AS writer,
+            rv.content AS content,
+            rv.rating AS rating,
+            rv.created_at AS createdAt,
+            COALESCE(rv.bookmark_count, 0) AS bookmarkCount
+        FROM review rv
+        JOIN restaurant r ON rv.restaurant_id = r.restaurant_id
+        JOIN user u ON rv.user_id = u.user_id
+        WHERE r.has_corkage = 1
+    
+          AND (
+                :keyword IS NULL OR :keyword = ''
+                OR r.name LIKE CONCAT('%', :keyword, '%')
+                OR rv.content LIKE CONCAT('%', :keyword, '%')
+          )
+    
+          AND (:sido IS NULL OR :sido = '' OR r.address LIKE CONCAT('%', :sido, '%'))
+          AND (:sigungu IS NULL OR :sigungu = '' OR r.address LIKE CONCAT('%', :sigungu, '%'))
+          AND (:dongRegex IS NULL OR :dongRegex = '' OR r.address REGEXP :dongRegex)
+    
+        ORDER BY
+          CASE WHEN :sort = 'BOOKMARK' THEN COALESCE(rv.bookmark_count, 0) END DESC,
+          rv.created_at DESC,
+          rv.review_id DESC
+    """, nativeQuery = true)
+    List<CorkageReviewProjection> searchCorkageReviews(
+            @Param("keyword") String keyword,
+            @Param("sido") String sido,
+            @Param("sigungu") String sigungu,
+            @Param("dongRegex") String dongRegex,
+            @Param("sort") String sort
+    );
 
     // 콜키지리뷰 저장수순 top5
     @Query(value = """
@@ -82,7 +82,7 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
         WHERE r.has_corkage = 1
         ORDER BY COALESCE(rv.bookmark_count, 0) DESC, rv.created_at DESC, rv.review_id DESC
         LIMIT :limit
-        """, nativeQuery = true)
+    """, nativeQuery = true)
     List<CorkageReviewProjection> findTopCorkageReviewsOrderByBookmark(@Param("limit") int limit);
 
 }

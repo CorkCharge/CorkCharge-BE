@@ -55,7 +55,7 @@ public class RestaurantController {
     @PostMapping("/new")
     public BaseResponse<List<GetHomeRestaurantResponse>> getNewRestaurant(
             @LoginUserId(required = false) Long userId,
-            @RequestBody UserLocationRequest request
+            @RequestBody GetNewRestaurantRequest request
     ) {
         return BaseResponse.ok(restaurantService.getNewRestaurants(userId, request));
     }

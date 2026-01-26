@@ -381,13 +381,24 @@ public class RestaurantService {
     }
 
     @Transactional(readOnly = true)
-    public List<GetHomeRestaurantResponse> getNewRestaurants(Long userId, UserLocationRequest req) {
+    public List<GetHomeRestaurantResponse> getNewRestaurants(Long userId, GetNewRestaurantRequest req) {
         LocalDateTime from = LocalDateTime.now().minusDays(NEW_RESTAURANT_DAYS);
+
+        String sido = (req == null || req.sido() == null) ? null : req.sido().trim();
+        String sigungu = (req == null || req.sigungu() == null) ? null : req.sigungu().trim();
+
+        String dongRegex = null;
+        if (req != null && req.dongList() != null && !req.dongList().isEmpty()) {
+            dongRegex = String.join("|", req.dongList());
+        }
 
         // 사용자 좌표가 있는 경우
         if (req.hasUserLocation()) {
             List<RestaurantDistanceProjection> rows =
-                    restaurantRepository.findNewRestaurantsWithDistance(from, req.lat(), req.lon());
+                    restaurantRepository.findNewRestaurantsWithDistanceAndRegion(
+                            from, req.lat(), req.lon(),
+                            sido, sigungu, dongRegex
+                    );
 
             Map<Long, Double> distanceMap = rows.stream()
                     .collect(Collectors.toMap(
@@ -414,7 +425,7 @@ public class RestaurantService {
         }
 
         // 사용자 좌표가 없는 경우
-        List<Restaurant> rows = restaurantRepository.findNewCorkageRestaurantsByCorkageCreatedAt(from);
+        List<Restaurant> rows = restaurantRepository.findNewCorkageRestaurantsWithRegion(from, sido, sigungu, dongRegex);
 
         List<Long> restaurantIds = rows.stream()
                 .map(Restaurant::getRestaurantId)
@@ -441,12 +452,19 @@ public class RestaurantService {
             throw new CustomException(CATEGORY_NOT_FOUND);
         }
 
+        String sido = (req == null || req.sido() == null) ? null : req.sido().trim();
+        String sigungu = (req == null || req.sigungu() == null) ? null : req.sigungu().trim();
+
+        String dongRegex = null;
+        if (req != null && req.dongList() != null && !req.dongList().isEmpty()) {
+            dongRegex = String.join("|", req.dongList());
+        }
+
         if (req.hasUserLocation()) {
             List<RestaurantDistanceProjection> rows =
-                    restaurantRepository.findCategoryRestaurantsWithDistance(
-                            req.category(),
-                            req.lat(),
-                            req.lon()
+                    restaurantRepository.findCategoryRestaurantsWithDistanceAndRegion(
+                            req.category(), req.lat(), req.lon(),
+                            sido, sigungu, dongRegex
                     );
 
             List<Long> restaurantIds = rows.stream()
@@ -469,7 +487,7 @@ public class RestaurantService {
 
         // 좌표 없는 경우
         List<Restaurant> rows =
-                restaurantRepository.findByHasCorkageTrueAndRawCategoryContainingOrderByBookmarkCountDesc(req.category());
+                restaurantRepository.findCategoryRestaurantsWithoutLocationWithRegion(req.category(), sido, sigungu, dongRegex);
 
         List<Long> restaurantsIds = rows.stream()
                 .map(Restaurant::getRestaurantId)
