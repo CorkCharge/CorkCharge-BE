@@ -83,6 +83,7 @@ public class RestaurantService {
     private final RestaurantDetailResponseMapper restaurantDetailResponseMapper;
     private final RestaurantListResponseMapper restaurantListResponseMapper;
     private final HomeRestaurantCardMapper homeRestaurantCardMapper;
+    private final SearchRestaurantResponseMapper searchRestaurantResponseMapper;
 
     private final RestaurantSummaryService restaurantSummaryService;
     private final HomeRestaurantResponseMapper homeRestaurantResponseMapper;
@@ -110,6 +111,90 @@ public class RestaurantService {
         RestaurantSummary summary = restaurantSummaryService.getSummary(restaurantId);
 
         return restaurantDetailResponseMapper.toResponse(summary);
+    }
+
+    @Transactional(readOnly = true)
+    public GetRestaurantSearchResponse searchRestaurants(
+            Long userId,
+            GetRestaurantSearchRequest req
+    ) {
+        if (req == null || req.keyword() == null || req.keyword().trim().isBlank()) {
+            return new GetRestaurantSearchResponse(0, List.of());
+        }
+
+        String keyword = req.keyword().trim();
+        System.out.println(keyword);
+        ClusterListSort sort = (req.sort() == null) ? ClusterListSort.PRICE_ASC : req.sort();
+
+        List<Long> restaurantIds = restaurantRepository.findIdsByNameOrAddressContains(keyword);
+        if (restaurantIds.isEmpty()) {
+            return new GetRestaurantSearchResponse(0, List.of());
+        }
+
+        List<Restaurant> restaurants = restaurantRepository.findAllById(restaurantIds);
+
+        List<CorkageStore> corkageStores =
+                corkageStoreRepository.findAllByRestaurantIdIn(restaurantIds);
+
+        Map<Long, CorkageStore> corkageMap = corkageStores.stream()
+                .collect(Collectors.toMap(
+                        cs -> cs.getRestaurant().getRestaurantId(),
+                        Function.identity(),
+                        (a, b) -> a
+                ));
+
+        Map<Long, String[]> imageMap =
+                imageRepository.findRestaurantMainImagesByRestaurantIds(restaurantIds)
+                        .stream()
+                        .collect(Collectors.groupingBy(
+                                Image::getTypeId,
+                                LinkedHashMap::new,
+                                Collectors.mapping(Image::getImageUrl, Collectors.toList())
+                        ))
+                        .entrySet()
+                        .stream()
+                        .collect(Collectors.toMap(
+                                Map.Entry::getKey,
+                                e -> e.getValue().toArray(new String[0])
+                        ));
+
+        // scrap
+        Set<Long> scrappedRestaurantIds = getScrappedRestaurantIds(userId, restaurantIds);
+
+        // 정렬
+        Comparator<Restaurant> comparator = switch (sort) {
+            case PRICE_ASC -> Comparator
+                    .comparingInt((Restaurant r) -> getComparableCorkagePrice(corkageMap.get(r.getRestaurantId())))
+                    .thenComparing(Restaurant::getRestaurantId, Comparator.reverseOrder());
+
+            case REVIEW_COUNT_DESC -> Comparator
+                    .comparingInt(Restaurant::getReviewCount).reversed()
+                    .thenComparing(Restaurant::getRestaurantId, Comparator.reverseOrder());
+
+            case RATING_DESC -> Comparator
+                    .comparingDouble((Restaurant r) -> safeDouble(r.getRating())).reversed()
+                    .thenComparing(Comparator.comparingInt((Restaurant r) -> r.getReviewCount()).reversed())
+                    .thenComparing(Restaurant::getRestaurantId, Comparator.reverseOrder());
+        };
+
+        List<GetRestaurantSearchResponse.Item> items = restaurants.stream()
+                .sorted(comparator)
+                .map(r -> {
+                    CorkageStore cs = corkageMap.get(r.getRestaurantId());
+
+                    boolean scrap = (userId != null)
+                            && scrappedRestaurantIds.contains(r.getRestaurantId());
+
+                    return searchRestaurantResponseMapper.toItem(
+                            r,
+                            cs, // null 가능
+                            imageMap.getOrDefault(r.getRestaurantId(), new String[0]),
+                            scrap
+                    );
+                })
+                .toList();
+
+        return new GetRestaurantSearchResponse(items.size(), items);
     }
 
     @Transactional
