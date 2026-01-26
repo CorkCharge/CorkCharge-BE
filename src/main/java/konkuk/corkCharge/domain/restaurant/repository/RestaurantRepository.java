@@ -233,6 +233,7 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
     SELECT
         r.restaurant_id AS restaurantId,
         r.name AS restaurantName,
+        r.address AS address,
         r.latitude AS latitude,
         r.longitude AS longitude,
     

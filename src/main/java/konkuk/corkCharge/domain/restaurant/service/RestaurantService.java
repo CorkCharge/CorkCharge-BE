@@ -251,6 +251,7 @@ public class RestaurantService {
                 .map(row -> new GetMapRestaurantPinResponse(
                         row.getRestaurantId(),
                         row.getRestaurantName(),
+                        row.getAddress(),
                         formatCorkagePrice(row.getCorkageType(), row.getCorkagePrice(), row.getMinMultiPrice()),
                         row.getLatitude(),
                         row.getLatitude()
