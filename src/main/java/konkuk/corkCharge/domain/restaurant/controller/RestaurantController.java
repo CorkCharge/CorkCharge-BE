@@ -29,6 +29,14 @@ public class RestaurantController {
         return BaseResponse.ok(restaurantService.getRestaurantDetail(restaurantId));
     }
 
+    @PostMapping("/search")
+    public BaseResponse<GetRestaurantSearchResponse> searchRestaurants(
+            @LoginUserId(required = false) Long userId,
+            @RequestBody GetRestaurantSearchRequest request
+    ) {
+        return BaseResponse.ok(restaurantService.searchRestaurants(userId, request));
+    }
+
     @PostMapping("/map")
     public BaseResponse<List<GetMapRestaurantPinResponse>> getMapCluster(
             @RequestBody GetMapRestaurantPinsRequest request
