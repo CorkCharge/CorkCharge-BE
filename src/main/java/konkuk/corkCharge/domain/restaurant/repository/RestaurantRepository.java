@@ -22,73 +22,130 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
     List<Restaurant> findByHasCorkageFalseAndBookmarkCountGreaterThanEqual(int count);
 
     @Query("""
+    select r.restaurantId
+      from Restaurant r
+     where lower(r.name) like lower(concat('%', :keyword, '%'))
+        or lower(r.address) like lower(concat('%', :keyword, '%'))
+""")
+    List<Long> findIdsByNameOrAddressContains(@Param("keyword") String keyword);
+
+    @Query("""
         SELECT r FROM Restaurant r
         WHERE (r.latitude IS NULL OR r.longitude IS NULL OR r.latitude = 0 OR r.longitude = 0)
         """)
     List<Restaurant> findRestaurantsWithoutValidCoordinates();
 
     // lat/lon 없을 때(그냥 2주 이내 최신순 콜키지 매장)
-    @Query("""
-        select r
-          from CorkageStore cs
-          join cs.restaurant r
-         where cs.createdAt >= :from
-           and r.hasCorkage = true
-         order by cs.createdAt desc, r.restaurantId desc
-    """)
-    List<Restaurant> findNewCorkageRestaurantsByCorkageCreatedAt(
-            @Param("from") LocalDateTime from
+    @Query(value = """
+        SELECT r.*
+        FROM restaurant r
+        JOIN corkage_store cs
+          ON cs.restaurant_id = r.restaurant_id
+        WHERE cs.created_at >= :from
+          AND r.has_corkage = 1
+        
+          AND (:sido IS NULL OR :sido = '' OR r.address LIKE CONCAT('%', :sido, '%'))
+          AND (:sigungu IS NULL OR :sigungu = '' OR r.address LIKE CONCAT('%', :sigungu, '%'))
+          AND (:dongRegex IS NULL OR :dongRegex = '' OR r.address REGEXP :dongRegex)
+        
+        ORDER BY cs.created_at DESC, r.restaurant_id DESC
+    """, nativeQuery = true)
+    List<Restaurant> findNewCorkageRestaurantsWithRegion(
+            @Param("from") LocalDateTime from,
+            @Param("sido") String sido,
+            @Param("sigungu") String sigungu,
+            @Param("dongRegex") String dongRegex
     );
 
     // lat/lon 있을 때: DB에서 distance(km) 계산해서 함께 반환
     @Query(value = """
-    SELECT
-        r.restaurant_id AS restaurantId,
-        ROUND(
-            ST_Distance_Sphere(
-                r.location,
-                ST_SRID(POINT(:lon, :lat), 4326)
-            ) / 1000,
-            1
-        ) AS distanceKm
-    FROM restaurant r
-      JOIN corkage_store cs
-        ON cs.restaurant_id = r.restaurant_id
-    WHERE cs.created_at >= :from
-      AND r.has_corkage = 1
-      AND ST_X(r.location) != 0 AND ST_Y(r.location) != 0
-    ORDER BY cs.created_at DESC, r.restaurant_id DESC
+        SELECT
+            r.restaurant_id AS restaurantId,
+            ROUND(
+                ST_Distance_Sphere(
+                    r.location,
+                    ST_SRID(POINT(:lon, :lat), 4326)
+                ) / 1000,
+                1
+            ) AS distanceKm
+        FROM restaurant r
+          JOIN corkage_store cs
+            ON cs.restaurant_id = r.restaurant_id
+        WHERE cs.created_at >= :from
+          AND r.has_corkage = 1
+          AND ST_X(r.location) != 0 AND ST_Y(r.location) != 0
+        
+          -- 지역 필터(옵션)
+          AND (:sido IS NULL OR :sido = '' OR r.address LIKE CONCAT('%', :sido, '%'))
+          AND (:sigungu IS NULL OR :sigungu = '' OR r.address LIKE CONCAT('%', :sigungu, '%'))
+          AND (:dongRegex IS NULL OR :dongRegex = '' OR r.address REGEXP :dongRegex)
+        
+        ORDER BY cs.created_at DESC, r.restaurant_id DESC
     """, nativeQuery = true)
-    List<RestaurantDistanceProjection> findNewRestaurantsWithDistance(
+    List<RestaurantDistanceProjection> findNewRestaurantsWithDistanceAndRegion(
             @Param("from") LocalDateTime from,
             @Param("lat") double lat,
-            @Param("lon") double lon
+            @Param("lon") double lon,
+            @Param("sido") String sido,
+            @Param("sigungu") String sigungu,
+            @Param("dongRegex") String dongRegex
     );
 
     // 사용자 좌표 없을 때(저장 수 순) : 카테고리별 매장 리스트
-    List<Restaurant> findByHasCorkageTrueAndRawCategoryContainingOrderByBookmarkCountDesc(String category);
+    @Query(value = """
+        SELECT *
+        FROM restaurant r
+        WHERE r.has_corkage = 1
+          AND r.raw_category LIKE CONCAT('%', :category, '%')
+        
+          -- 시/도
+          AND (:sido IS NULL OR :sido = '' OR r.address LIKE CONCAT('%', :sido, '%'))
+        
+          -- 시/군/구
+          AND (:sigungu IS NULL OR :sigungu = '' OR r.address LIKE CONCAT('%', :sigungu, '%'))
+        
+          -- 동 (단일 dong)
+          AND (:dong IS NULL OR :dong = '' OR r.address LIKE CONCAT('%', :dong, '%'))
+        
+        ORDER BY r.bookmark_count DESC
+    """, nativeQuery = true)
+    List<Restaurant> findCategoryRestaurantsWithoutLocationWithRegion(
+            @Param("category") String category,
+            @Param("sido") String sido,
+            @Param("sigungu") String sigungu,
+            @Param("dong") String dong
+    );
 
     // 사용자 좌표 있을 때(저장 수 순) : 카테고리별 매장 리스트
     @Query(value = """
-    SELECT
-        r.restaurant_id AS restaurantId,
-        ROUND(
-            ST_Distance_Sphere(
-                r.location,
-                ST_SRID(POINT(:lon, :lat), 4326)
-            ) / 1000,
-            1
-        ) AS distanceKm
-    FROM restaurant r
-    WHERE r.has_corkage = 1
-      AND r.raw_category LIKE CONCAT('%', :category, '%')
-      AND ST_X(r.location) != 0 AND ST_Y(r.location) != 0
-    ORDER BY distanceKm ASC, r.bookmark_count DESC
+        SELECT
+            r.restaurant_id AS restaurantId,
+            ROUND(
+                ST_Distance_Sphere(
+                    r.location,
+                    ST_SRID(POINT(:lon, :lat), 4326)
+                ) / 1000,
+                1
+            ) AS distanceKm
+        FROM restaurant r
+        WHERE r.has_corkage = 1
+          AND r.raw_category LIKE CONCAT('%', :category, '%')
+          AND ST_X(r.location) != 0 AND ST_Y(r.location) != 0
+        
+          -- ✅ 지역 필터 (null/빈값이면 무시)
+          AND (:sido IS NULL OR :sido = '' OR r.address LIKE CONCAT('%', :sido, '%'))
+          AND (:sigungu IS NULL OR :sigungu = '' OR r.address LIKE CONCAT('%', :sigungu, '%'))
+          AND (:dongRegex IS NULL OR :dongRegex = '' OR r.address REGEXP :dongRegex)
+        
+        ORDER BY distanceKm ASC, r.bookmark_count DESC
     """, nativeQuery = true)
-    List<RestaurantDistanceProjection> findCategoryRestaurantsWithDistance(
+    List<RestaurantDistanceProjection> findCategoryRestaurantsWithDistanceAndRegion(
             @Param("category") String category,
             @Param("lat") double lat,
-            @Param("lon") double lon
+            @Param("lon") double lon,
+            @Param("sido") String sido,
+            @Param("sigungu") String sigungu,
+            @Param("dongRegex") String dongRegex
     );
 
     // 사용자 위치 기준 3Km 이내에 있는 모든 매장 : 가까운 매장 리스트
@@ -225,6 +282,7 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
     SELECT
         r.restaurant_id AS restaurantId,
         r.name AS restaurantName,
+        r.address AS address,
         r.latitude AS latitude,
         r.longitude AS longitude,
     

@@ -12,6 +12,7 @@ import konkuk.corkCharge.domain.restaurant.service.RestaurantSummaryService;
 import konkuk.corkCharge.domain.review.domain.Review;
 import konkuk.corkCharge.domain.review.dto.mapper.GetRestaurantReviewResponseMapper;
 import konkuk.corkCharge.domain.review.dto.request.CorkageReviewSort;
+import konkuk.corkCharge.domain.review.dto.request.GetCorkageReviewRequest;
 import konkuk.corkCharge.domain.review.dto.request.PatchUpdateReviewRequest;
 import konkuk.corkCharge.domain.review.dto.request.PostReviewCreateRequest;
 import konkuk.corkCharge.domain.review.dto.response.GetCorkageReviewResponse;
@@ -102,26 +103,38 @@ public class ReviewService {
     }
 
     @Transactional(readOnly = true)
-    public List<GetCorkageReviewResponse> getCorkageReviews(Long userId, CorkageReviewSort sort) {
+    public List<GetCorkageReviewResponse> getCorkageReviews(Long userId, GetCorkageReviewRequest req) {
 
-        List<CorkageReviewProjection> rows = switch (sort) {
-            case LATEST -> reviewRepository.findAllCorkageReviewsOrderByLatest();
-            case BOOKMARK -> reviewRepository.findAllCorkageReviewsOrderByBookmark();
-        };
+        CorkageReviewSort sort = (req == null || req.sort() == null) ? CorkageReviewSort.BOOKMARK : req.sort();
 
-        if (rows.isEmpty())
-            return List.of();
+        String keyword = (req == null || req.keyword() == null) ? null : req.keyword().trim();
+        String sido = (req == null) ? null : req.sido();
+        String sigungu = (req == null) ? null : req.sigungu();
+
+        String dongRegex = null;
+        if (req != null && req.dongList() != null && !req.dongList().isEmpty()) {
+            dongRegex = String.join("|", req.dongList());
+        }
+
+        List<CorkageReviewProjection> rows = reviewRepository.searchCorkageReviews(
+                keyword,
+                sido,
+                sigungu,
+                dongRegex,
+                sort.name()
+        );
+
+        if (rows.isEmpty()) return List.of();
 
         List<Long> reviewIds = rows.stream()
                 .map(CorkageReviewProjection::getReviewId)
                 .toList();
 
-        Map<Long, List<String>> imageMap =
-                imageRepository.findReviewImagesByReviewIds(reviewIds).stream()
-                        .collect(Collectors.groupingBy(
-                                Image::getTypeId,
-                                Collectors.mapping(Image::getImageUrl, Collectors.toList())
-                        ));
+        Map<Long, List<String>> imageMap = imageRepository.findReviewImagesByReviewIds(reviewIds).stream()
+                .collect(Collectors.groupingBy(
+                        Image::getTypeId,
+                        Collectors.mapping(Image::getImageUrl, Collectors.toList())
+                ));
 
         Set<Long> scrappedReviewIds = getScrappedReviewIds(userId, reviewIds);
 
