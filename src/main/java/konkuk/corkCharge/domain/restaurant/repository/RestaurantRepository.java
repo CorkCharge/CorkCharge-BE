@@ -310,7 +310,7 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
       AND (:keyword IS NULL OR :keyword = '' OR r.name LIKE CONCAT('%', :keyword, '%'))
     
       -- 지역(시/도, 시/군/구)
-      AND (r.address LIKE CONCAT('%', :sido, '%'))
+      AND (:sido IS NULL OR :sido = '' OR r.address LIKE CONCAT('%', :sido, '%'))
       AND (:sigungu IS NULL OR :sigungu = '' OR r.address LIKE CONCAT('%', :sigungu, '%'))
       -- 동 리스트(여러 개 OR) => REGEXP로 처리
       AND (:dongRegex IS NULL OR :dongRegex = '' OR r.address REGEXP :dongRegex)
