@@ -34,6 +34,7 @@ public class ClusterListResponseMapper {
                 corkagePrice,
                 corkageOptions,
                 imageUrls == null ? new String[0] : imageUrls,
+                restaurant.getBookmarkCount(),
                 scrap
         );
     }
