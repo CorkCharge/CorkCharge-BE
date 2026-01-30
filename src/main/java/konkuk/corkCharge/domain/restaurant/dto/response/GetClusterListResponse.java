@@ -15,6 +15,7 @@ public record GetClusterListResponse(
             String corkagePrice,
             List<String> corkageOptions,
             String[] imageUrls,
+            Integer bookmarkCount,
             boolean scrap
     ) {}
 }

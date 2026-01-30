@@ -9,7 +9,7 @@ public record GetRestaurantDetailResponse(
         String phone,
         Double rating,
         int reviewCount,
-        String mainImageUrl,
+        List<String> mainImageUrl,
         String menuImageUrl,
         String corkagePrice,
         List<String> corkageOptions,

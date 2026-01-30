@@ -67,7 +67,7 @@ public class RestaurantService {
             "회",
             "이탈리안",
             "초밥",
-            "육류,고기"
+            "육류,고기요리"
     );
 
     private static final int NEW_RESTAURANT_DAYS = 14;
@@ -253,7 +253,7 @@ public class RestaurantService {
                         row.getAddress(),
                         formatCorkagePrice(row.getCorkageType(), row.getCorkagePrice(), row.getMinMultiPrice()),
                         row.getLatitude(),
-                        row.getLatitude()
+                        row.getLongitude()
                 ))
                 .toList();
     }

@@ -23,6 +23,8 @@ public class RestaurantDetailResponseMapper {
                 summary.getOptionEtcContent()
         );
 
+        List<String> mainImageUrls = summary.getMainImages() == null ? List.of() : summary.getMainImages();
+
         return new GetRestaurantDetailResponse(
                 restaurantId,
                 summary.getName(),
@@ -30,7 +32,7 @@ public class RestaurantDetailResponseMapper {
                 summary.getPhone(),
                 summary.getAvgRating(),
                 summary.getReviewCount() != null ? summary.getReviewCount() : 0,
-                summary.getMainImageUrl(),
+                mainImageUrls,
                 summary.getMenuImageUrl(),
                 summary.getCorkagePrice(),
                 corkageOptions,
