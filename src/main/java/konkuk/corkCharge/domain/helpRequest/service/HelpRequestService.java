@@ -77,6 +77,7 @@ public class HelpRequestService {
         );
     }
 
+    @Transactional(readOnly = true)
     public GetHelpRequestRestaurantsResponse getHelpRequestRestaurants(
             GetHelpRequestRestaurantsRequest request
     ) {
