@@ -34,7 +34,7 @@ public class HelpRequestController {
         return BaseResponse.ok(null);
     }
 
-    @GetMapping("/restaurants")
+    @PostMapping("/restaurants")
     public BaseResponse<GetHelpRequestRestaurantsResponse> getHelpRequestRestaurants(
             @RequestBody(required = false) GetHelpRequestRestaurantsRequest request
     ) {
