@@ -31,6 +31,7 @@ public class HomeRestaurantResponseMapper {
                 distanceKm,
                 summary.getMainImageUrl(),
                 summary.getOpeningHours(),
+                summary.getBookmarkCount(),
                 scrap
         );
     }
