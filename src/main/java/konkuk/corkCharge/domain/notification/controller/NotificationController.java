@@ -1,6 +1,7 @@
 package konkuk.corkCharge.domain.notification.controller;
 
 import konkuk.corkCharge.domain.notification.dto.request.PostTestNotificationRequest;
+import konkuk.corkCharge.domain.notification.dto.response.NotificationDetailResponse;
 import konkuk.corkCharge.domain.notification.dto.response.NotificationListResponse;
 import konkuk.corkCharge.domain.notification.service.NotificationService;
 import konkuk.corkCharge.global.annotation.LoginUserId;
@@ -24,8 +25,17 @@ public class NotificationController {
         );
     }
 
+    @GetMapping("/{notificationId}")
+    public BaseResponse<NotificationDetailResponse> getNotificationDetail(
+            @PathVariable Long notificationId
+    ) {
+        return BaseResponse.ok(
+                notificationService.getNotificationDetail(notificationId)
+        );
+    }
+
     @PostMapping
-    public BaseResponse<Void> createTestNotification(
+    public BaseResponse<Void> createTestNotification( // 테스트용
             @RequestBody PostTestNotificationRequest request
     ) {
         notificationService.createTestNotification(request);
