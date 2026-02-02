@@ -1,8 +1,7 @@
 package konkuk.corkCharge.domain.notification.service;
 
-import konkuk.corkCharge.domain.notification.dto.NotificationListItemResponse;
-import konkuk.corkCharge.domain.notification.dto.NotificationListResponse;
-import konkuk.corkCharge.domain.notification.entity.Notification;
+import konkuk.corkCharge.domain.notification.dto.response.NotificationListItemResponse;
+import konkuk.corkCharge.domain.notification.dto.response.NotificationListResponse;
 import konkuk.corkCharge.domain.notification.entity.NotificationUser;
 import konkuk.corkCharge.domain.notification.repository.NotificationRepository;
 import konkuk.corkCharge.domain.notification.repository.NotificationUserRepository;

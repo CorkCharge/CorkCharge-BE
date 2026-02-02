@@ -1,4 +1,4 @@
-package konkuk.corkCharge.domain.notification.dto;
+package konkuk.corkCharge.domain.notification.dto.response;
 
 import java.util.List;
 

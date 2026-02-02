@@ -1,6 +1,6 @@
 package konkuk.corkCharge.domain.notification.controller;
 
-import konkuk.corkCharge.domain.notification.dto.NotificationListResponse;
+import konkuk.corkCharge.domain.notification.dto.response.NotificationListResponse;
 import konkuk.corkCharge.domain.notification.service.NotificationService;
 import konkuk.corkCharge.global.annotation.LoginUserId;
 import konkuk.corkCharge.global.response.BaseResponse;
