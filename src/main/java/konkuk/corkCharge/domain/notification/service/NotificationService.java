@@ -21,13 +21,13 @@ import static konkuk.corkCharge.global.response.status.BaseExceptionResponseStat
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
 public class NotificationService {
 
     private final NotificationRepository notificationRepository;
     private final UserRepository userRepository;
     private final NotificationUserRepository notificationUserRepository;
 
+    @Transactional(readOnly = true)
     public NotificationListResponse getMyNotifications(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(()-> new CustomException(USER_NOT_FOUND));
@@ -49,6 +49,7 @@ public class NotificationService {
         return new NotificationListResponse(notifications);
     }
 
+    @Transactional
     public void createTestNotification(PostTestNotificationRequest request) {
 
         Notification notification = notificationRepository.save(

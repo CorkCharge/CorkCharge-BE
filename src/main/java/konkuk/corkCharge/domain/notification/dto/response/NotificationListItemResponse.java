@@ -4,19 +4,20 @@ import konkuk.corkCharge.domain.notification.entity.Notification;
 import konkuk.corkCharge.domain.notification.entity.NotificationType;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 public record NotificationListItemResponse(
         Long notificationId,
         NotificationType type,
         String title,
-        LocalDate createdAt
+        LocalDateTime createdAt
 ) {
     public static NotificationListItemResponse from(Notification notification) {
         return new NotificationListItemResponse(
                 notification.getId(),
                 notification.getType(),
                 notification.getTitle(),
-                notification.getCreatedAt().toLocalDate()
+                notification.getCreatedAt()
         );
     }
 }
