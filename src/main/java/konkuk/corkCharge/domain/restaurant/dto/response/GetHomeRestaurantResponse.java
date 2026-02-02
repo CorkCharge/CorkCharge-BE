@@ -13,6 +13,7 @@ public record GetHomeRestaurantResponse(
         Double distance,          // km기준, lat/lon 없으면 null
         String mainImageUrls,
         String openingHours,
+        Integer bookmarkCount,
         boolean scrap
 ) {
 }
