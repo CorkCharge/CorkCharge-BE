@@ -104,7 +104,8 @@ public enum BaseExceptionResponseStatus implements ResponseStatus {
     /**
      * 170000 : notification
      */
-    NOTIFICATION_NOT_FOUND(170000, "해당 알림을 찾을 수 없습니다.")
+    NOTIFICATION_NOT_FOUND(170000, "해당 알림을 찾을 수 없습니다."),
+    NOTIFICATION_TYPE_NOT_FOUND(170001, "해당 타입을 찾을 수 없습니다.")
     ;
 
     private final boolean success = false;

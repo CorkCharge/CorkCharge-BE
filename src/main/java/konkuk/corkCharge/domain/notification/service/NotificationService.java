@@ -8,6 +8,7 @@ import konkuk.corkCharge.domain.notification.dto.response.NotificationDetailResp
 import konkuk.corkCharge.domain.notification.dto.response.NotificationListItemResponse;
 import konkuk.corkCharge.domain.notification.dto.response.NotificationListResponse;
 import konkuk.corkCharge.domain.notification.entity.Notification;
+import konkuk.corkCharge.domain.notification.entity.NotificationType;
 import konkuk.corkCharge.domain.notification.entity.NotificationUser;
 import konkuk.corkCharge.domain.notification.repository.NotificationRepository;
 import konkuk.corkCharge.domain.notification.repository.NotificationUserRepository;
@@ -21,8 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import static konkuk.corkCharge.global.response.status.BaseExceptionResponseStatus.NOTIFICATION_NOT_FOUND;
-import static konkuk.corkCharge.global.response.status.BaseExceptionResponseStatus.USER_NOT_FOUND;
+import static konkuk.corkCharge.global.response.status.BaseExceptionResponseStatus.*;
 
 @Service
 @RequiredArgsConstructor
@@ -72,6 +72,10 @@ public class NotificationService {
 
     @Transactional
     public void createTestNotification(PostTestNotificationRequest request) {
+    // Todo 테스트 전용 기능이므로 예외처리가 꼼꼼하게 되어 있지 않습니다.
+        if (!NotificationType.isValid(request.type())) {
+            throw new CustomException(NOTIFICATION_TYPE_NOT_FOUND);
+        }
 
         Notification notification = notificationRepository.save(
                 Notification.builder()
@@ -96,7 +100,7 @@ public class NotificationService {
         }
 
         User targetUser = userRepository.findById(request.targetUserId())
-                .orElseThrow();
+                .orElseThrow(()->new CustomException(USER_NOT_FOUND));
 
         notificationUserRepository.save(
                 NotificationUser.builder()
