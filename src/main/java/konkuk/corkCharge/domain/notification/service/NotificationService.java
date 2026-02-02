@@ -1,7 +1,9 @@
 package konkuk.corkCharge.domain.notification.service;
 
+import konkuk.corkCharge.domain.notification.dto.request.PostTestNotificationRequest;
 import konkuk.corkCharge.domain.notification.dto.response.NotificationListItemResponse;
 import konkuk.corkCharge.domain.notification.dto.response.NotificationListResponse;
+import konkuk.corkCharge.domain.notification.entity.Notification;
 import konkuk.corkCharge.domain.notification.entity.NotificationUser;
 import konkuk.corkCharge.domain.notification.repository.NotificationRepository;
 import konkuk.corkCharge.domain.notification.repository.NotificationUserRepository;
@@ -45,5 +47,40 @@ public class NotificationService {
                         .toList();
 
         return new NotificationListResponse(notifications);
+    }
+
+    public void createTestNotification(PostTestNotificationRequest request) {
+
+        Notification notification = notificationRepository.save(
+                Notification.builder()
+                        .type(request.type())
+                        .title(request.title())
+                        .content(request.content())
+                        .build()
+        );
+
+        if (Boolean.TRUE.equals(request.sendToAll())) {
+            List<User> users = userRepository.findAll();
+
+            List<NotificationUser> notificationUsers = users.stream()
+                    .map(user -> NotificationUser.builder()
+                            .notification(notification)
+                            .user(user)
+                            .build())
+                    .toList();
+
+            notificationUserRepository.saveAll(notificationUsers);
+            return;
+        }
+
+        User targetUser = userRepository.findById(request.targetUserId())
+                .orElseThrow();
+
+        notificationUserRepository.save(
+                NotificationUser.builder()
+                        .notification(notification)
+                        .user(targetUser)
+                        .build()
+        );
     }
 }

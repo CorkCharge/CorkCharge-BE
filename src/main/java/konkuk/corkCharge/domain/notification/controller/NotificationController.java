@@ -1,13 +1,12 @@
 package konkuk.corkCharge.domain.notification.controller;
 
+import konkuk.corkCharge.domain.notification.dto.request.PostTestNotificationRequest;
 import konkuk.corkCharge.domain.notification.dto.response.NotificationListResponse;
 import konkuk.corkCharge.domain.notification.service.NotificationService;
 import konkuk.corkCharge.global.annotation.LoginUserId;
 import konkuk.corkCharge.global.response.BaseResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/notifications")
@@ -23,5 +22,13 @@ public class NotificationController {
         return BaseResponse.ok(
                 notificationService.getMyNotifications(userId)
         );
+    }
+
+    @PostMapping
+    public BaseResponse<Void> createTestNotification(
+            @RequestBody PostTestNotificationRequest request
+    ) {
+        notificationService.createTestNotification(request);
+        return BaseResponse.ok(null);
     }
 }
