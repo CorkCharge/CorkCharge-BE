@@ -1,6 +1,10 @@
 package konkuk.corkCharge.domain.notification.service;
 
+import konkuk.corkCharge.domain.image.domain.Image;
+import konkuk.corkCharge.domain.image.domain.ImageCategory;
+import konkuk.corkCharge.domain.image.repository.ImageRepository;
 import konkuk.corkCharge.domain.notification.dto.request.PostTestNotificationRequest;
+import konkuk.corkCharge.domain.notification.dto.response.NotificationDetailResponse;
 import konkuk.corkCharge.domain.notification.dto.response.NotificationListItemResponse;
 import konkuk.corkCharge.domain.notification.dto.response.NotificationListResponse;
 import konkuk.corkCharge.domain.notification.entity.Notification;
@@ -17,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import static konkuk.corkCharge.global.response.status.BaseExceptionResponseStatus.NOTIFICATION_NOT_FOUND;
 import static konkuk.corkCharge.global.response.status.BaseExceptionResponseStatus.USER_NOT_FOUND;
 
 @Service
@@ -26,6 +31,7 @@ public class NotificationService {
     private final NotificationRepository notificationRepository;
     private final UserRepository userRepository;
     private final NotificationUserRepository notificationUserRepository;
+    private final ImageRepository imageRepository;
 
     @Transactional(readOnly = true)
     public NotificationListResponse getMyNotifications(Long userId) {
@@ -47,6 +53,21 @@ public class NotificationService {
                         .toList();
 
         return new NotificationListResponse(notifications);
+    }
+
+    @Transactional(readOnly = true)
+    public NotificationDetailResponse getNotificationDetail(Long notificationId) {
+
+        Notification notification = notificationRepository.findById(notificationId)
+                .orElseThrow(()->new CustomException(NOTIFICATION_NOT_FOUND));
+
+        List<String> imageUrls =
+                imageRepository.findUrlsByCategoryAndTypeId(
+                        ImageCategory.NOTIFICATION,
+                        notificationId
+                );
+
+        return NotificationDetailResponse.from(notification, imageUrls);
     }
 
     @Transactional

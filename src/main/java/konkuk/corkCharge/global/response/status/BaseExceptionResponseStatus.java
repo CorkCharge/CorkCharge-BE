@@ -1,5 +1,6 @@
 package konkuk.corkCharge.global.response.status;
 
+import konkuk.corkCharge.domain.notification.entity.Notification;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
@@ -98,7 +99,12 @@ public enum BaseExceptionResponseStatus implements ResponseStatus {
      */
     ALREADY_COMPLETED_HELP_REQUEST(160000, "이미 완료한 요청입니다."),
     HELP_REQUEST_NOT_FOUND(160001, "기존 요청을 찾을 수 없습니다."),
-    HELP_REQUEST_FORBIDDEN(160002, "이 내역에 대한 사용자의 접근 권한이 없습니다.")
+    HELP_REQUEST_FORBIDDEN(160002, "이 내역에 대한 사용자의 접근 권한이 없습니다."),
+
+    /**
+     * 170000 : notification
+     */
+    NOTIFICATION_NOT_FOUND(170000, "해당 알림을 찾을 수 없습니다.")
     ;
 
     private final boolean success = false;
