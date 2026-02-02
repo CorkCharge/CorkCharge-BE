@@ -10,7 +10,8 @@ public enum ImageCategory {
     REVIEW("리뷰"),
     TIP("팁"),
     CORKAGE("콜키지"),
-    USER("유저")
+    USER("유저"),
+    NOTIFICATION("알림")
     ;
 
     private final String imageCategory;

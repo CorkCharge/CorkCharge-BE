@@ -84,6 +84,7 @@ public class S3ImageService {
             case TIP -> "tip";
             case CORKAGE -> "corkage";
             case USER -> "user";
+            case NOTIFICATION -> "notification";
         };
     }
 
