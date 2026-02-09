@@ -13,7 +13,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class RestaurantDetailResponseMapper {
 
-    public GetRestaurantDetailResponse toResponse(RestaurantSummary summary) {
+    public GetRestaurantDetailResponse toResponse(RestaurantSummary summary, boolean scrap) {
 
         Long restaurantId = summary.getRestaurantId();
 
@@ -40,7 +40,8 @@ public class RestaurantDetailResponseMapper {
                 summary.getPairingAlcohol(),
                 summary.getPairingDescription(),
                 summary.getPairingImageUrl(),
-                summary.getOpeningHours()
+                summary.getOpeningHours(),
+                scrap
         );
     }
 

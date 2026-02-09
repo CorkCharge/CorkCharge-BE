@@ -22,6 +22,7 @@ public interface BookmarkRepository extends JpaRepository<Bookmark, Long> {
             Long targetId
     );
 
+    // scrap bulk 조회
     @Query("""
         select b
           from Bookmark b
@@ -33,6 +34,13 @@ public interface BookmarkRepository extends JpaRepository<Bookmark, Long> {
             @Param("userId") Long userId,
             @Param("targetType") BookmarkTargetType targetType,
             @Param("targetIds") List<Long> targetIds
+    );
+
+    // scrap 단건 조회(매장 상세 조회)
+    boolean existsByUser_UserIdAndTargetTypeAndTargetId(
+            Long userId,
+            BookmarkTargetType targetType,
+            Long targetId
     );
 
 }
