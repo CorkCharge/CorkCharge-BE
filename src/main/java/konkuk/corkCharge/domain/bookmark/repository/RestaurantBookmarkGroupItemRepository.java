@@ -1,6 +1,7 @@
 package konkuk.corkCharge.domain.bookmark.repository;
 
 import konkuk.corkCharge.domain.bookmark.domain.Bookmark;
+import konkuk.corkCharge.domain.bookmark.domain.BookmarkTargetType;
 import konkuk.corkCharge.domain.bookmark.domain.RestaurantBookmarkGroupItem;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -15,6 +16,11 @@ public interface RestaurantBookmarkGroupItemRepository extends JpaRepository<Res
     long countByBookmark_Id(Long bookmarkId);
     void deleteAllByGroup_Id(Long groupId);
     int countByGroup_Id(Long groupId);
+    boolean existsByGroup_IdAndBookmark_TargetTypeAndBookmark_TargetId(
+            Long groupId,
+            BookmarkTargetType targetType,
+            Long targetId
+    );
     boolean existsByBookmark_IdAndGroup_Id(Long bookmarkId, Long groupId);
 
     @Query(value = """
