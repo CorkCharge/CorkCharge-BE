@@ -24,9 +24,10 @@ public class RestaurantController {
 
     @GetMapping("/{restaurantId}")
     public BaseResponse<GetRestaurantDetailResponse> getRestaurantDetail(
+            @LoginUserId(required = false) Long userId,
             @PathVariable(name = "restaurantId") Long restaurantId
     ) {
-        return BaseResponse.ok(restaurantService.getRestaurantDetail(restaurantId));
+        return BaseResponse.ok(restaurantService.getRestaurantDetail(userId, restaurantId));
     }
 
     @PostMapping("/search")

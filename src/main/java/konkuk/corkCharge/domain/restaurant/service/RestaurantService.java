@@ -104,13 +104,20 @@ public class RestaurantService {
     }
 
     @Transactional(readOnly = true)
-    public GetRestaurantDetailResponse getRestaurantDetail(Long restaurantId) {
+    public GetRestaurantDetailResponse getRestaurantDetail(Long userId, Long restaurantId) {
         restaurantRepository.findById(restaurantId)
                 .orElseThrow(() -> new CustomException(RESTAURANT_NOT_FOUND));
 
         RestaurantSummary summary = restaurantSummaryService.getSummary(restaurantId);
 
-        return restaurantDetailResponseMapper.toResponse(summary);
+        boolean scrap = false;
+        if (userId != null) {
+            scrap = bookmarkRepository.existsByUser_UserIdAndTargetTypeAndTargetId(
+                    userId, RESTAURANT, restaurantId
+            );
+        }
+
+        return restaurantDetailResponseMapper.toResponse(summary, scrap);
     }
 
     @Transactional(readOnly = true)

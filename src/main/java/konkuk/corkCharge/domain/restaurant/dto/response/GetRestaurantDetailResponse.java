@@ -17,6 +17,7 @@ public record GetRestaurantDetailResponse(
         String pairingAlcohol,
         String pairingDescription,
         String pairingImageUrl,
-        String openingHours
+        String openingHours,
+        boolean scrap
 ) {
 }
