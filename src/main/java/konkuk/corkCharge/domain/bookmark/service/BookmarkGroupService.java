@@ -3,10 +3,7 @@ package konkuk.corkCharge.domain.bookmark.service;
 import konkuk.corkCharge.domain.bookmark.domain.*;
 import konkuk.corkCharge.domain.bookmark.dto.request.PostBookmarkGroupRequest;
 import konkuk.corkCharge.domain.bookmark.dto.request.PutBookmarkGroupRequest;
-import konkuk.corkCharge.domain.bookmark.dto.response.GetBookmarkGroupDetailResponse;
-import konkuk.corkCharge.domain.bookmark.dto.response.GetBookmarkGroupListResponse;
-import konkuk.corkCharge.domain.bookmark.dto.response.PostBookmarkGroupResponse;
-import konkuk.corkCharge.domain.bookmark.dto.response.PutBookmarkGroupResponse;
+import konkuk.corkCharge.domain.bookmark.dto.response.*;
 import konkuk.corkCharge.domain.bookmark.repository.BookmarkRepository;
 import konkuk.corkCharge.domain.bookmark.repository.RestaurantBookmarkGroupItemRepository;
 import konkuk.corkCharge.domain.bookmark.repository.RestaurantBookmarkGroupRepository;
@@ -309,5 +306,55 @@ public class BookmarkGroupService {
     private String formatCorkagePrice(CorkageStore store) {
         if (store.getCorkagePrice() == null) return null;
         return "병당 " + store.getCorkagePrice() + "원";
+    }
+
+    public GetRestaurantBookmarkGroupListResponse getBookmarkGroupsByRestaurant(
+            Long userId,
+            Long restaurantId
+    ) {
+        if(!userRepository.findById(userId).isPresent()) {
+            throw new CustomException(USER_NOT_FOUND);
+        }
+        if (!restaurantRepository.existsById(restaurantId)) {
+            throw new CustomException(RESTAURANT_NOT_FOUND);
+        }
+
+        // 유저의 모든 그룹 조회 (정렬 포함)
+        List<RestaurantBookmarkGroup> groups =
+                groupRepository.findAllByUser_UserIdOrderByDisplayOrderAsc(userId);
+
+        // 그룹별 storedFlag + storeCount 계산
+        List<GetRestaurantBookmarkGroupItemResponse> groupResponses =
+                groups.stream()
+                        .map(group -> {
+                            boolean storedFlag =
+                                    restaurantBookmarkGroupItemRepository
+                                            .existsByGroup_IdAndBookmark_TargetTypeAndBookmark_TargetId(
+                                                    group.getId(),
+                                                    BookmarkTargetType.RESTAURANT,
+                                                    restaurantId
+                                            );
+
+                            int storeCount =
+                                    restaurantBookmarkGroupItemRepository.countByGroup_Id(group.getId());
+
+                            return new GetRestaurantBookmarkGroupItemResponse(
+                                    group.getId(),
+                                    group.getName(),
+                                    group.getColor(),
+                                    group.getVisibility(),
+                                    storedFlag,
+                                    storeCount,
+                                    group.getCreatedAt(),
+                                    group.getUpdatedAt()
+                            );
+                        })
+                        .toList();
+
+        // 최종 응답
+        return new GetRestaurantBookmarkGroupListResponse(
+                groupResponses.size(),
+                groupResponses
+        );
     }
 }
