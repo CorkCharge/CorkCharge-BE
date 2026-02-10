@@ -309,14 +309,19 @@ public class BookmarkGroupService {
     }
 
     public GetRestaurantBookmarkGroupListResponse getBookmarkGroupsByRestaurant(
-            User user,
+            Long userId,
             Long restaurantId
     ) {
+        if(!userRepository.findById(userId).isPresent()) {
+            throw new CustomException(USER_NOT_FOUND);
+        }
+        if (!restaurantRepository.existsById(restaurantId)) {
+            throw new CustomException(RESTAURANT_NOT_FOUND);
+        }
+
         // 유저의 모든 그룹 조회 (정렬 포함)
         List<RestaurantBookmarkGroup> groups =
-                groupRepository.findAllByUser_UserIdOrderByDisplayOrderAsc(
-                        user.getUserId()
-                );
+                groupRepository.findAllByUser_UserIdOrderByDisplayOrderAsc(userId);
 
         // 그룹별 storedFlag + storeCount 계산
         List<GetRestaurantBookmarkGroupItemResponse> groupResponses =
