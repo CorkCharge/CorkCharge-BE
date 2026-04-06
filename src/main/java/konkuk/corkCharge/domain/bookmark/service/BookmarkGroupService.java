@@ -95,9 +95,9 @@ public class BookmarkGroupService {
             throw new CustomException(BAD_REQUEST);
         }
 
-        // 기존 이름과 완전히 동일한 경우
-        if (group.getName().equals(request.name())) {
-            throw new CustomException(GROUP_NAME_SAME_AS_BEFORE);
+        // 기존의 내용과 전체 동일할 경우에만 예외 터뜨릴 것(name, color, visibility)
+        if (group.getName().equals(request.name()) && group.getColor().equals(request.color()) && group.getVisibility() == request.visibility()) {
+            throw new CustomException(GROUP_CONTENTS_SAME_AS_BEFORE);
         }
 
         // 다른 그룹이 이미 사용 중인 이름인 경우
