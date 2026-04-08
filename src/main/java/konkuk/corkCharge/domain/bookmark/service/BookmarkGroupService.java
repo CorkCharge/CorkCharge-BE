@@ -96,13 +96,14 @@ public class BookmarkGroupService {
         }
 
         // 기존의 내용과 전체 동일할 경우에만 예외 터뜨릴 것(name, color, visibility)
-        if (group.getName().equals(request.name()) && group.getColor().equals(request.color()) && group.getVisibility() == request.visibility()) {
+        if (group.getName().equals(request.name())
+                && group.getColor().equals(request.color())
+                && group.getVisibility() == request.visibility()) {
             throw new CustomException(GROUP_CONTENTS_SAME_AS_BEFORE);
         }
 
-        // TODO 얘가 본인까지도 포함해서 예외 터뜨리는 것 같음.
         // 다른 그룹이 이미 사용 중인 이름인 경우
-        if (groupRepository.existsByUser_UserIdAndName(userId, request.name())) {
+        if (groupRepository.existsByUser_UserIdAndNameAndIdNot(userId, request.name(), groupId)) {
             throw new CustomException(GROUP_NAME_ALREADY_EXISTS);
         }
 
