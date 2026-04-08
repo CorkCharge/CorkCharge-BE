@@ -100,6 +100,7 @@ public class BookmarkGroupService {
             throw new CustomException(GROUP_CONTENTS_SAME_AS_BEFORE);
         }
 
+        // TODO 얘가 본인까지도 포함해서 예외 터뜨리는 것 같음.
         // 다른 그룹이 이미 사용 중인 이름인 경우
         if (groupRepository.existsByUser_UserIdAndName(userId, request.name())) {
             throw new CustomException(GROUP_NAME_ALREADY_EXISTS);

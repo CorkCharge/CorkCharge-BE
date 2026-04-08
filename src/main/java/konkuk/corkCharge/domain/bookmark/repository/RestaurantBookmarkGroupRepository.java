@@ -10,6 +10,7 @@ import java.util.List;
 public interface RestaurantBookmarkGroupRepository extends JpaRepository<RestaurantBookmarkGroup, Long> {
     List<RestaurantBookmarkGroup> findAllByIdIn(List<Long> ids);
     boolean existsByUser_UserIdAndName(Long userId, String name);
+    boolean existsByUser_UserIdAndNameAndIdNot(Long userId, String name, Long groupId);
     int countByUser_UserId(Long userId);
     List<RestaurantBookmarkGroup> findAllByUser_UserIdOrderByDisplayOrderAsc(Long userId);
     @Query("""
