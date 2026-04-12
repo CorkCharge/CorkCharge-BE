@@ -3,6 +3,7 @@ package konkuk.corkCharge.domain.restaurant.dto.mapper;
 import konkuk.corkCharge.domain.corkageStore.domain.OptionType;
 import konkuk.corkCharge.domain.restaurant.domain.RestaurantSummary;
 import konkuk.corkCharge.domain.restaurant.dto.response.GetRestaurantDetailResponse;
+import konkuk.corkCharge.domain.restaurant.util.RestaurantOperationStatusResolver;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -12,6 +13,8 @@ import java.util.List;
 @Component
 @RequiredArgsConstructor
 public class RestaurantDetailResponseMapper {
+
+    private final RestaurantOperationStatusResolver operationStatusResolver;
 
     public GetRestaurantDetailResponse toResponse(RestaurantSummary summary, boolean scrap) {
 
@@ -41,6 +44,7 @@ public class RestaurantDetailResponseMapper {
                 summary.getPairingDescription(),
                 summary.getPairingImageUrl(),
                 summary.getOpeningHours(),
+                operationStatusResolver.resolve(summary.getOpeningHours()),
                 scrap
         );
     }
