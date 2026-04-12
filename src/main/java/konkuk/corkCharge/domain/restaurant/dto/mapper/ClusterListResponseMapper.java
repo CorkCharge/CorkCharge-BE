@@ -92,12 +92,12 @@ public class ClusterListResponseMapper {
 
         List<MinuteRange> todayRanges = schedule.get(today);
         if (todayRanges != null && isOpenByTodaySchedule(currentMinute, todayRanges)) {
-            return "운영중";
+            return "영업중";
         }
 
         List<MinuteRange> yesterdayRanges = schedule.get(yesterday);
         if (yesterdayRanges != null && isOpenByYesterdaySchedule(currentMinute, yesterdayRanges)) {
-            return "운영중";
+            return "영업중";
         }
 
         return "영업종료";
