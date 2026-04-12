@@ -12,6 +12,7 @@ public record GetClusterListResponse(
             Double rating,
             int reviewCount,
             String openingHours,
+            String operationStatus,
             String corkagePrice,
             List<String> corkageOptions,
             String[] imageUrls,
