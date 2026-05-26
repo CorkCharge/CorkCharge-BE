@@ -7,6 +7,7 @@ import konkuk.corkCharge.domain.image.repository.ImageRepository;
 import konkuk.corkCharge.domain.image.service.S3ImageService;
 import konkuk.corkCharge.domain.restaurant.domain.Restaurant;
 import konkuk.corkCharge.domain.review.domain.Review;
+import konkuk.corkCharge.domain.review.dto.response.GetHomeCorkageReviewResponse;
 import konkuk.corkCharge.domain.review.dto.response.GetMyPageReviewResponse;
 import konkuk.corkCharge.domain.review.repository.ReviewRepository;
 import konkuk.corkCharge.domain.user.domain.Role;
@@ -93,18 +94,25 @@ public class UserService {
 
         List<Review> reviews = reviewRepository.findAllByUser_UserId(userId);
 
-        List<GetMyPageReviewResponse> reviewDtos = reviews.stream()
+        List<GetHomeCorkageReviewResponse> reviewDtos = reviews.stream()
                 .map(review -> {
                     Restaurant restaurant = review.getRestaurant();
-                    String thumbnailUrl = imageRepository
-                            .findFirstByCategoryAndTypeIdOrderByCreatedAtAsc(REVIEW, review.getReviewId())
-                            .map(Image::getImageUrl)
-                            .orElse(null);
 
-                    return new GetMyPageReviewResponse(
+                    List<String> imageUrls = imageRepository
+                            .findAllByCategoryAndTypeId(REVIEW, review.getReviewId())
+                            .stream()
+                            .map(Image::getImageUrl)
+                            .toList();
+
+                    return new GetHomeCorkageReviewResponse(
+                            review.getReviewId(),
+                            restaurant.getRestaurantId(),
                             restaurant.getName(),
-                            restaurant.getAddress(),
-                            thumbnailUrl
+                            user.getName(),
+                            review.getContent(),
+                            review.getRating(),
+                            review.getCreatedAt(),
+                            imageUrls
                     );
                 })
                 .collect(Collectors.toList());
