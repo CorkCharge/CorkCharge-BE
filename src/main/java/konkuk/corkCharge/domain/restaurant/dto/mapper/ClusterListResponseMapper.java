@@ -5,8 +5,10 @@ import konkuk.corkCharge.domain.corkageStore.domain.MultiCorkage;
 import konkuk.corkCharge.domain.corkageStore.domain.OptionType;
 import konkuk.corkCharge.domain.restaurant.domain.Restaurant;
 import konkuk.corkCharge.domain.restaurant.dto.response.GetClusterListResponse;
+import konkuk.corkCharge.domain.restaurant.util.RestaurantOperationStatusResolver;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -15,6 +17,8 @@ import static konkuk.corkCharge.domain.corkageStore.domain.OptionType.ETC;
 @Component
 @RequiredArgsConstructor
 public class ClusterListResponseMapper {
+
+    private final RestaurantOperationStatusResolver operationStatusResolver;
 
     public GetClusterListResponse.Item toItem(
             Restaurant restaurant,
@@ -31,6 +35,7 @@ public class ClusterListResponseMapper {
                 restaurant.getRating(),
                 restaurant.getReviewCount(),
                 restaurant.getOpeningHours(),
+                operationStatusResolver.resolve(restaurant.getOpeningHours()),
                 corkagePrice,
                 corkageOptions,
                 imageUrls == null ? new String[0] : imageUrls,
