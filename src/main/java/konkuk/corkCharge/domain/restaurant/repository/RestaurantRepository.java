@@ -1,6 +1,7 @@
 package konkuk.corkCharge.domain.restaurant.repository;
 
 import konkuk.corkCharge.domain.restaurant.domain.Restaurant;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -34,6 +35,13 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
         WHERE (r.latitude IS NULL OR r.longitude IS NULL OR r.latitude = 0 OR r.longitude = 0)
         """)
     List<Restaurant> findRestaurantsWithoutValidCoordinates();
+
+    @Query("""
+        SELECT r FROM Restaurant r
+        WHERE (r.latitude IS NULL OR r.longitude IS NULL OR r.latitude = 0 OR r.longitude = 0)
+        ORDER BY r.restaurantId ASC
+        """)
+    List<Restaurant> findRestaurantsWithoutValidCoordinates(Pageable pageable);
 
     // lat/lon 없을 때(그냥 2주 이내 최신순 콜키지 매장)
     @Query(value = """

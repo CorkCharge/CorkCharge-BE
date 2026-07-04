@@ -26,6 +26,8 @@ import konkuk.corkCharge.global.api.naverMapsApi.dto.Address;
 import konkuk.corkCharge.global.api.naverMapsApi.dto.NaverMapsResponse;
 import konkuk.corkCharge.global.exception.CustomException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,6 +41,7 @@ import static konkuk.corkCharge.global.response.status.BaseExceptionResponseStat
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class RestaurantService {
 
     private static final double GANGNAM_LAT = 37.498774;
@@ -205,8 +208,6 @@ public class RestaurantService {
 
     @Transactional
     public List<GetMapRestaurantPinResponse> GetMapCluster(GetMapRestaurantPinsRequest req) {
-        updateMissingLocations();
-
         // DB에서 바로 공간 인덱스 기반으로 범위 내 매장 검색
         String wkt = toEnvelopeWkt(req.lonMin(), req.latMin(), req.lonMax(), req.latMax());
 
@@ -291,6 +292,55 @@ public class RestaurantService {
                 // location은 DB가 자동 갱신함
             }
         });
+    }
+
+    @Transactional
+    public PostRestaurantGeocodingResponse geocodeMissingLocations(int limit) {
+        int requestedLimit = normalizeGeocodingLimit(limit);
+        List<Restaurant> targets = restaurantRepository.findRestaurantsWithoutValidCoordinates(
+                PageRequest.of(0, requestedLimit)
+        );
+
+        int successCount = 0;
+        int notFoundCount = 0;
+        int failedCount = 0;
+
+        for (Restaurant restaurant : targets) {
+            try {
+                NaverMapsResponse response = naverGeocodingClient.getCoordinatesByAddress(restaurant.getAddress());
+                if (response == null || response.addresses() == null || response.addresses().isEmpty()) {
+                    notFoundCount++;
+                    log.warn("Naver geocoding result not found. restaurantId={}, address={}",
+                            restaurant.getRestaurantId(), restaurant.getAddress());
+                    continue;
+                }
+
+                Address address = response.addresses().get(0);
+                double lat = Double.parseDouble(address.latitude());
+                double lon = Double.parseDouble(address.longitude());
+                restaurant.updateCoordinates(lat, lon);
+                successCount++;
+            } catch (Exception e) {
+                failedCount++;
+                log.warn("Naver geocoding failed. restaurantId={}, address={}",
+                        restaurant.getRestaurantId(), restaurant.getAddress(), e);
+            }
+        }
+
+        return new PostRestaurantGeocodingResponse(
+                requestedLimit,
+                targets.size(),
+                successCount,
+                notFoundCount,
+                failedCount
+        );
+    }
+
+    private int normalizeGeocodingLimit(int limit) {
+        if (limit <= 0) {
+            return 100;
+        }
+        return Math.min(limit, 500);
     }
 
     @Transactional(readOnly = true)

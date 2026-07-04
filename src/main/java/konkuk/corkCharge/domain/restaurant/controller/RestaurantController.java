@@ -103,4 +103,11 @@ public class RestaurantController {
         return BaseResponse.ok(restaurantService.getGroupRestaurantPins(userId, latMin, latMax, lonMin, lonMax, color));
     }
 
+    @PostMapping("/locations/geocode")
+    public BaseResponse<PostRestaurantGeocodingResponse> geocodeMissingLocations(
+            @RequestParam(name = "limit", defaultValue = "100") int limit
+    ) {
+        return BaseResponse.ok(restaurantService.geocodeMissingLocations(limit));
+    }
+
 }

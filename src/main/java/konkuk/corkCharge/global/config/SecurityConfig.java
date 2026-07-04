@@ -58,7 +58,8 @@ public class SecurityConfig {
                                 "/restaurants/home",
                                 "/restaurants/map",
                                 "/restaurants/search",
-                                "/reviews/corkageReview")
+                                "/reviews/corkageReview",
+                                "/restaurants/locations/geocode")
                         .permitAll()
 
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
